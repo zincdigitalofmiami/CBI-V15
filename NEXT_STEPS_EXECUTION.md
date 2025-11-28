@@ -1,162 +1,175 @@
-# Next Steps Execution Status
+# Next Steps Execution Plan
 
 **Date**: November 28, 2025  
-**Current Phase**: Ready for Data Ingestion
+**Status**: Dataform Connected ✅
 
 ---
 
-## ✅ Completed Verification
+## Current Status
 
-### System Checks
-- ✅ BigQuery connection: Working (8 datasets found)
-- ✅ Dataform compilation: Successful (18 actions)
-- ✅ Infrastructure: Complete
-- ⚠️ API keys: Not stored yet (expected)
-
-### Data Status
-- ⚠️ Raw tables: Empty (ready for ingestion)
-- ⚠️ Staging tables: Empty (waiting for raw data)
-- ⚠️ Feature tables: Empty (waiting for staging)
+- ✅ GCP Project: `cbi-v15` created
+- ✅ BigQuery Datasets: All created
+- ✅ Dataform Repository: Connected to GitHub
+- ✅ SSH Keys: Configured
+- ⏳ API Keys: Need to be stored
+- ⏳ Data Ingestion: Not started
+- ⏳ Dataform Compilation: Ready to test
 
 ---
 
-## 🎯 Immediate Actions Required
+## Immediate Next Steps
 
-### 1. Connect Dataform to GitHub (Manual - UI)
-**Status**: ⚠️ Pending  
-**Action**: 
-- Go to Google Cloud Console → Dataform
-- Connect repository `zincdigital/CBI-V15`
-- Set Root Directory to `dataform/`
+### Step 1: Store API Keys
 
-**Why Critical**: Enables Dataform UI compilation and runs
-
-### 2. Store API Keys
-**Status**: ⚠️ Pending  
-**Script**: `./scripts/setup/store_api_keys.sh`
-
-**Keys Needed**:
-- Databento API key (required for price data)
-- ScrapeCreators API key (required for news/Trump data)
-- FRED API key (optional, for economic data)
+**Required Keys:**
+- Databento API key (critical - for price data)
+- ScrapeCreators API key (critical - for Trump/news data)
+- FRED API key (optional - for economic data)
 - Glide API key (for Vegas Intel)
 
-**Why Critical**: Required for data ingestion
+**Execute:**
+```bash
+./scripts/setup/store_api_keys.sh
+```
 
-### 3. First Data Ingestion
-**Status**: ⚠️ Ready (after API keys stored)  
-**Script**: `python3 src/ingestion/databento/collect_daily.py`
+**Verify:**
+```bash
+./scripts/setup/verify_api_keys.sh
+```
 
-**What It Does**:
-- Collects daily OHLCV data from Databento
-- Loads to `raw.databento_futures_ohlcv_1d`
-- Handles incremental updates
+---
 
-**Expected Result**: Data in BigQuery raw tables
+### Step 2: Test Dataform Compilation
 
-### 4. Run Dataform Staging
-**Status**: ⚠️ Ready (after raw data exists)  
-**Commands**:
+**From CLI:**
 ```bash
 cd dataform
-npx dataform compile  # Verify
-npx dataform run --tags staging  # Build staging tables
+npx dataform compile
 ```
 
-**What It Does**:
-- Builds `staging.market_daily` from raw data
-- Cleans and normalizes data
-- Forward-fills missing values
+**Expected:**
+- 18 actions compiled
+- 2 warnings about UDF includes (non-critical)
 
-**Expected Result**: Clean data in staging tables
-
-### 5. Run Dataform Features
-**Status**: ⚠️ Ready (after staging data exists)  
-**Commands**:
-```bash
-npx dataform run --tags features  # Build feature tables
-npx dataform test  # Run assertions
-```
-
-**What It Does**:
-- Builds all feature tables
-- Creates `features.daily_ml_matrix`
-- Runs data quality assertions
-
-**Expected Result**: 276 features ready for training
+**Or in UI:**
+- Go to: https://console.cloud.google.com/dataform?project=cbi-v15
+- Click "Compile" button
 
 ---
 
-## 📊 Current Pipeline Status
+### Step 3: First Data Ingestion
 
-```
-External APIs → [⚠️ Pending] → Raw Layer → [Empty] → Staging Layer → [Empty] → Features Layer → [Empty] → Training
-     ↓              ↓              ↓            ↓            ↓            ↓            ↓            ↓
-  Databento    API Keys      BigQuery      Ready      Dataform      Ready      Dataform      Ready
-  FRED         Needed        (empty)       for        (waiting)     for        (waiting)     for
-  ScrapeCreators                        ingestion                  staging                  features
-```
+**Start with Databento (price data):**
 
----
-
-## 🔄 Execution Order
-
-1. **Connect Dataform** (UI) - Enables ETL operations
-2. **Store API Keys** - Enables data collection
-3. **Ingest Data** - Populates raw tables
-4. **Run Dataform Staging** - Builds clean data
-5. **Run Dataform Features** - Builds ML-ready features
-6. **Export Training Data** - Prepares for model training
-7. **Train Models** - Creates baseline predictions
-
----
-
-## ✅ What's Ready
-
-- ✅ All infrastructure configured
-- ✅ All scripts prepared
-- ✅ All documentation complete
-- ✅ Connection tests working
-- ✅ Dataform compiles successfully
-- ✅ BigQuery structure ready
-
----
-
-## ⚠️ What's Needed
-
-- ⚠️ Dataform GitHub connection (manual UI step)
-- ⚠️ API keys stored (user input required)
-- ⚠️ First data ingestion (after API keys)
-- ⚠️ Dataform transformations (after data exists)
-
----
-
-## 🚀 Quick Start Commands
-
-**Check current status:**
-```bash
-python3 scripts/ingestion/check_data_availability.py
-```
-
-**After API keys stored:**
 ```bash
 python3 src/ingestion/databento/collect_daily.py
 ```
 
-**After data ingested:**
+**What it does:**
+- Collects daily OHLCV for ZL, ZS, ZM, CL, HO, FCPO
+- Loads to `raw.databento_futures_ohlcv_1d`
+- Handles incremental updates
+
+**Verify:**
 ```bash
-cd dataform
-npx dataform run --tags staging
-npx dataform run --tags features
+python3 scripts/ingestion/check_data_availability.py
 ```
 
 ---
 
-**Status**: ✅ **READY FOR USER ACTIONS**
+### Step 4: Run Dataform Staging Layer
 
-All automated checks complete. System is ready for:
-1. Dataform connection (UI)
-2. API key storage
-3. Data ingestion
-4. ETL transformations
+**After raw data exists:**
 
+```bash
+cd dataform
+npx dataform run --tags staging
+```
+
+**Or in UI:**
+- Click "Run" → Select "staging" tag
+
+**What it builds:**
+- `staging.market_daily` - Cleaned market data
+- `staging.fred_macro_clean` - Cleaned FRED data
+- `staging.news_bucketed` - Aggregated news buckets
+
+---
+
+### Step 5: Run Dataform Features Layer
+
+**After staging data exists:**
+
+```bash
+npx dataform run --tags features
+```
+
+**What it builds:**
+- All feature tables
+- `features.daily_ml_matrix` - Master feature table
+- Technical indicators
+- Cross-asset correlations
+- Lagged features
+
+---
+
+### Step 6: Run Data Quality Assertions
+
+**Verify data quality:**
+
+```bash
+npx dataform test
+```
+
+**Or in UI:**
+- Click "Test" button
+
+---
+
+## Priority Order
+
+1. **Store API Keys** (5 min)
+2. **Test Compilation** (2 min)
+3. **First Ingestion** (Databento - 5 min)
+4. **Run Staging** (2 min)
+5. **Run Features** (5 min)
+6. **Run Assertions** (2 min)
+
+**Total Time**: ~20 minutes for initial setup
+
+---
+
+## Monitoring
+
+**Check System Status:**
+```bash
+./scripts/system_status.sh
+```
+
+**Check Ingestion Status:**
+```bash
+python3 scripts/ingestion/ingestion_status.py
+```
+
+**Check Data Availability:**
+```bash
+python3 scripts/ingestion/check_data_availability.py
+```
+
+---
+
+## Success Criteria
+
+After completing all steps:
+
+- ✅ API keys stored
+- ✅ Dataform compiles successfully
+- ✅ Raw data flowing into BigQuery
+- ✅ Staging tables populated
+- ✅ Feature tables populated
+- ✅ Assertions passing
+- ✅ System operational
+
+---
+
+**Ready to proceed with Step 1: Store API Keys**
