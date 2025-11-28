@@ -4,8 +4,12 @@
 databento:
   api_key_env: DATABENTO_API_KEY
   rate_limit: 1000  # requests per minute
-  schedule: "0 0 * * *"  # Daily at midnight UTC
-  symbols: [ZL, ZS, ZM, CL, HO, FCPO]
+  # ZL-only: 1 hour for price, 4 hours for all else
+  price_schedule: "0 * * * *"  # Every hour for ZL price
+  other_schedule: "0 */4 * * *"  # Every 4 hours for ZS, ZM, CL, HO, FCPO
+  symbols: 
+    primary: [ZL]  # ZL only - primary focus
+    secondary: [ZS, ZM, CL, HO, FCPO]  # Pulled every 4 hours
   
 fred:
   api_key_env: FRED_API_KEY

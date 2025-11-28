@@ -1,9 +1,11 @@
 # Cost Optimization Configuration
-# Budget Cap: $100/month (GCP only)
+# Budget Cap: $50/month (GCP only)
+# ZL-Only: MES removed, ZL primary focus
 
 optimization:
-  budget_cap_usd: 100
-  alert_threshold_percent: 80  # Alert at $80/month
+  budget_cap_usd: 50
+  alert_threshold_percent: 80  # Alert at $40/month
+  zl_only: true  # ZL-only mode (MES removed)
   
   bigquery:
     # Query optimizations
@@ -22,12 +24,17 @@ optimization:
     refresh_interval_minutes: 5
     
   databento:
-    # 5-minute pull optimization
-    pull_interval_minutes: 5
-    upload_interval_hours: 1  # Upload to BQ hourly (not every 5 min)
+    # ZL-only: 1 hour for price, 4 hours for all else
+    zl_pull_interval_hours: 1  # ZL price: Every hour
+    other_pull_interval_hours: 4  # Other symbols: Every 4 hours
+    zl_upload_interval_hours: 1  # Upload ZL hourly
+    other_upload_interval_hours: 4  # Upload others every 4 hours
     enable_local_cache: true
     cache_path: "/Volumes/Satechi Hub/Projects/CBI-V15/cache/databento"
     deduplicate: true
+    symbols:
+      primary: [ZL]  # ZL only - primary focus
+      secondary: [ZS, ZM, CL, HO, FCPO]  # Pulled every 4 hours
     
   public_datasets:
     # Reduce query frequency
