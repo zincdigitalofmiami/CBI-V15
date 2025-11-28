@@ -113,5 +113,79 @@
 
 ---
 
+---
+
+## ✅ Locked Features (November 28, 2025)
+
+### Complete Feature Inventory (276 Features)
+
+**Technical Indicators** (19 features):
+- Distance MAs: 5 features (EMA 5d, 10d, 21d; SMA 63d, 200d)
+- Bollinger: 2 features (%B, Bandwidth)
+- PPO: 1 feature (12, 26, 9)
+- VWAP: 1 feature (21d distance)
+- Volatility: 3 features (Garman-Klass, Parkinson, 21d)
+- Microstructure: 2 features (Amihud, OI/Volume)
+- Cross-asset: 3 features (BOHO spread, ZL-BRL corr, Terms of Trade)
+- Metadata: 2 features (Seasonality SIN/COS)
+
+**FX Indicators** (16 features):
+- BRL Momentum: 3 features (21d, 63d, 252d)
+- DXY Momentum: 3 features (21d, 63d, 252d)
+- BRL Volatility: 2 features (21d, 63d)
+- ZL-BRL Correlation: 3 features (30d, 60d, 90d)
+- ZL-DXY Correlation: 3 features (30d, 60d, 90d)
+- Terms of Trade: 1 feature
+- Correlation Regimes: 2 features
+
+**Fundamental Spreads** (5 features):
+- Board Crush: `(ZM × 0.022 + ZL × 11) - ZS`
+- Oil Share: `(ZL × 11) / Board_Crush_Value`
+- Hog Spread: `HE - (0.8 × ZC + 0.2 × ZM)`
+- BOHO Spread: `(ZL/100 × 7.5) - HO`
+- China Pulse: `CORR(HG, ZS, 60d)`
+
+**Pair Correlations** (112 features):
+- 28 pairs × 4 horizons (30d, 60d, 90d, 252d)
+
+**Cross-Asset Betas** (28 features):
+- 7 assets × 4 horizons (30d, 60d, 90d, 252d)
+
+**Lagged Features** (96 features):
+- 8 symbols × 12 lags (1d, 2d, 3d, 5d, 10d, 21d for prices & returns)
+
+**Total**: **276 features** pre-computed in BigQuery ✅
+
+### Symbols Locked In (10-12 symbols)
+
+**Commodities** (8 symbols):
+- ZL (Soybean Oil) - PRIMARY TARGET
+- ZS (Soybeans), ZM (Soybean Meal)
+- CL (Crude Oil), HO (Heating Oil)
+- FCPO (Palm Oil), ZC (Corn), HE (Lean Hogs)
+
+**FX** (2 symbols):
+- 6L (BRL Futures), DX (DXY Futures)
+
+**Optional** (2 symbols):
+- HG (Copper) - For China Pulse
+- GC (Gold) - For Real-Terms Price
+
+### Prerequisites Before Baselines
+
+**Must Complete**:
+1. ✅ USDA Ingestion (WASDE, crop progress, exports)
+2. ✅ CFTC Ingestion (COT positions, managed money)
+3. ✅ EIA Ingestion (RIN prices, biodiesel production)
+
+**Status**: ⚠️ **REQUIRED** before baseline training
+
+### BigQuery Structure
+
+**Partitioning**: All tables `PARTITION BY DATE(date)`
+**Clustering**: `CLUSTER BY symbol` (where applicable)
+**No Joins**: Skeleton structure = table definitions only
+**Master Join**: `daily_ml_matrix` joins all features
+
 **Last Updated**: November 28, 2025
 
