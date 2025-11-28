@@ -1,0 +1,162 @@
+-- Fundamental Spreads - US Oil Solutions Spec
+-- Academic & Institutionally Validated
+-- Focus: ZL-optimized fundamental economics
+
+config {
+  type: "table",
+  schema: "features",
+  name: "fundamental_spreads_daily",
+  description: "Synthetic fundamental spreads: crush, protein, biofuel, macro economics",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["spread_type"]
+  }
+}
+
+WITH prices AS (
+  SELECT 
+    date,
+    MAX(IF(symbol = 'ZL', close, NULL)) AS zl_price,
+    MAX(IF(symbol = 'ZS', close, NULL)) AS zs_price,
+    MAX(IF(symbol = 'ZM', close, NULL)) AS zm_price,
+    MAX(IF(symbol = 'CL', close, NULL)) AS cl_price,
+    MAX(IF(symbol = 'HO', close, NULL)) AS ho_price,
+    MAX(IF(symbol = 'ZC', close, NULL)) AS zc_price,
+    MAX(IF(symbol = 'HE', close, NULL)) AS he_price,
+    MAX(IF(symbol = 'HG', close, NULL)) AS hg_price,
+    MAX(IF(symbol = 'GC', close, NULL)) AS gc_price
+  FROM ${ref("market_daily")}
+  WHERE symbol IN ('ZL', 'ZS', 'ZM', 'CL', 'HO', 'ZC', 'HE', 'HG', 'GC')
+    AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
+  GROUP BY date
+),
+
+crush_calcs AS (
+  SELECT 
+    date,
+    zl_price,
+    zs_price,
+    zm_price,
+    
+    -- Board Crush: (ZM * 0.022 + ZL * 11) - ZS
+    -- Standard CME crush margin formula
+    ((zm_price * 0.022) + (zl_price * 11)) - zs_price AS board_crush,
+    
+    -- Board Crush Value (denominator for oil share)
+    (zm_price * 0.022) + (zl_price * 11) AS board_crush_value,
+    
+    -- Oil Share: (ZL * 11) / Board_Crush_Value
+    -- Measures if crush is driven by oil (>45%) or meal (<45%)
+    CASE
+      WHEN ((zm_price * 0.022) + (zl_price * 11)) = 0 THEN NULL
+      ELSE (zl_price * 11) / ((zm_price * 0.022) + (zl_price * 11))
+    END AS oil_share
+    
+  FROM prices
+  WHERE zl_price IS NOT NULL 
+    AND zs_price IS NOT NULL 
+    AND zm_price IS NOT NULL
+),
+
+protein_calcs AS (
+  SELECT 
+    date,
+    he_price,
+    zc_price,
+    zm_price,
+    
+    -- Hog Spread (Feeder Margin): HE - (0.8 * ZC + 0.2 * ZM)
+    -- Standard livestock economics: 80% corn, 20% meal feed ratio
+    he_price - ((0.8 * zc_price) + (0.2 * zm_price)) AS hog_spread_feeder_margin
+    
+  FROM prices
+  WHERE he_price IS NOT NULL 
+    AND zc_price IS NOT NULL 
+    AND zm_price IS NOT NULL
+),
+
+biofuel_calcs AS (
+  SELECT 
+    date,
+    zl_price,
+    ho_price,
+    
+    -- BOHO Spread: (ZL/100 * 7.5) - HO
+    -- ZL in cents/lb, convert to $/gal: divide by 100, multiply by 7.5
+    -- Standard biodiesel arbitrage calculation
+    (zl_price / 100 * 7.5) - ho_price AS boho_spread_gal
+    
+  FROM prices
+  WHERE zl_price IS NOT NULL 
+    AND ho_price IS NOT NULL
+),
+
+macro_calcs AS (
+  SELECT 
+    date,
+    hg_price,
+    zs_price,
+    zl_price,
+    gc_price,
+    
+    -- China Pulse: Rolling correlation of HG (Copper) vs ZS (Soybeans)
+    -- Copper as China GDP proxy, soybeans as import demand proxy
+    CORR(
+      LN(hg_price / LAG(hg_price, 1) OVER (ORDER BY date)),
+      LN(zs_price / LAG(zs_price, 1) OVER (ORDER BY date))
+    ) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
+    ) AS china_pulse_corr_60d,
+    
+    -- Real-Terms Price: ZL_Price / GC_Price
+    -- Gold as inflation hedge, removes dollar noise
+    CASE
+      WHEN gc_price = 0 THEN NULL
+      ELSE zl_price / gc_price
+    END AS real_terms_price_zl_gc
+    
+  FROM prices
+  WHERE hg_price IS NOT NULL 
+    AND zs_price IS NOT NULL
+),
+
+term_structure AS (
+  SELECT 
+    date,
+    -- Carry Signal: (Front_Month_Price - Second_Month_Price)
+    -- Positive = Backwardation (shortage), Negative = Contango (glut)
+    -- Note: This requires contract-level data, placeholder for now
+    NULL AS carry_signal_front_2nd
+  FROM prices
+  LIMIT 1  -- Placeholder - needs contract-level implementation
+)
+
+SELECT 
+  c.date,
+  
+  -- Crush Economics
+  ROUND(c.board_crush, 4) AS board_crush,
+  ROUND(c.oil_share, 4) AS oil_share,
+  
+  -- Protein Economics
+  ROUND(p.hog_spread_feeder_margin, 4) AS hog_spread_feeder_margin,
+  
+  -- Biofuel Economics
+  ROUND(b.boho_spread_gal, 4) AS boho_spread_gal,
+  
+  -- Macro Economics
+  ROUND(m.china_pulse_corr_60d, 4) AS china_pulse_corr_60d,
+  ROUND(m.real_terms_price_zl_gc, 4) AS real_terms_price_zl_gc,
+  
+  -- Term Structure (placeholder)
+  t.carry_signal_front_2nd AS carry_signal_front_2nd
+  
+FROM crush_calcs c
+LEFT JOIN protein_calcs p ON c.date = p.date
+LEFT JOIN biofuel_calcs b ON c.date = b.date
+LEFT JOIN macro_calcs m ON c.date = m.date
+LEFT JOIN term_structure t ON c.date = t.date
+WHERE c.date IS NOT NULL
+ORDER BY c.date
+

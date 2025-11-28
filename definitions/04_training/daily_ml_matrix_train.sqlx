@@ -1,0 +1,14 @@
+-- Training Set View
+-- Filters daily_ml_matrix to training date range
+
+config {
+  type: "view",
+  schema: "training",
+  name: "daily_ml_matrix_train",
+  description: "Training set: 2010-01-01 to 2018-12-31"
+}
+
+SELECT *
+FROM ${ref("daily_ml_matrix")}
+WHERE date BETWEEN DATE '2010-01-01' AND DATE '2018-12-31'
+

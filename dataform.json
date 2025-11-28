@@ -1,0 +1,24 @@
+{
+  "warehouse": "bigquery",
+  "defaultSchema": "staging",
+  "assertionSchema": "reference",
+  "defaultDatabase": "cbi-v15",
+  "defaultLocation": "us-central1",
+  "vars": {
+    "project": "cbi-v15",
+    "raw_dataset": "raw",
+    "staging_dataset": "staging",
+    "features_dataset": "features",
+    "training_dataset": "training",
+    "forecasts_dataset": "forecasts",
+    "api_dataset": "api",
+    "reference_dataset": "reference",
+    "ops_dataset": "ops",
+    "assertionSchema": "reference",
+    "collinearity_threshold": "0.85",
+    "palm_source": "FRED_PPOILUSDM",
+    "fec_enabled": "true",
+    "silence_enabled": "true"
+  }
+}
+

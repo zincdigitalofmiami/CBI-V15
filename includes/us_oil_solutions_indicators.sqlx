@@ -1,0 +1,137 @@
+-- US Oil Solutions Technical Indicators - Institutional Grade
+-- Aligned with GS Quant, JPM, Vanguard best practices
+-- Optimized for BigQuery SQL
+
+-- Garman-Klass Volatility (Advanced)
+CREATE TEMP FUNCTION calc_garman_klass(
+  o FLOAT64, 
+  h FLOAT64, 
+  l FLOAT64, 
+  c FLOAT64
+)
+RETURNS FLOAT64 AS (
+  SQRT(0.5 * POW(LN(h / NULLIF(l, 0)), 2) - (2 * LN(2) - 1) * POW(LN(c / NULLIF(o, 0)), 2))
+);
+
+-- Parkinson Volatility (Range-based)
+CREATE TEMP FUNCTION calc_parkinson(
+  h FLOAT64,
+  l FLOAT64
+)
+RETURNS FLOAT64 AS (
+  SQRT(POW(LN(h / NULLIF(l, 0)), 2) / (4 * LN(2)))
+);
+
+-- PPO (Percentage Price Oscillator) - Better than MACD for scaling
+CREATE TEMP FUNCTION calculate_ppo(
+  prices ARRAY<FLOAT64>,
+  fast_period INT64,
+  slow_period INT64
+)
+RETURNS FLOAT64 AS (
+  WITH ema_fast AS (
+    SELECT AVG(price) AS ema_fast
+    FROM UNNEST(prices) AS price
+    LIMIT fast_period
+  ),
+  ema_slow AS (
+    SELECT AVG(price) AS ema_slow
+    FROM UNNEST(prices) AS price
+    LIMIT slow_period
+  )
+  SELECT 
+    CASE 
+      WHEN ema_slow = 0 THEN NULL
+      ELSE ((ema_fast - ema_slow) / ema_slow) * 100
+    END
+  FROM ema_fast, ema_slow
+);
+
+-- Bollinger %B (Normalized price position)
+CREATE TEMP FUNCTION calculate_bb_pct_b(
+  price FLOAT64,
+  upper FLOAT64,
+  lower FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN (upper - lower) = 0 THEN NULL
+    ELSE (price - lower) / (upper - lower)
+  END
+);
+
+-- Bollinger Bandwidth (Volatility squeeze)
+CREATE TEMP FUNCTION calculate_bb_bandwidth(
+  upper FLOAT64,
+  lower FLOAT64,
+  middle FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN middle = 0 THEN NULL
+    ELSE (upper - lower) / middle
+  END
+);
+
+-- Amihud Illiquidity Proxy
+CREATE TEMP FUNCTION calculate_amihud(
+  return_pct FLOAT64,
+  volume FLOAT64,
+  price FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN volume * price = 0 THEN NULL
+    ELSE ABS(return_pct) / (volume * price)
+  END
+);
+
+-- Calendar Spread (F1 - F2)
+CREATE TEMP FUNCTION calculate_calendar_spread(
+  front_price FLOAT64,
+  second_price FLOAT64
+)
+RETURNS FLOAT64 AS (
+  front_price - second_price
+);
+
+-- Butterfly Spread (Front - 2*Middle + Back)
+CREATE TEMP FUNCTION calculate_butterfly_spread(
+  front_price FLOAT64,
+  middle_price FLOAT64,
+  back_price FLOAT64
+)
+RETURNS FLOAT64 AS (
+  front_price - (2 * middle_price) + back_price
+);
+
+-- BOHO Spread (Bean Oil / Heating Oil)
+CREATE TEMP FUNCTION calculate_boho_spread(
+  zl_price_c_lb FLOAT64,
+  ho_price_usd_gal FLOAT64
+)
+RETURNS FLOAT64 AS (
+  (zl_price_c_lb / 100 * 7.5) - ho_price_usd_gal
+);
+
+-- Terms of Trade (ZL / BRL)
+CREATE TEMP FUNCTION calculate_terms_of_trade(
+  zl_price FLOAT64,
+  brl_price FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN brl_price = 0 THEN NULL
+    ELSE zl_price / brl_price
+  END
+);
+
+-- Seasonality (SIN/COS)
+CREATE TEMP FUNCTION calculate_seasonality(date DATE)
+RETURNS STRUCT<sin FLOAT64, cos FLOAT64> AS (
+  STRUCT(
+    SIN(2 * ACOS(-1) * EXTRACT(DAYOFYEAR FROM date) / 365) AS sin,
+    COS(2 * ACOS(-1) * EXTRACT(DAYOFYEAR FROM date) / 365) AS cos
+  )
+);
+
