@@ -20,11 +20,11 @@
 
 ## Solution Applied
 
-**Created clean base64 version using exact method:**
+**Created clean base64 version using macOS-compatible method:**
 
 ```bash
-# Create standard base64 (one line, no newlines)
-base64 -b0 ~/.ssh/dataform_github_rsa > /tmp/dataform_github.b64
+# Create standard base64 (one line, no newlines) - macOS syntax
+cat ~/.ssh/dataform_github_rsa | base64 | tr -d '\n' > /tmp/dataform_github.b64
 
 # Store in Secret Manager
 cat /tmp/dataform_github.b64 | \
@@ -32,6 +32,8 @@ cat /tmp/dataform_github.b64 | \
     --data-file=- \
     --project=cbi-v15
 ```
+
+**Note:** macOS `base64` doesn't support `-b0` flag, so use `base64 | tr -d '\n'` instead.
 
 **Key Points:**
 - ✅ Standard base64 (A-Z, a-z, 0-9, +, /, =)
