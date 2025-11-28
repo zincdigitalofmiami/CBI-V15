@@ -1,6 +1,6 @@
 config {
   type: "incremental",
-  schema: "${dataform.projectConfig.vars.staging_dataset}",
+  schema: "staging",
   name: "market_daily",
   description: "Cleaned daily OHLCV market data with forward-fill and normalization",
   bigquery: {

@@ -1,6 +1,6 @@
 config {
   type: "assertion",
-  schema: "${dataform.projectConfig.vars.reference_dataset}",
+  schema: "reference",
   tags: ["data_quality", "critical"]
 }
 

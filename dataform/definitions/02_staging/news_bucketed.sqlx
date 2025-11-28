@@ -1,6 +1,6 @@
 config {
   type: "incremental",
-  schema: "${dataform.projectConfig.vars.staging_dataset}",
+  schema: "staging",
   name: "news_bucketed",
   description: "News buckets aggregated by date and bucket type (biofuel, China, tariffs)",
   bigquery: {
