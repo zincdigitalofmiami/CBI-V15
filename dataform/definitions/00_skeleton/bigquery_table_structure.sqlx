@@ -91,6 +91,19 @@ config {
 }
 SELECT * FROM ${ref("scrapecreators_trump")} WHERE FALSE; -- Skeleton only
 
+-- ScrapeCreators News Buckets (SEGMENTED AT INGESTION)
+config {
+  type: "table",
+  schema: "raw",
+  name: "scrapecreators_news_buckets",
+  description: "News buckets from ScrapeCreators (biofuel, China, tariffs) - segmented at ingestion to prevent drift",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["bucket_type"]
+  }
+}
+SELECT * FROM ${ref("scrapecreators_buckets")} WHERE FALSE; -- Skeleton only
+
 -- ============================================================================
 -- STAGING LAYER (02_staging)
 -- ============================================================================
@@ -179,6 +192,32 @@ config {
   }
 }
 SELECT * FROM ${ref("trump_policy_intelligence")} WHERE FALSE; -- Skeleton only
+
+-- News Bucketed (Aggregated by date, bucket)
+config {
+  type: "table",
+  schema: "staging",
+  name: "news_bucketed",
+  description: "News buckets aggregated by date and bucket type (biofuel, China, tariffs)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["bucket_type"]
+  }
+}
+SELECT * FROM ${ref("news_bucketed")} WHERE FALSE; -- Skeleton only
+
+-- Sentiment Buckets (Sentiment scores by bucket)
+config {
+  type: "table",
+  schema: "staging",
+  name: "sentiment_buckets",
+  description: "Sentiment scores by bucket (biofuel, China, tariffs) - segmented to prevent drift",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["bucket_type"]
+  }
+}
+SELECT * FROM ${ref("sentiment_buckets")} WHERE FALSE; -- Skeleton only
 
 -- ============================================================================
 -- FEATURES LAYER (03_features)
@@ -274,6 +313,54 @@ config {
 }
 SELECT * FROM ${ref("daily_ml_matrix")} WHERE FALSE; -- Skeleton only
 
+-- Sentiment Features Daily (ML-ready sentiment features)
+config {
+  type: "table",
+  schema: "features",
+  name: "sentiment_features_daily",
+  description: "Sentiment features for ML (bucket-specific, normalized, regime-tagged)",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("sentiment_features_daily")} WHERE FALSE; -- Skeleton only
+
+-- Regime Indicators Daily (Daily regime flags)
+config {
+  type: "table",
+  schema: "features",
+  name: "regime_indicators_daily",
+  description: "Daily regime indicators (volatility regime, correlation regime, trend regime)",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("regime_indicators_daily")} WHERE FALSE; -- Skeleton only
+
+-- Neural Signals Daily (Layer 2: dollar_neural_score, fed_neural_score, crush_neural_score)
+config {
+  type: "table",
+  schema: "features",
+  name: "neural_signals_daily",
+  description: "Neural composite signals (Layer 2) - segmented by driver to prevent drift",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("neural_signals_daily")} WHERE FALSE; -- Skeleton only
+
+-- Neural Master Score (Layer 1: Master neural score)
+config {
+  type: "table",
+  schema: "features",
+  name: "neural_master_score",
+  description: "Master neural score (Layer 1) - combines all neural signals",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("neural_master_score")} WHERE FALSE; -- Skeleton only
+
 -- ============================================================================
 -- TRAINING LAYER (04_training)
 -- ============================================================================
@@ -329,6 +416,72 @@ config {
   }
 }
 SELECT * FROM ${ref("zl_training_6m")} WHERE FALSE; -- Skeleton only
+
+-- ============================================================================
+-- REFERENCE LAYER (06_reference)
+-- ============================================================================
+
+-- Regime Calendar (Regime dates)
+config {
+  type: "table",
+  schema: "reference",
+  name: "regime_calendar",
+  description: "Regime calendar (Trump eras, crises, normal periods)",
+  bigquery: {
+    clusterBy: ["regime_type"]
+  }
+}
+SELECT * FROM ${ref("regime_calendar")} WHERE FALSE; -- Skeleton only
+
+-- Regime Weights (VIX-based weights, shock multipliers)
+config {
+  type: "table",
+  schema: "reference",
+  name: "regime_weights",
+  description: "Regime weights for training (VIX-based, shock multipliers)",
+  bigquery: {
+    clusterBy: ["regime_type"]
+  }
+}
+SELECT * FROM ${ref("regime_weights")} WHERE FALSE; -- Skeleton only
+
+-- Neural Drivers (Layer 3 → Layer 2 → Layer 1 definitions)
+config {
+  type: "table",
+  schema: "reference",
+  name: "neural_drivers",
+  description: "Neural driver definitions (Layer 3 deep drivers → Layer 2 signals → Layer 1 master)",
+  bigquery: {
+    clusterBy: ["layer", "driver_name"]
+  }
+}
+SELECT * FROM ${ref("neural_drivers")} WHERE FALSE; -- Skeleton only
+
+-- Train/Val/Test Splits
+config {
+  type: "table",
+  schema: "reference",
+  name: "train_val_test_splits",
+  description: "Date ranges for train/val/test splits"
+}
+SELECT * FROM ${ref("train_val_test_splits")} WHERE FALSE; -- Skeleton only
+
+-- ============================================================================
+-- OPS LAYER (07_ops)
+-- ============================================================================
+
+-- Ingestion Completion Tracking
+config {
+  type: "table",
+  schema: "ops",
+  name: "ingestion_completion",
+  description: "Tracks completion of each ingestion source for scheduler coordination",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["source"]
+  }
+}
+SELECT * FROM ${ref("ingestion_completion")} WHERE FALSE; -- Skeleton only
 
 -- ============================================================================
 -- FORECASTS LAYER (05_forecasts)
