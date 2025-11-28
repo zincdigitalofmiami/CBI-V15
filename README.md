@@ -13,11 +13,44 @@ Institutional-grade ZL (soybean oil futures) price forecasting using Dataform ET
 
 - Python 3.11+
 - Node.js 18+ (for Dataform)
-- Google Cloud SDK
+- Google Cloud SDK (`gcloud`)
+- BigQuery CLI (`bq`)
 - macOS Keychain (for API keys)
-- GCP project: `cbi-v15` (us-central1)
+- GCP project: `cbi-v15` (us-central1, App Development folder)
 
-### Setup
+### Complete Setup (Recommended)
+
+**Follow the complete execution guide**:
+```bash
+cd /Users/zincdigital/CBI-V15
+# See COMPLETE_SETUP_EXECUTION_GUIDE.md for full instructions
+```
+
+**Quick execution**:
+```bash
+# 1. Pre-flight check
+./scripts/setup/pre_flight_check.sh
+
+# 2. GCP project setup
+./scripts/setup/setup_gcp_project.sh
+
+# 3. IAM permissions
+./scripts/setup/setup_iam_permissions.sh
+
+# 4. BigQuery skeleton
+./scripts/setup/setup_bigquery_skeleton.sh
+
+# 5. Store API keys
+./scripts/setup/store_api_keys.sh
+
+# 6. Verify
+python3 scripts/setup/verify_connections.py
+
+# 7. Dataform
+cd dataform && npm install && dataform compile
+```
+
+### Manual Setup (Alternative)
 
 1. **Clone Repository**
    ```bash
