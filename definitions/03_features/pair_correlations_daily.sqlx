@@ -1,106 +1,60 @@
--- Pair Correlations - All Symbol Pairs
--- Pre-compute all pairwise correlations to reduce Mac compute
--- 28 pairs total (8 choose 2)
+-- Pair Correlations - Key ZL Pairs Only
+-- DENORMALIZED - No JOINs - Pivot pattern
+-- Pre-compute ZL correlations with major assets
 
 config {
   type: "table",
   schema: "features",
   name: "pair_correlations_daily",
-  description: "All pairwise correlations across all symbols (ZL, ZS, ZM, CL, HO, FCPO, BRL, DXY)",
+  description: "ZL pairwise correlations - denormalized",
   bigquery: {
     partitionBy: "DATE(date)",
-    clusterBy: ["symbol_pair"]
+    clusterBy: ["date"]
   }
 }
 
-WITH symbol_returns AS (
+WITH returns_pivot AS (
   SELECT 
     date,
-    symbol,
-    LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)) AS return
+    MAX(IF(symbol = 'ZL', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS zl_return,
+    MAX(IF(symbol = 'ZS', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS zs_return,
+    MAX(IF(symbol = 'ZM', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS zm_return,
+    MAX(IF(symbol = 'CL', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS cl_return,
+    MAX(IF(symbol = 'HO', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS ho_return,
+    MAX(IF(symbol = 'FCPO', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS fcpo_return,
+    MAX(IF(symbol = '6L', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS brl_return,
+    MAX(IF(symbol = 'DX', LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)), NULL)) AS dxy_return
   FROM ${ref("market_daily")}
   WHERE symbol IN ('ZL', 'ZS', 'ZM', 'CL', 'HO', 'FCPO', '6L', 'DX')
     AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
-),
-
--- All symbol pairs (28 total)
-symbol_pairs AS (
-  SELECT DISTINCT
-    s1.symbol AS symbol1,
-    s2.symbol AS symbol2,
-    CONCAT(s1.symbol, '-', s2.symbol) AS symbol_pair
-  FROM symbol_returns s1
-  CROSS JOIN symbol_returns s2
-  WHERE s1.symbol < s2.symbol  -- Avoid duplicates (A-B = B-A)
-),
-
--- Join returns for each pair
-paired_returns AS (
-  SELECT 
-    s1.date,
-    sp.symbol_pair,
-    s1.symbol AS symbol1,
-    s2.symbol AS symbol2,
-    s1.return AS return1,
-    s2.return AS return2
-  FROM symbol_pairs sp
-  LEFT JOIN symbol_returns s1 ON sp.symbol1 = s1.symbol
-  LEFT JOIN symbol_returns s2 ON sp.symbol2 = s2.symbol AND s1.date = s2.date
-  WHERE s1.return IS NOT NULL AND s2.return IS NOT NULL
+  GROUP BY date
 )
 
 SELECT 
   date,
-  symbol_pair,
-  symbol1,
-  symbol2,
   
-  -- Rolling Correlations (4 horizons)
-  CORR(return1, return2) OVER (
-    PARTITION BY symbol_pair 
-    ORDER BY date 
-    ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
-  ) AS corr_30d,
+  -- ZL-ZS Correlations (soybean complex)
+  CORR(zl_return, zs_return) OVER w60 AS corr_zl_zs_60d,
   
-  CORR(return1, return2) OVER (
-    PARTITION BY symbol_pair 
-    ORDER BY date 
-    ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
-  ) AS corr_60d,
+  -- ZL-ZM Correlations (soybean complex)
+  CORR(zl_return, zm_return) OVER w60 AS corr_zl_zm_60d,
   
-  CORR(return1, return2) OVER (
-    PARTITION BY symbol_pair 
-    ORDER BY date 
-    ROWS BETWEEN 89 PRECEDING AND CURRENT ROW
-  ) AS corr_90d,
+  -- ZL-CL Correlations (energy)
+  CORR(zl_return, cl_return) OVER w60 AS corr_zl_cl_60d,
   
-  CORR(return1, return2) OVER (
-    PARTITION BY symbol_pair 
-    ORDER BY date 
-    ROWS BETWEEN 251 PRECEDING AND CURRENT ROW
-  ) AS corr_252d,
+  -- ZL-HO Correlations (biodiesel arb)
+  CORR(zl_return, ho_return) OVER w60 AS corr_zl_ho_60d,
   
-  -- Correlation Regime Classification
-  CASE
-    WHEN CORR(return1, return2) OVER (
-      PARTITION BY symbol_pair 
-      ORDER BY date 
-      ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
-    ) > 0.7 THEN 'high'
-    WHEN CORR(return1, return2) OVER (
-      PARTITION BY symbol_pair 
-      ORDER BY date 
-      ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
-    ) > 0.3 THEN 'medium'
-    WHEN CORR(return1, return2) OVER (
-      PARTITION BY symbol_pair 
-      ORDER BY date 
-      ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
-    ) > -0.3 THEN 'low'
-    ELSE 'negative'
-  END AS corr_regime_60d
+  -- ZL-FCPO Correlations (palm oil substitute)
+  CORR(zl_return, fcpo_return) OVER w60 AS corr_zl_fcpo_60d,
   
-FROM paired_returns
-WHERE date IS NOT NULL
-ORDER BY date, symbol_pair
+  -- ZL-BRL Correlations (Brazil FX)
+  CORR(zl_return, brl_return) OVER w60 AS corr_zl_brl_60d,
+  
+  -- ZL-DXY Correlations (dollar index)
+  CORR(zl_return, dxy_return) OVER w60 AS corr_zl_dxy_60d
 
+FROM returns_pivot
+WHERE zl_return IS NOT NULL
+WINDOW w60 AS (ORDER BY date ROWS BETWEEN 59 PRECEDING AND CURRENT ROW)
+ORDER BY date
