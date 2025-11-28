@@ -33,8 +33,14 @@ done
 
 echo ""
 echo "📋 Summary:"
-KEYCHAIN_COUNT=$(security dump-keychain 2>/dev/null | grep -c "DATABENTO_API_KEY\|SCRAPECREATORS_API_KEY\|FRED_API_KEY\|GLIDE_API_KEY" || echo "0")
-SECRET_COUNT=$(gcloud secrets list --project="$PROJECT_ID" --filter="name:databento-api-key OR name:scrapecreators-api-key OR name:fred-api-key OR name:glide-api-key" --format="value(name)" 2>/dev/null | wc -l | tr -d ' ')
+KEYCHAIN_COUNT=0
+for key in "${KEYS[@]}"; do
+    if security find-generic-password -s "$key" &> /dev/null; then
+        KEYCHAIN_COUNT=$((KEYCHAIN_COUNT + 1))
+    fi
+done
+
+SECRET_COUNT=$(gcloud secrets list --project="$PROJECT_ID" --filter="name:databento-api-key OR name:scrapecreators-api-key OR name:fred-api-key OR name:glide-api-key" --format="value(name)" 2>/dev/null | wc -l | tr -d ' ' || echo "0")
 
 echo "  Keychain keys: $KEYCHAIN_COUNT"
 echo "  Secret Manager secrets: $SECRET_COUNT"
