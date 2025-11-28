@@ -1,72 +1,82 @@
-# Quick Start: Push to GitHub
+# CBI-V15 Quick Start Guide
 
-**Date**: November 28, 2025
-
----
-
-## Step 1: Create Repository on GitHub
-
-**Go to**: https://github.com/new
-
-**Fill in**:
-- Repository name: `CBI-V15`
-- Description: `Institutional-grade ZL (soybean oil futures) price forecasting using Dataform ETL, Mac M4 training, and BigQuery storage`
-- Visibility: **Private** (recommended)
-- **IMPORTANT**: Do NOT check "Add a README file", "Add .gitignore", or "Choose a license" (we already have these)
-
-**Click**: "Create repository"
+**Get started in 5 minutes**
 
 ---
 
-## Step 2: Push Local Code
+## 🚀 Quick Start (5 Steps)
 
-After creating the repo, run:
+### Step 1: Connect Dataform to GitHub
+1. Go to: [Google Cloud Console → Dataform](https://console.cloud.google.com/dataform)
+2. Click **"Connect Repository"**
+3. Enter:
+   - Repository: `zincdigital/CBI-V15`
+   - Branch: `main`
+   - **Root Directory: `dataform/`** ⚠️ Critical
+4. Click **"Connect"**
 
+### Step 2: Store API Keys
 ```bash
-cd /Users/zincdigital/CBI-V15
-./push_to_github.sh
+./scripts/setup/store_api_keys.sh
 ```
+Enter your API keys when prompted (Databento, ScrapeCreators, etc.)
 
-**OR manually**:
-
+### Step 3: Test Connections
 ```bash
-cd /Users/zincdigital/CBI-V15
-git remote add origin https://github.com/zincdigitalofmiami/CBI-V15.git
-git branch -M main
-git push -u origin main
+python3 scripts/ingestion/test_connections.py
 ```
+Should show: ✅ BigQuery connected
 
----
-
-## Step 3: Verify
-
-Go to: https://github.com/zincdigitalofmiami/CBI-V15
-
-You should see:
-- ✅ README.md
-- ✅ All 25+ files
-- ✅ Folder structure
-
----
-
-## Troubleshooting
-
-### Authentication Error?
+### Step 4: First Data Ingestion
 ```bash
-# Use SSH instead
-git remote set-url origin git@github.com:zincdigitalofmiami/CBI-V15.git
-git push -u origin main
+python3 src/ingestion/databento/collect_daily.py
 ```
+This collects price data and loads it to BigQuery.
 
-### Remote Already Exists?
+### Step 5: Run Dataform
 ```bash
-# Remove and re-add
-git remote remove origin
-git remote add origin https://github.com/zincdigitalofmiami/CBI-V15.git
-git push -u origin main
+cd dataform
+npx dataform compile  # Verify compilation
+npx dataform run --tags staging  # Build staging tables
+npx dataform run --tags features  # Build feature tables
 ```
 
 ---
 
-**Status**: Local repo ready, waiting for GitHub repo creation
+## ✅ That's It!
 
+You now have:
+- ✅ Data flowing into BigQuery
+- ✅ Staging tables built
+- ✅ Feature tables built
+- ✅ Ready for model training
+
+---
+
+## 📚 Next Steps
+
+- **Export Training Data**: `python3 scripts/export/export_training_data.py`
+- **Train Models**: `python3 src/training/baselines/lightgbm_zl.py`
+- **Set Up Automation**: See `DEPLOYMENT_GUIDE.md`
+
+---
+
+## 🆘 Troubleshooting
+
+**Dataform won't connect?**
+- Verify Root Directory is `dataform/` (not `/`)
+- Check GitHub repository access
+- Refresh the Dataform page
+
+**API keys not found?**
+- Run `./scripts/setup/store_api_keys.sh` again
+- Check Keychain: `security find-generic-password -s DATABENTO_API_KEY`
+
+**Ingestion fails?**
+- Verify API keys are stored
+- Check BigQuery permissions
+- Review error logs
+
+---
+
+**Need Help?** See `DEPLOYMENT_GUIDE.md` for detailed instructions.
