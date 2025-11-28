@@ -1,21 +1,33 @@
 {
-  "name": "cbi-v15",
+  "name": "cbi-v15-dataform",
   "version": "1.0.0",
-  "description": "CBI-V15: Soybean Oil Forecasting Platform",
-  "private": true,
+  "description": "Dataform ETL for CBI-V15",
   "scripts": {
-    "dataform:compile": "cd dataform && dataform compile",
-    "dataform:test": "cd dataform && dataform test",
-    "dataform:run": "cd dataform && dataform run",
-    "dataform:run:staging": "cd dataform && dataform run --tags staging",
-    "dataform:run:features": "cd dataform && dataform run --tags features",
-    "dataform:run:training": "cd dataform && dataform run --tags training"
+    "compile": "dataform compile",
+    "test": "dataform test",
+    "run": "dataform run"
+  },
+  "dependencies": {
+    "@dataform/core": "^3.0.38"
   },
   "devDependencies": {
-    "@dataform/cli": "^2.30.0"
+    "@dataform/cli": "^3.0.38"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zincdigitalofmiami/CBI-V15.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/zincdigitalofmiami/CBI-V15/issues"
+  },
+  "homepage": "https://github.com/zincdigitalofmiami/CBI-V15#readme"
 }
-
