@@ -16,12 +16,33 @@ if ! command -v gcloud &> /dev/null; then
     exit 1
 fi
 
+# App Development folder ID (where cbi-v14 is located)
+APP_DEV_FOLDER_ID="568609080192"
+
 # Check if project exists
 if gcloud projects describe $PROJECT_ID &> /dev/null; then
     echo "✅ Project $PROJECT_ID already exists"
+    
+    # Check if it's in the right folder
+    CURRENT_PARENT=$(gcloud projects describe $PROJECT_ID --format="get(parent)" 2>/dev/null || echo "")
+    if [[ "$CURRENT_PARENT" == *"$APP_DEV_FOLDER_ID"* ]]; then
+        echo "✅ Project is already in App Development folder"
+    elif [ -n "$CURRENT_PARENT" ]; then
+        echo "⚠️  Project exists but is in different folder: $CURRENT_PARENT"
+        echo "   Moving to App Development folder..."
+        gcloud projects move $PROJECT_ID --folder=$APP_DEV_FOLDER_ID
+        echo "✅ Project moved to App Development folder"
+    else
+        echo "⚠️  Project exists but has no folder"
+        echo "   Moving to App Development folder..."
+        gcloud projects move $PROJECT_ID --folder=$APP_DEV_FOLDER_ID
+        echo "✅ Project moved to App Development folder"
+    fi
 else
-    echo "📝 Creating project $PROJECT_ID..."
-    gcloud projects create $PROJECT_ID --name="CBI-V15 Soybean Oil Forecasting"
+    echo "📝 Creating project $PROJECT_ID under App Development folder..."
+    gcloud projects create $PROJECT_ID \
+        --name="CBI-V15 Soybean Oil Forecasting" \
+        --folder=$APP_DEV_FOLDER_ID
     
     # Set as current project
     gcloud config set project $PROJECT_ID
