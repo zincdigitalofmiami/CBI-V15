@@ -26,6 +26,12 @@ scrapecreators:
 glide:
   api_key_env: GLIDE_API_KEY
   rate_limit: 100
-  schedule: "0 */6 * * *"  # Every 6 hours
-  endpoints: [restaurants, casinos, shifts, events]
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  endpoints: [restaurants, casinos, shifts]
+  
+vegas_events:
+  api_key_env: GLIDE_API_KEY
+  rate_limit: 100
+  schedule: "0 3 * * *"  # Daily at 3 AM UTC (after Glide)
+  endpoints: [events]  # Vegas events only
 
