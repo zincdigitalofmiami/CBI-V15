@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `cbi-v15.raw.usda_reports` (
   metric STRING,
   value FLOAT64
 )
-PARTITION BY DATE(report_date)
+PARTITION BY report_date
 CLUSTER BY report_type;
 
 -- CFTC COT Data
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS `cbi-v15.staging.usda_reports_clean` (
   metric STRING,
   value FLOAT64
 )
-PARTITION BY DATE(report_date)
+PARTITION BY report_date
 CLUSTER BY report_type;
 
 -- CFTC Positions
