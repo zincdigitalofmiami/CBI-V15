@@ -102,18 +102,19 @@ def calculate_sentiment_finbert(text: str, bucket_type: str) -> dict:
             }
     
     elif bucket_type == 'china_demand':
-        # Positive China import news → BEARISH_ZL (more supply = lower price)
-        # Negative China import news → BULLISH_ZL (less supply = higher price)
-        # NOTE: China imports have NEGATIVE correlation (-0.813)
+        # ✅ CORRECTED: US is net exporter, China is primary buyer
+        # Positive China buying news → BULLISH_ZL (drains US stocks = higher price)
+        # Negative China cancellation news → BEARISH_ZL (stocks build up = lower price)
+        # Economic Reality: More China imports = drain US ending stocks = HIGHER prices
         if positive_score > 0.5:
             return {
-                'sentiment': 'BEARISH_ZL',  # INVERTED
+                'sentiment': 'BULLISH_ZL',  # ✅ CORRECTED
                 'confidence': positive_score,
                 'raw_score': positive_score
             }
         elif negative_score > 0.5:
             return {
-                'sentiment': 'BULLISH_ZL',  # INVERTED
+                'sentiment': 'BEARISH_ZL',  # ✅ CORRECTED
                 'confidence': negative_score,
                 'raw_score': negative_score
             }
@@ -125,25 +126,48 @@ def calculate_sentiment_finbert(text: str, bucket_type: str) -> dict:
             }
     
     elif bucket_type == 'tariffs_trade_policy':
-        # Positive tariff news (tariffs imposed) → BULLISH_ZL (trade war = volatility)
-        # Negative tariff news (tariffs removed) → BEARISH_ZL (trade peace = stability)
-        if positive_score > 0.5:
-            return {
-                'sentiment': 'BULLISH_ZL',
-                'confidence': positive_score,
-                'raw_score': positive_score
-            }
-        elif negative_score > 0.5:
-            return {
-                'sentiment': 'BEARISH_ZL',
-                'confidence': negative_score,
-                'raw_score': negative_score
-            }
+        # ✅ CORRECTED: Tariffs are context-dependent (not always bullish)
+        # Economic Reality: 2018 Trade War caused ZS to crash from $10.50 to $8.00
+        # Nuance: Tariffs on US exports (retaliation) = BEARISH (demand destruction)
+        #         Tariffs on Chinese UCO imports = BULLISH (protects US biofuel demand)
+        text_lower = text.lower()
+        
+        # Tariffs on Chinese UCO/Biodiesel imports = BULLISH (protects US demand)
+        if any(kw in text_lower for kw in ['uco', 'used cooking oil', 'biodiesel import', 'chinese import']):
+            if positive_score > 0.5:
+                return {
+                    'sentiment': 'BULLISH_ZL',  # ✅ CORRECTED
+                    'confidence': positive_score,
+                    'raw_score': positive_score
+                }
+            else:
+                return {
+                    'sentiment': 'BEARISH_ZL',
+                    'confidence': negative_score,
+                    'raw_score': negative_score
+                }
+        
+        # Tariffs on US exports (retaliation) = BEARISH (demand destruction)
+        elif any(kw in text_lower for kw in ['us export', 'retaliation', 'trade war', 'china tariff']):
+            if positive_score > 0.5:
+                return {
+                    'sentiment': 'BEARISH_ZL',  # ✅ CORRECTED (demand destruction)
+                    'confidence': positive_score,
+                    'raw_score': positive_score
+                }
+            else:
+                return {
+                    'sentiment': 'BULLISH_ZL',  # Removing tariffs = bullish
+                    'confidence': negative_score,
+                    'raw_score': negative_score
+                }
+        
+        # Default: BEARISH for soy complex (conservative)
         else:
             return {
-                'sentiment': 'NEUTRAL',
-                'confidence': neutral_score,
-                'raw_score': neutral_score
+                'sentiment': 'BEARISH_ZL',  # ✅ DEFAULT TO BEARISH
+                'confidence': max(positive_score, negative_score),
+                'raw_score': max(positive_score, negative_score)
             }
     
     # Default: use FinBERT output directly
@@ -537,7 +561,7 @@ LEFT JOIN `features.trump_news_features_daily` t ON r.date = t.date
 
 ## 📊 Part 4: Sentiment Features for ML
 
-### For Baselines (LightGBM): 12 Features ✅
+### For Baselines (LightGBM): 14 Features ✅
 
 1. `news_supply_tact_net_7d` - Supply-side tactical news
 2. `news_biofuel_tact_net_7d` - Biofuel tactical news
@@ -545,12 +569,14 @@ LEFT JOIN `features.trump_news_features_daily` t ON r.date = t.date
 4. `news_macro_risk_net_7d` - Macro risk-on/off
 5. `news_logistics_tact_net_7d` - Logistics tactical news
 6. `news_zl_pulse_7d` - Overall pulse (encoded as numeric)
-7. `policy_trump_trade_china_net_7d` - Trump trade China (7d)
-8. `policy_trump_trade_china_net_30d` - Trump trade China (30d)
-9. `policy_trump_biofuels_net_7d` - Trump biofuels (7d)
-10. `policy_trump_biofuels_net_30d` - Trump biofuels (30d)
-11. `policy_trump_zl_net_7d` - Trump ZL net (7d)
-12. `policy_trump_zl_net_30d` - Trump ZL net (30d)
+7. `news_sentiment_change_1d` - ✅ NEW: Sentiment velocity (change from previous day)
+8. `news_sentiment_velocity_7d` - ✅ NEW: Rate of change over 7 days
+9. `policy_trump_trade_china_net_7d` - Trump trade China (7d)
+10. `policy_trump_trade_china_net_30d` - Trump trade China (30d)
+11. `policy_trump_biofuels_net_7d` - Trump biofuels (7d)
+12. `policy_trump_biofuels_net_30d` - Trump biofuels (30d)
+13. `policy_trump_zl_net_7d` - Trump ZL net (7d)
+14. `policy_trump_zl_net_30d` - Trump ZL net (30d)
 
 ---
 
@@ -572,10 +598,13 @@ LEFT JOIN `features.trump_news_features_daily` t ON r.date = t.date
 
 - ✅ **Segmentation at Ingestion**: Prevents drift
 - ✅ **FinBERT**: Industry-standard financial sentiment model
-- ✅ **ZL-Specific Mapping**: Accounts for inverse correlations (China imports)
+- ✅ **ZL-Specific Mapping**: ✅ **CORRECTED** - China buying = BULLISH (not BEARISH)
+- ✅ **Tariff Logic**: ✅ **CORRECTED** - Context-dependent (not always bullish)
 - ✅ **Impact Weighting**: HIGH=3, MEDIUM=2, LOW=1
 - ✅ **Volume Normalization**: Prevents volume spikes from dominating
 - ✅ **Rolling Windows**: 7d (tactical), 30d (structural)
+- ✅ **Sentiment Velocity**: ✅ **NEW** - Detects novelty (change from previous day)
+- ✅ **Zero-Shot Classification**: ✅ **RECOMMENDED** - Use BART-large-mnli for bucketing
 
 ---
 
