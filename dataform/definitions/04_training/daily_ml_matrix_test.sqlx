@@ -1,0 +1,14 @@
+-- Test Set View
+-- Filters daily_ml_matrix to test date range
+
+config {
+  type: "view",
+  schema: "training",
+  name: "daily_ml_matrix_test",
+  description: "Test set: 2022-01-01 onwards"
+}
+
+SELECT *
+FROM ${ref("daily_ml_matrix")}
+WHERE date >= DATE '2022-01-01'
+

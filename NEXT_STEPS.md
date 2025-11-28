@@ -31,7 +31,7 @@
 
 ---
 
-## 🎯 Immediate Next Steps
+## 🎯 Immediate Next Steps (UPDATED STRATEGY)
 
 ### Step 1: Setup BigQuery Skeleton Structure
 
@@ -50,9 +50,58 @@ cd /Users/zincdigital/CBI-V15
 
 ---
 
-### Step 2: Implement USDA Ingestion (REQUIRED)
+### Step 2: Build `daily_ml_matrix` (IMMEDIATE)
 
-**Priority**: ⚠️ **HIGH** - Required before baselines
+**Priority**: ✅ **CRITICAL** - Start baselines NOW
+
+**What it does**:
+- Joins all 276 locked features
+- Generates targets (price levels) for all horizons
+- Creates train/val/test split views
+
+**Files Created**:
+- ✅ `dataform/definitions/03_features/daily_ml_matrix.sqlx` - Master join table
+- ✅ `dataform/definitions/04_training/train_val_test_splits.sqlx` - Split reference
+- ✅ `dataform/definitions/04_training/daily_ml_matrix_train.sqlx` - Train view
+- ✅ `dataform/definitions/04_training/daily_ml_matrix_val.sqlx` - Val view
+- ✅ `dataform/definitions/04_training/daily_ml_matrix_test.sqlx` - Test view
+
+**Status**: ✅ **READY TO RUN**
+
+---
+
+### Step 3: Export Training Data
+
+**Priority**: ✅ **CRITICAL** - After `daily_ml_matrix` built
+
+**Script**: `scripts/export/export_training_data.py`
+
+**What it does**:
+- Exports train/val/test splits as Parquet files
+- Saves to external drive
+
+**Status**: ✅ **READY TO RUN**
+
+---
+
+### Step 4: Train LightGBM Baselines
+
+**Priority**: ✅ **CRITICAL** - After data exported
+
+**Script**: `src/training/baselines/lightgbm_zl.py`
+
+**What it does**:
+- Trains LightGBM models per horizon (1w, 1m, 3m, 6m)
+- Evaluates on train/val/test splits
+- Saves models and predictions
+
+**Status**: ✅ **READY TO RUN**
+
+---
+
+### Step 5: Implement USDA/CFTC/EIA Ingestion (PARALLEL)
+
+**Priority**: ⚠️ **MEDIUM** - Can run in parallel with baselines
 
 **Tasks**:
 1. Create `src/ingestion/usda/collect_usda_comprehensive.py`
@@ -155,15 +204,20 @@ cd /Users/zincdigital/CBI-V15
 
 ## 📋 Prerequisites Checklist
 
-Before baseline training:
-
+### Baseline v15.0 (START NOW):
 - [ ] ✅ BigQuery skeleton structure created
-- [ ] ⚠️ USDA ingestion implemented
-- [ ] ⚠️ CFTC ingestion implemented
-- [ ] ⚠️ EIA ingestion implemented
-- [ ] ⚠️ Feature tables built in Dataform
-- [ ] ⚠️ Training data exported
-- [ ] ⚠️ Baseline training scripts ready
+- [ ] ✅ `daily_ml_matrix` built (with current 276 features)
+- [ ] ✅ Train/val/test splits created
+- [ ] ✅ Training data exported
+- [ ] ✅ Baseline training scripts ready
+- [ ] ✅ LightGBM baselines trained
+
+### Baseline v15.1 (AFTER USDA/CFTC/EIA):
+- [ ] ⚠️ USDA ingestion implemented (parallel)
+- [ ] ⚠️ CFTC ingestion implemented (parallel)
+- [ ] ⚠️ EIA ingestion implemented (parallel)
+- [ ] ⚠️ Rebuild `daily_ml_matrix` with full features
+- [ ] ⚠️ Re-run baselines and compare performance
 
 ---
 
@@ -174,9 +228,20 @@ Before baseline training:
 - ✅ Calculations: 100% robust
 - ✅ BigQuery pre-compute: 80% (excellent)
 - ✅ Baseline plan: 100% solid
-- ⚠️ Data ingestion: 60% (USDA/CFTC/EIA pending)
+- ✅ `daily_ml_matrix`: Ready to build
+- ⚠️ Data ingestion: 60% (USDA/CFTC/EIA can be added later)
 
-**Next Action**: Run `./scripts/setup/setup_bigquery_skeleton.sh`
+**Strategy**: ✅ **PROCEED WITH BASELINES NOW**
+- Build `daily_ml_matrix` with current 276 features
+- Train LightGBM baselines (v15.0)
+- Add USDA/CFTC/EIA in parallel
+- Re-run baselines (v15.1) and compare
+
+**Next Action**: 
+1. Run `./scripts/setup/setup_bigquery_skeleton.sh`
+2. Build `daily_ml_matrix` in Dataform
+3. Export training data
+4. Train LightGBM baselines
 
 ---
 
