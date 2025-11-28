@@ -36,30 +36,37 @@ fi
 # Set as current project
 gcloud config set project $PROJECT_ID
 
-# Enable required APIs
+# Enable required APIs (quant finance data pipeline)
 echo "🔧 Enabling required APIs..."
 gcloud services enable \
     bigquery.googleapis.com \
     bigqueryconnection.googleapis.com \
+    bigquerymigration.googleapis.com \
+    dataform.googleapis.com \
     secretmanager.googleapis.com \
     cloudscheduler.googleapis.com \
     cloudfunctions.googleapis.com \
     run.googleapis.com \
     storage-api.googleapis.com \
-    storage-component.googleapis.com
+    storage-component.googleapis.com \
+    logging.googleapis.com \
+    monitoring.googleapis.com \
+    pubsub.googleapis.com
 
 # Create BigQuery datasets
 echo "📊 Creating BigQuery datasets..."
 
+# Quant finance inspired datasets (following GS Quant/JPM patterns)
 datasets=(
-    "raw:Raw source data declarations"
-    "staging:Cleaned normalized data"
-    "features:Engineered features"
-    "training:Training-ready tables with targets"
-    "forecasts:Model predictions"
-    "api:Public API views for dashboard"
-    "reference:Reference tables and mappings"
-    "ops:Operations monitoring and logs"
+    "raw:Raw source data (market, economic, weather, news)"
+    "staging:Cleaned normalized data (point-in-time discipline)"
+    "features:Engineered features (Big 8 drivers, technical indicators)"
+    "training:Training-ready tables (with targets and regime weights)"
+    "forecasts:Model predictions (multi-horizon forecasts)"
+    "signals:Trading signals and derived indicators"
+    "reference:Reference data (calendars, symbols, mappings)"
+    "api:Public API views (dashboard-ready)"
+    "ops:Operations monitoring (data quality, model performance)"
 )
 
 for dataset_info in "${datasets[@]}"; do

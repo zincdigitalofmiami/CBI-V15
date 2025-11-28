@@ -2,10 +2,16 @@
 # CBI-V15 Project: cbi-v15
 # Location: us-central1 ONLY
 
+# Quant Finance Inspired Dataset Architecture
+# Following GS Quant, JPM, and industry best practices
+# CBI-V15 Project: cbi-v15
+# Location: us-central1 ONLY
+
 datasets:
   raw:
     location: us-central1
-    description: "Raw source data declarations"
+    description: "Raw source data (market, economic, weather, news)"
+    quant_finance_pattern: "Source of truth - never modify"
     tables:
       - name: databento_daily_ohlcv
         source: databento
@@ -15,37 +21,51 @@ datasets:
       
   staging:
     location: us-central1
-    description: "Cleaned, normalized data"
+    description: "Cleaned normalized data (point-in-time discipline)"
+    quant_finance_pattern: "PIT-compliant, forward-filled with limits"
     partition_by: date
     cluster_by: [symbol]
     
   features:
     location: us-central1
-    description: "Engineered features"
+    description: "Engineered features (Big 8 drivers, technical indicators)"
+    quant_finance_pattern: "Feature store - versioned, reproducible"
     partition_by: date
     cluster_by: [symbol]
     
   training:
     location: us-central1
-    description: "Training-ready tables with targets"
+    description: "Training-ready tables (with targets and regime weights)"
+    quant_finance_pattern: "Walk-forward validation ready"
     partition_by: date
     cluster_by: [symbol, horizon]
     
   forecasts:
     location: us-central1
-    description: "Model predictions"
+    description: "Model predictions (multi-horizon forecasts)"
+    quant_finance_pattern: "Prediction store - versioned models"
     partition_by: date
     cluster_by: [symbol, horizon]
     
-  api:
+  signals:
     location: us-central1
-    description: "Public API views for dashboard"
+    description: "Trading signals and derived indicators"
+    quant_finance_pattern: "Signal generation layer"
+    partition_by: date
+    cluster_by: [symbol]
     
   reference:
     location: us-central1
-    description: "Reference tables and mappings"
+    description: "Reference data (calendars, symbols, mappings)"
+    quant_finance_pattern: "Dimension tables - slow-changing"
+    
+  api:
+    location: us-central1
+    description: "Public API views (dashboard-ready)"
+    quant_finance_pattern: "Read-only views for consumption"
     
   ops:
     location: us-central1
-    description: "Operations monitoring and logs"
+    description: "Operations monitoring (data quality, model performance)"
+    quant_finance_pattern: "Observability layer"
 
