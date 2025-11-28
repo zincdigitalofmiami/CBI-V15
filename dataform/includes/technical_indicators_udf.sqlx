@@ -1,0 +1,125 @@
+-- Technical Indicators UDFs for BigQuery
+-- Optimized for 15-year initial load
+-- Vectorized, parallelized by BigQuery
+
+-- RSI (Relative Strength Index)
+CREATE TEMP FUNCTION calculate_rsi(prices ARRAY<FLOAT64>, period INT64)
+RETURNS FLOAT64 AS (
+  -- RSI calculation using array operations
+  CASE
+    WHEN ARRAY_LENGTH(prices) < period + 1 THEN NULL
+    ELSE
+      WITH changes AS (
+        SELECT 
+          price - LAG(price) OVER (ORDER BY idx) AS change
+        FROM UNNEST(prices) AS price WITH OFFSET AS idx
+      ),
+      gains AS (
+        SELECT AVG(IF(change > 0, change, 0)) AS avg_gain
+        FROM changes
+        WHERE change IS NOT NULL
+        LIMIT period
+      ),
+      losses AS (
+        SELECT AVG(IF(change < 0, ABS(change), 0)) AS avg_loss
+        FROM changes
+        WHERE change IS NOT NULL
+        LIMIT period
+      )
+      SELECT 
+        CASE 
+          WHEN avg_loss = 0 THEN 100
+          ELSE 100 - (100 / (1 + (avg_gain / avg_loss)))
+        END
+      FROM gains, losses
+  END
+);
+
+-- Simple Moving Average
+CREATE TEMP FUNCTION calculate_sma(prices ARRAY<FLOAT64>, period INT64)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN ARRAY_LENGTH(prices) < period THEN NULL
+    ELSE (
+      SELECT AVG(price)
+      FROM UNNEST(prices) AS price
+      LIMIT period
+    )
+  END
+);
+
+-- Exponential Moving Average
+CREATE TEMP FUNCTION calculate_ema(prices ARRAY<FLOAT64>, period INT64)
+RETURNS FLOAT64 AS (
+  -- EMA calculation
+  CASE
+    WHEN ARRAY_LENGTH(prices) < period THEN NULL
+    ELSE
+      -- Simplified EMA (can be enhanced)
+      calculate_sma(prices, period)
+  END
+);
+
+-- MACD
+CREATE TEMP FUNCTION calculate_macd(
+  prices ARRAY<FLOAT64>,
+  fast_period INT64,
+  slow_period INT64,
+  signal_period INT64
+)
+RETURNS STRUCT<macd FLOAT64, signal FLOAT64, histogram FLOAT64> AS (
+  STRUCT(
+    calculate_ema(prices, fast_period) - calculate_ema(prices, slow_period) AS macd,
+    NULL AS signal,  -- Signal line requires recursive calculation
+    NULL AS histogram  -- Histogram = MACD - Signal
+  )
+);
+
+-- Bollinger Bands
+CREATE TEMP FUNCTION calculate_bollinger(
+  prices ARRAY<FLOAT64>,
+  period INT64,
+  std_dev FLOAT64
+)
+RETURNS STRUCT<upper FLOAT64, middle FLOAT64, lower FLOAT64> AS (
+  WITH stats AS (
+    SELECT 
+      AVG(price) AS mean,
+      STDDEV(price) AS std
+    FROM UNNEST(prices) AS price
+    LIMIT period
+  )
+  SELECT STRUCT(
+    mean + (std * std_dev) AS upper,
+    mean AS middle,
+    mean - (std * std_dev) AS lower
+  )
+  FROM stats
+);
+
+-- ATR (Average True Range)
+CREATE TEMP FUNCTION calculate_atr(
+  highs ARRAY<FLOAT64>,
+  lows ARRAY<FLOAT64>,
+  closes ARRAY<FLOAT64>,
+  period INT64
+)
+RETURNS FLOAT64 AS (
+  WITH true_ranges AS (
+    SELECT 
+      GREATEST(
+        high - low,
+        ABS(high - LAG(close) OVER (ORDER BY idx)),
+        ABS(low - LAG(close) OVER (ORDER BY idx))
+      ) AS tr
+    FROM 
+      UNNEST(highs) AS high WITH OFFSET AS idx
+      JOIN UNNEST(lows) AS low WITH OFFSET AS idx USING (idx)
+      JOIN UNNEST(closes) AS close WITH OFFSET AS idx USING (idx)
+  )
+  SELECT AVG(tr)
+  FROM true_ranges
+  WHERE tr IS NOT NULL
+  LIMIT period
+);
+
