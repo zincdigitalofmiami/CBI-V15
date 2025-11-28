@@ -9,7 +9,7 @@
 
 ### 1. Ensure Repository Exists on GitHub
 
-The repository `zincdigital/CBI-V15` needs to exist on GitHub.
+The repository `zincdigitalofmiami/CBI-V15` needs to exist on GitHub.
 
 **Option A: Create via GitHub Web UI**
 1. Go to https://github.com/new
@@ -21,7 +21,7 @@ The repository `zincdigital/CBI-V15` needs to exist on GitHub.
 
 **Option B: Create via GitHub CLI** (if you have `gh` installed)
 ```bash
-gh repo create zincdigital/CBI-V15 --public --source=. --remote=origin --push
+gh repo create zincdigitalofmiami/CBI-V15 --public --source=. --remote=origin --push
 ```
 
 ### 2. Push Local Repository to GitHub
@@ -44,7 +44,7 @@ In Google Cloud Dataform UI:
 
 1. Go to Dataform → Your Repository
 2. Click "Connect Repository" or "Link GitHub Repository"
-3. Select: `zincdigital/CBI-V15`
+3. Select: `zincdigitalofmiami/CBI-V15`
 4. Branch: `main`
 5. Root Directory: `dataform/` (if Dataform is in a subdirectory)
 6. Click "Connect"
@@ -77,7 +77,7 @@ git push -u origin main
 
 If you need to use SSH instead:
 ```bash
-git remote set-url origin git@github.com:zincdigital/CBI-V15.git
+git remote set-url origin git@github.com:zincdigitalofmiami/CBI-V15.git
 git push -u origin main
 ```
 

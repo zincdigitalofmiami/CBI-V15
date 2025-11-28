@@ -4,15 +4,15 @@
 
 set -e
 
-REPO_URL="https://github.com/zincdigital/CBI-V15.git"
-SSH_URL="git@github.com:zincdigital/CBI-V15.git"
+REPO_URL="https://github.com/zincdigitalofmiami/CBI-V15.git"
+SSH_URL="git@github.com:zincdigitalofmiami/CBI-V15.git"
 
 echo "🚀 Pushing CBI-V15 to GitHub..."
 echo ""
 
 # Check if repository exists
 echo "Checking if repository exists..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://github.com/zincdigital/CBI-V15 || echo "000")
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://github.com/zincdigitalofmiami/CBI-V15 || echo "000")
 
 if [ "$HTTP_CODE" = "404" ]; then
     echo "❌ Repository does not exist on GitHub yet!"
@@ -53,7 +53,7 @@ echo ""
 echo "Next steps:"
 echo "1. Go to Google Cloud Console → Dataform"
 echo "2. Click 'Connect Repository'"
-echo "3. Select: zincdigital/CBI-V15"
+echo "3. Select: zincdigitalofmiami/CBI-V15"
 echo "4. Branch: main"
 echo "5. Root Directory: dataform/"
 echo "6. Click 'Connect'"

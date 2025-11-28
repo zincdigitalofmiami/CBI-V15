@@ -33,7 +33,7 @@ This script will:
 7. Click **"Connect to GitHub"**
 8. Select **SSH** connection method
 9. Enter:
-   - **SSH URL**: `git@github.com:zincdigital/CBI-V15.git`
+   - **SSH URL**: `git@github.com:zincdigitalofmiami/CBI-V15.git`
    - **Secret**: `dataform-github-ssh-key` (from Secret Manager)
    - **Branch**: `main`
    - **Root Directory**: `dataform/` ⚠️ **CRITICAL**
@@ -77,7 +77,7 @@ gcloud secrets add-iam-policy-binding dataform-github-token \
 4. Click **"Connect to GitHub"**
 5. Select **HTTPS** connection method
 6. Enter:
-   - **HTTPS URL**: `https://github.com/zincdigital/CBI-V15.git`
+   - **HTTPS URL**: `https://github.com/zincdigitalofmiami/CBI-V15.git`
    - **Secret**: `dataform-github-token` (from Secret Manager)
    - **Branch**: `main`
    - **Root Directory**: `dataform/` ⚠️ **CRITICAL**
@@ -120,7 +120,7 @@ After connecting:
 ## Troubleshooting
 
 ### "Repository not found"
-- Verify repository name: `zincdigital/CBI-V15`
+- Verify repository name: `zincdigitalofmiami/CBI-V15`
 - Check GitHub access permissions
 - Verify SSH key is added to GitHub (for SSH method)
 

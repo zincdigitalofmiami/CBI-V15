@@ -35,7 +35,7 @@ python3 scripts/setup/verify_bigquery_setup.py
 ### 5. Connect Dataform to GitHub
 1. Go to Google Cloud Console → Dataform
 2. Click "Connect Repository"
-3. Repository: `zincdigital/CBI-V15`
+3. Repository: `zincdigitalofmiami/CBI-V15`
 4. Branch: `main`
 5. **Root Directory: `dataform/`** ⚠️ Critical
 6. Click "Connect"
