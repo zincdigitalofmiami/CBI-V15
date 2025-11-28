@@ -1,0 +1,27 @@
+# Data Source Configuration
+# API endpoints, rate limits, schedules
+
+databento:
+  api_key_env: DATABENTO_API_KEY
+  rate_limit: 1000  # requests per minute
+  schedule: "0 0 * * *"  # Daily at midnight UTC
+  symbols: [ZL, ZS, ZM, CL, HO, FCPO]
+  
+fred:
+  api_key_env: FRED_API_KEY
+  rate_limit: 120
+  schedule: "0 1 * * *"  # Daily at 1 AM UTC
+  series_count: 60
+  
+scrapecreators:
+  api_key_env: SCRAPECREATORS_API_KEY
+  rate_limit: 60
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  buckets: [biofuel_policy, china_demand, tariffs_trade_policy]
+  
+glide:
+  api_key_env: GLIDE_API_KEY
+  rate_limit: 100
+  schedule: "0 */6 * * *"  # Every 6 hours
+  endpoints: [restaurants, casinos, shifts, events]
+

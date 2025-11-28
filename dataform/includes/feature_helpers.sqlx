@@ -1,0 +1,37 @@
+-- Shared SQL functions for feature engineering
+-- Used across all feature definitions
+
+-- Safe division (avoid divide by zero)
+CREATE TEMP FUNCTION safe_divide(numerator FLOAT64, denominator FLOAT64)
+RETURNS FLOAT64 AS (
+  SAFE_DIVIDE(numerator, NULLIF(denominator, 0))
+);
+
+-- Percentile bucket (for regime classification)
+CREATE TEMP FUNCTION percentile_bucket(value FLOAT64, q25 FLOAT64, q75 FLOAT64)
+RETURNS STRING AS (
+  CASE
+    WHEN value < q25 THEN 'low'
+    WHEN value > q75 THEN 'high'
+    ELSE 'normal'
+  END
+);
+
+-- Forward fill with window limit
+CREATE TEMP FUNCTION forward_fill(
+  value FLOAT64,
+  lookback_days INT64
+)
+RETURNS FLOAT64 AS (
+  LAST_VALUE(value IGNORE NULLS) OVER (
+    ORDER BY date
+    ROWS BETWEEN lookback_days PRECEDING AND CURRENT ROW
+  )
+);
+
+-- Safe date handling
+DECLARE DEFAULT_EARLY_DATE DATE DEFAULT DATE '1900-01-01';
+
+CREATE TEMP FUNCTION safe_latest(existing DATE)
+RETURNS DATE AS (IFNULL(existing, DEFAULT_EARLY_DATE));
+

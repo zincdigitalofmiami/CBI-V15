@@ -1,0 +1,54 @@
+name: Dataform CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dataform/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dataform/**'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install Dataform CLI
+        run: npm install -g @dataform/cli
+        
+      - name: Compile Dataform
+        run: |
+          cd dataform
+          dataform compile
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+          
+  test:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install Dataform CLI
+        run: npm install -g @dataform/cli
+        
+      - name: Run Assertions
+        run: |
+          cd dataform
+          dataform test
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+

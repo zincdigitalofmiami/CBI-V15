@@ -1,0 +1,156 @@
+# Cursor Rules for CBI-V15
+
+## CRITICAL: Read First
+1. ALWAYS read `docs/architecture/MASTER_PLAN.md` before starting work
+2. Use `docs/architecture/DATAFORM_ARCHITECTURE.md` for Dataform structure
+3. Review `docs/reference/AI_ASSISTANT_GUIDE.md` for common tasks
+4. Review `docs/reference/BEST_PRACTICES.md` for comprehensive best practices
+
+## Current Architecture (V15)
+- Training: Mac M4 (100% local) → BigQuery upload
+- ETL: Dataform (BigQuery transformations)
+- Storage: BigQuery (us-central1 only)
+- Dashboard: Next.js/Vercel
+- NO Vertex AI, NO BQML, NO AutoML
+
+## Data Sources
+- Databento (market data)
+- FRED (economic data)
+- NOAA/INMET/Argentina SMN (weather)
+- Google Public Datasets (GSOD, GFS, GDELT, BLS, FEC)
+- USDA (agricultural)
+- CFTC (positioning)
+- EIA (biofuels)
+- ScrapeCreators (Trump + buckets)
+- Glide API (Vegas Intel)
+
+## Critical Rules
+1. **NO FAKE DATA** - Only real, verified data
+2. **ALWAYS CHECK BEFORE CREATING** - Tables, datasets, files
+3. **ALWAYS AUDIT AFTER WORK** - Data quality checks
+4. **us-central1 ONLY** - All GCP resources
+5. **NO COSTLY RESOURCES** - Approval required >$5/month
+6. **API KEYS** - Keychain (Mac) or Secret Manager (GCP)
+7. **Configuration** - YAML/JSON, not hardcoded
+8. **Dataform First** - All ETL in Dataform
+9. **Mac Training Only** - No cloud training
+10. **ZL Focus** - Soybean Oil Futures primary target
+
+## File Organization
+- Dataform SQL → `dataform/definitions/`
+- Python scripts → `src/`
+- Operational scripts → `scripts/`
+- Config files → `config/`
+- Documentation → `docs/`
+
+## Testing Requirements
+- Run unit tests before committing
+- Run Dataform compile before committing
+- Run data quality checks after data changes
+
+## Common Tasks
+- Adding data source: See `docs/reference/AI_ASSISTANT_GUIDE.md`
+- Adding feature: See `docs/features/README.md`
+- Training model: See `docs/training/README.md`
+
+## Before Referencing Any File
+- Check if it's in correct location per V15 structure
+- Verify naming conventions (`{asset}_{function}_{scope}_{regime}_{horizon}`)
+- Ensure no hardcoded values (use config/env)
+
+## BEST PRACTICES (MANDATORY)
+
+### 🔴 CRITICAL RULES (Must Always Follow)
+
+#### Data Quality
+1. **NO FAKE DATA** - NEVER use placeholders, synthetic data, or fake values
+2. **ALWAYS CHECK BEFORE CREATING** - Verify tables/datasets/files exist before creating
+3. **ALWAYS AUDIT AFTER WORK** - Run data quality checks after any data modification
+
+#### Cost & Resource Management
+4. **us-central1 ONLY** - ALL BigQuery datasets, GCS buckets, GCP resources MUST be in us-central1
+5. **NO COSTLY RESOURCES WITHOUT APPROVAL** - Do NOT create paid GCP resources without explicit approval (>$5/month)
+
+#### Research & Validation
+6. **RESEARCH BEST PRACTICES** - ALWAYS research online for best practices before implementing
+7. **RESEARCH QUANT FINANCE** - For modeling features, research quant finance best practices
+
+#### Security
+8. **API KEYS** - macOS Keychain (Mac) or Secret Manager (GCP scheduler), NEVER hardcoded
+9. **Configuration** - YAML/JSON files, environment variables, never hardcoded
+
+#### Architecture
+10. **Dataform First** - All ETL transformations in Dataform, version controlled
+11. **Mac Training Only** - All training on Mac M4, no cloud training
+12. **Source Prefixing** - All columns prefixed with source (`databento_`, `fred_`, etc.)
+
+### 🟡 HIGH PRIORITY (Should Always Follow)
+
+#### Pre-Work Validation
+- Check existing resources before creating/modifying
+- Validate naming conventions
+- Verify schema compatibility before merging/joining
+
+#### Post-Work Validation
+- Run data quality checks (`scripts/validation/data_quality_checks.py`)
+- Test queries/scripts before declaring success
+- Validate BigQuery views/tables are accessible
+- Run Dataform compile (`cd dataform && dataform compile`)
+
+#### Code Quality
+- Test all code before committing
+- Document complex logic (explain why, not just what)
+- Follow naming conventions (source prefixes)
+- No hardcoded values (use config/env variables)
+
+### 🟢 MEDIUM PRIORITY (Best Practices)
+
+#### Data Engineering
+- Idempotent pipelines (safe to re-run)
+- Preserve source data (never modify raw layer)
+- Validate transformations (test with known inputs/outputs)
+
+#### Model Development
+- Pre-training validation (run data quality checks)
+- Local training only (Mac M4, NOT cloud)
+- Post-training validation (evaluate on holdout set)
+- Save metadata (version, hyperparameters, performance metrics)
+
+#### Integration & Deployment
+- Pre-integration checks (run audit framework)
+- Test in staging before production
+- Rollback planning (always have rollback plan)
+
+#### Monitoring & Maintenance
+- Monitor data quality (daily automated checks)
+- Clean up resources (temporary files, test data)
+- Review costs (monthly GCP billing audits)
+- Update documentation (when code changes)
+
+---
+
+## Workflow Checklist
+
+### Before Starting Work
+- [ ] Read `docs/architecture/MASTER_PLAN.md`
+- [ ] Check existing resources (tables, datasets, files)
+- [ ] Research best practices for the task
+- [ ] Verify naming conventions
+
+### During Work
+- [ ] Follow existing patterns in codebase
+- [ ] Use source prefixes for columns
+- [ ] Document complex logic
+- [ ] Test code as you write
+
+### After Work
+- [ ] Run data quality checks
+- [ ] Audit for errors (nulls, duplicates, gaps)
+- [ ] Test queries/scripts
+- [ ] Verify BigQuery views/tables
+- [ ] Update documentation
+
+---
+
+**Last Updated**: November 28, 2025
+

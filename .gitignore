@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# Data
+*.parquet
+*.csv
+*.json
+!config/**/*.json
+!config/**/*.yaml
+!package.json
+!package-lock.json
+
+# Models
+models/
+*.pkl
+*.h5
+*.pt
+*.pth
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# External drive (symlinks only)
+/Volumes/
+
+# Logs
+*.log
+logs/
+
+# Dataform
+dataform/.dataform/
+dataform/node_modules/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Mac
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+

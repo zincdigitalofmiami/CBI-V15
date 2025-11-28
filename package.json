@@ -1,0 +1,21 @@
+{
+  "name": "cbi-v15",
+  "version": "1.0.0",
+  "description": "CBI-V15: Soybean Oil Forecasting Platform",
+  "private": true,
+  "scripts": {
+    "dataform:compile": "cd dataform && dataform compile",
+    "dataform:test": "cd dataform && dataform test",
+    "dataform:run": "cd dataform && dataform run",
+    "dataform:run:staging": "cd dataform && dataform run --tags staging",
+    "dataform:run:features": "cd dataform && dataform run --tags features",
+    "dataform:run:training": "cd dataform && dataform run --tags training"
+  },
+  "devDependencies": {
+    "@dataform/cli": "^2.30.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

@@ -1,0 +1,51 @@
+# BigQuery Dataset Configuration
+# CBI-V15 Project: cbi-v15
+# Location: us-central1 ONLY
+
+datasets:
+  raw:
+    location: us-central1
+    description: "Raw source data declarations"
+    tables:
+      - name: databento_daily_ohlcv
+        source: databento
+        symbols: [ZL, ZS, ZM, CL, HO, FCPO]
+        partition_by: date
+        cluster_by: [symbol]
+      
+  staging:
+    location: us-central1
+    description: "Cleaned, normalized data"
+    partition_by: date
+    cluster_by: [symbol]
+    
+  features:
+    location: us-central1
+    description: "Engineered features"
+    partition_by: date
+    cluster_by: [symbol]
+    
+  training:
+    location: us-central1
+    description: "Training-ready tables with targets"
+    partition_by: date
+    cluster_by: [symbol, horizon]
+    
+  forecasts:
+    location: us-central1
+    description: "Model predictions"
+    partition_by: date
+    cluster_by: [symbol, horizon]
+    
+  api:
+    location: us-central1
+    description: "Public API views for dashboard"
+    
+  reference:
+    location: us-central1
+    description: "Reference tables and mappings"
+    
+  ops:
+    location: us-central1
+    description: "Operations monitoring and logs"
+
