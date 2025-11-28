@@ -41,7 +41,7 @@ if gcloud projects describe $PROJECT_ID &> /dev/null; then
 else
     echo "📝 Creating project $PROJECT_ID under App Development folder..."
     gcloud projects create $PROJECT_ID \
-        --name="CBI-V15 Soybean Oil Forecasting" \
+        --name="CBI-V15 Forecasting" \
         --folder=$APP_DEV_FOLDER_ID
     
     # Set as current project
