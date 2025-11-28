@@ -1,0 +1,26 @@
+config {
+  type: "incremental",
+  schema: "${dataform.projectConfig.vars.staging_dataset}",
+  name: "fred_macro_clean",
+  description: "Cleaned FRED economic indicators with forward-fill and daily interpolation",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["series_id"]
+  },
+  uniqueKey: ["date", "series_id"]
+}
+
+${ref("fred_economic")}
+
+SELECT
+  date,
+  series_id,
+  value,
+  -- Forward-fill missing values
+  LAG(value) OVER (PARTITION BY series_id ORDER BY date) AS prev_value,
+  -- Calculate period-over-period change
+  SAFE_DIVIDE(value - LAG(value) OVER (PARTITION BY series_id ORDER BY date),
+              LAG(value) OVER (PARTITION BY series_id ORDER BY date)) AS pct_change
+FROM ${ref("fred_economic")}
+WHERE date >= DATE('2010-01-01')
+

@@ -1,0 +1,11 @@
+config {
+  type: "declaration",
+  database: "${dataform.projectConfig.vars.project}",
+  schema: "${dataform.projectConfig.vars.raw_dataset}",
+  name: "scrapecreators_trump_posts",
+  description: "Raw Truth Social posts and policy events from ScrapeCreators API"
+}
+
+-- Declaration for Trump policy intelligence data
+-- Used by trump_policy_signals feature table
+

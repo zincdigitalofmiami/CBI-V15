@@ -1,0 +1,55 @@
+config {
+  type: "view",
+  schema: "${dataform.projectConfig.vars.api_dataset}",
+  name: "vw_latest_forecast",
+  description: "Public API view for latest ZL forecasts across all horizons"
+}
+
+SELECT
+  date,
+  model_type,
+  horizon,
+  predicted_price,
+  lower_bound,
+  upper_bound,
+  confidence_score,
+  created_at
+FROM ${ref("zl_predictions_1w")}
+WHERE date = (SELECT MAX(date) FROM ${ref("zl_predictions_1w")})
+UNION ALL
+SELECT
+  date,
+  model_type,
+  '1m' AS horizon,
+  predicted_price,
+  lower_bound,
+  upper_bound,
+  confidence_score,
+  created_at
+FROM ${ref("zl_predictions_1m")}
+WHERE date = (SELECT MAX(date) FROM ${ref("zl_predictions_1m")})
+UNION ALL
+SELECT
+  date,
+  model_type,
+  '3m' AS horizon,
+  predicted_price,
+  lower_bound,
+  upper_bound,
+  confidence_score,
+  created_at
+FROM ${ref("zl_predictions_3m")}
+WHERE date = (SELECT MAX(date) FROM ${ref("zl_predictions_3m")})
+UNION ALL
+SELECT
+  date,
+  model_type,
+  '6m' AS horizon,
+  predicted_price,
+  lower_bound,
+  upper_bound,
+  confidence_score,
+  created_at
+FROM ${ref("zl_predictions_6m")}
+WHERE date = (SELECT MAX(date) FROM ${ref("zl_predictions_6m")})
+

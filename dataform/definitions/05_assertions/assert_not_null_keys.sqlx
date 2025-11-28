@@ -1,0 +1,14 @@
+config {
+  type: "assertion",
+  schema: "${dataform.projectConfig.vars.reference_dataset}",
+  tags: ["data_quality", "critical"]
+}
+
+-- Assert that critical keys are never null
+SELECT 1
+WHERE EXISTS (
+  SELECT 1
+  FROM ${ref("market_daily")}
+  WHERE date IS NULL OR symbol IS NULL
+)
+

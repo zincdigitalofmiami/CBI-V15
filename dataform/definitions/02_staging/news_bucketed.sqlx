@@ -1,0 +1,28 @@
+config {
+  type: "incremental",
+  schema: "${dataform.projectConfig.vars.staging_dataset}",
+  name: "news_bucketed",
+  description: "News buckets aggregated by date and bucket type (biofuel, China, tariffs)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["bucket_type"]
+  },
+  uniqueKey: ["date", "bucket_type"]
+}
+
+${ref("scrapecreators_news_buckets")}
+
+SELECT
+  date,
+  bucket_type,
+  COUNT(*) AS article_count,
+  -- Aggregate sentiment scores (if available)
+  AVG(sentiment_score) AS avg_sentiment,
+  -- Count by impact magnitude
+  COUNTIF(impact_magnitude = 'HIGH') AS high_impact_count,
+  COUNTIF(impact_magnitude = 'MEDIUM') AS medium_impact_count,
+  COUNTIF(impact_magnitude = 'LOW') AS low_impact_count
+FROM ${ref("scrapecreators_news_buckets")}
+WHERE date >= DATE('2010-01-01')
+GROUP BY date, bucket_type
+
