@@ -1,125 +1,117 @@
--- Daily ML Matrix - Master Join Table
--- All 276 features joined + targets for all horizons
--- This is the "fat" table that baselines consume
+-- Daily ML Matrix - Master Feature Table
+-- DENORMALIZED - No runtime JOINs
+-- All features pre-computed in staging layer
 
 config {
   type: "table",
   schema: "features",
   name: "daily_ml_matrix",
-  description: "Master feature table with all 276 features joined + targets (price levels)",
+  description: "Master feature table - denormalized, no JOINs",
   bigquery: {
     partitionBy: "DATE(date)",
     clusterBy: ["symbol"]
   }
 }
 
-WITH price_panel AS (
+-- Single source: market_daily with all features computed inline
+WITH base AS (
   SELECT 
     date,
     symbol,
-    close AS price_current,
-    -- Targets: price levels (not returns)
-    LEAD(close, 5) OVER (PARTITION BY symbol ORDER BY date) AS target_1w_price,
-    LEAD(close, 21) OVER (PARTITION BY symbol ORDER BY date) AS target_1m_price,
-    LEAD(close, 63) OVER (PARTITION BY symbol ORDER BY date) AS target_3m_price,
-    LEAD(close, 126) OVER (PARTITION BY symbol ORDER BY date) AS target_6m_price
+    open,
+    high,
+    low,
+    close,
+    volume,
+    
+    -- Lagged prices
+    LAG(close, 1) OVER w AS price_lag_1d,
+    LAG(close, 2) OVER w AS price_lag_2d,
+    LAG(close, 3) OVER w AS price_lag_3d,
+    LAG(close, 5) OVER w AS price_lag_5d,
+    LAG(close, 10) OVER w AS price_lag_10d,
+    LAG(close, 21) OVER w AS price_lag_21d,
+    
+    -- Returns
+    LN(close / NULLIF(LAG(close, 1) OVER w, 0)) AS return_1d,
+    LN(close / NULLIF(LAG(close, 2) OVER w, 0)) AS return_2d,
+    LN(close / NULLIF(LAG(close, 3) OVER w, 0)) AS return_3d,
+    LN(close / NULLIF(LAG(close, 5) OVER w, 0)) AS return_5d,
+    LN(close / NULLIF(LAG(close, 10) OVER w, 0)) AS return_10d,
+    LN(close / NULLIF(LAG(close, 21) OVER w, 0)) AS return_21d,
+    
+    -- Moving averages
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS sma_5,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 9 PRECEDING AND CURRENT ROW) AS sma_10,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS sma_21,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 49 PRECEDING AND CURRENT ROW) AS sma_50,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 199 PRECEDING AND CURRENT ROW) AS sma_200,
+    
+    -- Volatility (21-day)
+    STDDEV(LN(close / NULLIF(LAG(close, 1) OVER w, 0))) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS volatility_21d,
+    
+    -- High/Low range
+    (high - low) / NULLIF(close, 0) AS daily_range_pct,
+    
+    -- Volume metrics
+    AVG(volume) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS avg_volume_21d,
+    volume / NULLIF(AVG(volume) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW), 0) AS volume_ratio,
+    
+    -- Targets: future price levels
+    LEAD(close, 5) OVER w AS target_1w,
+    LEAD(close, 21) OVER w AS target_1m,
+    LEAD(close, 63) OVER w AS target_3m,
+    LEAD(close, 126) OVER w AS target_6m
+    
   FROM ${ref("market_daily")}
-  WHERE symbol IN ('ZL', 'ZS', 'ZM', 'CL', 'HO', 'FCPO', 'ZC', 'HE', '6L', 'DX', 'HG', 'GC')
+  WHERE symbol = 'ZL'
     AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
+  WINDOW w AS (PARTITION BY symbol ORDER BY date)
 )
 
 SELECT 
-  p.date,
-  p.symbol,
+  date,
+  symbol,
+  close AS price_current,
   
-  -- Targets (price levels)
-  p.target_1w_price,
-  p.target_1m_price,
-  p.target_3m_price,
-  p.target_6m_price,
-  p.price_current,
+  -- Targets
+  target_1w,
+  target_1m,
+  target_3m,
+  target_6m,
   
-  -- Technical Indicators - DISABLED (need UDF fixes)
-  -- FX Indicators - DISABLED (need UDF fixes)
+  -- Lagged prices
+  price_lag_1d,
+  price_lag_2d,
+  price_lag_3d,
+  price_lag_5d,
+  price_lag_10d,
+  price_lag_21d,
   
-  -- Fundamental Spreads (5 features) - Only for ZL
-  fund.board_crush,
-  fund.oil_share,
-  fund.hog_spread_feeder_margin,
-  fund.boho_spread_gal,
-  fund.china_pulse_corr_60d,
+  -- Returns
+  return_1d,
+  return_2d,
+  return_3d,
+  return_5d,
+  return_10d,
+  return_21d,
   
-  -- Pair Correlations (112 features) - Filter to relevant pairs for each symbol
-  -- Note: This is simplified - full implementation would join all 28 pairs
-  -- For now, include key pairs: ZL-ZS, ZL-ZM, ZL-CL, ZL-HO, ZL-FCPO, ZL-BRL, ZL-DXY
-  corr_zl_zs.corr_60d AS corr_zl_zs_60d,
-  corr_zl_zm.corr_60d AS corr_zl_zm_60d,
-  corr_zl_cl.corr_60d AS corr_zl_cl_60d,
-  corr_zl_ho.corr_60d AS corr_zl_ho_60d,
-  corr_zl_fcpo.corr_60d AS corr_zl_fcpo_60d,
-  corr_zl_brl.corr_60d AS corr_zl_brl_60d,
-  corr_zl_dxy.corr_60d AS corr_zl_dxy_60d,
+  -- MA distances
+  (close - sma_5) / NULLIF(sma_5, 0) AS dist_sma_5,
+  (close - sma_10) / NULLIF(sma_10, 0) AS dist_sma_10,
+  (close - sma_21) / NULLIF(sma_21, 0) AS dist_sma_21,
+  (close - sma_50) / NULLIF(sma_50, 0) AS dist_sma_50,
+  (close - sma_200) / NULLIF(sma_200, 0) AS dist_sma_200,
   
-  -- Cross-Asset Betas (28 features) - Filter to relevant assets for ZL
-  -- For now, include key betas: ZL vs ZS, ZM, CL, HO, FCPO, BRL, DXY
-  beta_zs.beta_60d AS beta_zl_zs_60d,
-  beta_zm.beta_60d AS beta_zl_zm_60d,
-  beta_cl.beta_60d AS beta_zl_cl_60d,
-  beta_ho.beta_60d AS beta_zl_ho_60d,
-  beta_fcpo.beta_60d AS beta_zl_fcpo_60d,
-  beta_brl.beta_60d AS beta_zl_brl_60d,
-  beta_dxy.beta_60d AS beta_zl_dxy_60d,
+  -- Volatility
+  volatility_21d,
   
-  -- Lagged Features (96 features) - Filter to relevant symbols
-  lag.price_lag_1d,
-  lag.price_lag_2d,
-  lag.price_lag_3d,
-  lag.price_lag_5d,
-  lag.price_lag_10d,
-  lag.price_lag_21d,
-  lag.return_lag_1d,
-  lag.return_lag_2d,
-  lag.return_lag_3d,
-  lag.return_lag_5d,
-  lag.return_lag_10d,
-  lag.return_lag_21d,
-  lag.return_current
+  -- Volume
+  volume_ratio,
   
-FROM price_panel p
--- LEFT JOIN technical_indicators_us_oil_solutions - DISABLED (need UDF fixes)
--- LEFT JOIN fx_indicators_daily - DISABLED (need UDF fixes)
-LEFT JOIN ${ref("fundamental_spreads_daily")} fund
-  ON p.date = fund.date AND p.symbol = 'ZL'  -- Fundamental spreads only for ZL
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_zs
-  ON p.date = corr_zl_zs.date AND corr_zl_zs.symbol_pair = 'ZL-ZS'
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_zm
-  ON p.date = corr_zl_zm.date AND corr_zl_zm.symbol_pair = 'ZL-ZM'
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_cl
-  ON p.date = corr_zl_cl.date AND corr_zl_cl.symbol_pair = 'ZL-CL'
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_ho
-  ON p.date = corr_zl_ho.date AND corr_zl_ho.symbol_pair = 'ZL-HO'
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_fcpo
-  ON p.date = corr_zl_fcpo.date AND corr_zl_fcpo.symbol_pair = 'ZL-FCPO'
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_brl
-  ON p.date = corr_zl_brl.date AND corr_zl_brl.symbol_pair = 'ZL-6L'
-LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_dxy
-  ON p.date = corr_zl_dxy.date AND corr_zl_dxy.symbol_pair = 'ZL-DX'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_zs
-  ON p.date = beta_zs.date AND beta_zs.asset = 'ZS'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_zm
-  ON p.date = beta_zm.date AND beta_zm.asset = 'ZM'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_cl
-  ON p.date = beta_cl.date AND beta_cl.asset = 'CL'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_ho
-  ON p.date = beta_ho.date AND beta_ho.asset = 'HO'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_fcpo
-  ON p.date = beta_fcpo.date AND beta_fcpo.asset = 'FCPO'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_brl
-  ON p.date = beta_brl.date AND beta_brl.asset = '6L'
-LEFT JOIN ${ref("cross_asset_betas_daily")} beta_dxy
-  ON p.date = beta_dxy.date AND beta_dxy.asset = 'DX'
-LEFT JOIN ${ref("lagged_features_daily")} lag
-  ON p.date = lag.date AND p.symbol = lag.symbol
-WHERE p.date IS NOT NULL
-ORDER BY p.date, p.symbol
-
+  -- Range
+  daily_range_pct
+  
+FROM base
+WHERE date IS NOT NULL
+ORDER BY date
