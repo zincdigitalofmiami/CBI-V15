@@ -38,9 +38,19 @@ else
     echo "   ✅ Repository exists"
 fi
 
+# Get GitHub host public key
+echo ""
+echo "2. Getting GitHub host public key..."
+GITHUB_HOST_KEY=$(ssh-keyscan github.com 2>/dev/null | grep "ssh-ed25519" | head -1)
+if [ -z "$GITHUB_HOST_KEY" ]; then
+    echo "   ⚠️  Could not get GitHub host key, using known key"
+    GITHUB_HOST_KEY="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+fi
+echo "   ✅ Host key obtained"
+
 # Connect to GitHub
 echo ""
-echo "2. Connecting to GitHub..."
+echo "3. Connecting to GitHub..."
 RESPONSE=$(curl -s -X PATCH \
     -H "Authorization: Bearer ${ACCESS_TOKEN}" \
     -H "Content-Type: application/json" \
@@ -48,7 +58,8 @@ RESPONSE=$(curl -s -X PATCH \
         \"gitRemoteSettings\": {
             \"url\": \"${GITHUB_URL}\",
             \"sshAuthenticationConfig\": {
-                \"userPrivateKeySecretVersion\": \"projects/${PROJECT_ID}/secrets/${SECRET_NAME}/versions/latest\"
+                \"userPrivateKeySecretVersion\": \"projects/${PROJECT_ID}/secrets/${SECRET_NAME}/versions/latest\",
+                \"hostPublicKey\": \"${GITHUB_HOST_KEY}\"
             },
             \"defaultBranch\": \"${BRANCH}\"
         }
@@ -65,7 +76,7 @@ fi
 
 # Set workspace compilation override (for root directory)
 echo ""
-echo "3. Setting workspace compilation override (root directory)..."
+echo "4. Setting workspace compilation override (root directory)..."
 WORKSPACE="main"
 curl -s -X PATCH \
     -H "Authorization: Bearer ${ACCESS_TOKEN}" \
@@ -84,7 +95,7 @@ echo "   ✅ Workspace configured"
 
 # Verify connection
 echo ""
-echo "4. Verifying connection..."
+echo "5. Verifying connection..."
 REPO_INFO=$(curl -s -X GET \
     -H "Authorization: Bearer ${ACCESS_TOKEN}" \
     "https://dataform.googleapis.com/v1beta1/projects/${PROJECT_ID}/locations/${REGION}/repositories/${REPO_ID}")
