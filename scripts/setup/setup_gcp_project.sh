@@ -106,34 +106,11 @@ for dataset_info in "${datasets[@]}"; do
     fi
 done
 
-# Create service account for Dataform/Cloud Scheduler
-echo "🔐 Creating service accounts..."
-
-SA_NAME="cbi-v15-dataform"
-SA_EMAIL="$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
-
-if gcloud iam service-accounts describe $SA_EMAIL &> /dev/null; then
-    echo "  ✅ Service account $SA_NAME already exists"
-else
-    gcloud iam service-accounts create $SA_NAME \
-        --display-name="CBI-V15 Dataform Service Account" \
-        --description="Service account for Dataform ETL and Cloud Scheduler"
-    echo "  ✅ Created service account $SA_NAME"
-fi
-
-# Grant permissions
-echo "🔑 Granting permissions..."
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$SA_EMAIL" \
-    --role="roles/bigquery.dataEditor"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$SA_EMAIL" \
-    --role="roles/bigquery.jobUser"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$SA_EMAIL" \
-    --role="roles/secretmanager.secretAccessor"
+# Note: IAM permissions are set up via separate script
+# Run: ./scripts/setup/setup_iam_permissions.sh
+echo "🔐 IAM Setup:"
+echo "  Run './scripts/setup/setup_iam_permissions.sh' for complete IAM setup"
+echo "  This includes service accounts and folder-level permissions"
 
 echo ""
 echo "✅ GCP setup complete!"
