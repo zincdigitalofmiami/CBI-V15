@@ -91,17 +91,18 @@ config {
 }
 SELECT * FROM ${ref("scrapecreators_trump")} WHERE FALSE; -- Skeleton only
 
--- ScrapeCreators News Buckets (SEGMENTED AT INGESTION)
+-- ScrapeCreators News Buckets (3-Way Segmentation: Theme, Horizon, Impact/Sentiment)
 config {
   type: "table",
   schema: "raw",
   name: "scrapecreators_news_buckets",
-  description: "News buckets from ScrapeCreators (biofuel, China, tariffs) - segmented at ingestion to prevent drift",
+  description: "News buckets from ScrapeCreators - 3-way segmentation: thematic (7 buckets), time-horizon (3 buckets), impact/sentiment (ZL-specific). Includes Trump tags for Trump/ZL engine integration.",
   bigquery: {
     partitionBy: "DATE(date)",
-    clusterBy: ["bucket_type"]
+    clusterBy: ["theme_primary", "is_trump_related"]
   }
 }
+-- Schema: theme_primary (7 buckets), is_trump_related (BOOL), policy_axis (if Trump), horizon (3 buckets), zl_sentiment, impact_magnitude
 SELECT * FROM ${ref("scrapecreators_buckets")} WHERE FALSE; -- Skeleton only
 
 -- ============================================================================
@@ -318,12 +319,26 @@ config {
   type: "table",
   schema: "features",
   name: "sentiment_features_daily",
-  description: "Sentiment features for ML (bucket-specific, normalized, regime-tagged)",
+  description: "Sentiment features for ML (bucket-specific, normalized, regime-tagged) - 12 features for baselines",
   bigquery: {
     partitionBy: "DATE(date)"
   }
 }
+-- Features: news_supply_tact_net_7d, news_biofuel_tact_net_7d, news_trade_struct_net_30d, news_macro_risk_net_7d, news_logistics_tact_net_7d, news_zl_pulse_7d
 SELECT * FROM ${ref("sentiment_features_daily")} WHERE FALSE; -- Skeleton only
+
+-- Trump News Features Daily (Trump-specific news features)
+config {
+  type: "table",
+  schema: "features",
+  name: "trump_news_features_daily",
+  description: "Trump-specific news features (6-10 features) - feeds Trump predictor/ZL effects engine and Legislative page",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+-- Features: policy_trump_trade_china_net_7d, policy_trump_trade_china_net_30d, policy_trump_biofuels_net_7d, policy_trump_biofuels_net_30d, policy_trump_zl_net_7d, policy_trump_zl_net_30d
+SELECT * FROM ${ref("trump_news_features_daily")} WHERE FALSE; -- Skeleton only
 
 -- Regime Indicators Daily (Daily regime flags)
 config {
