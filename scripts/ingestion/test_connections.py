@@ -5,11 +5,17 @@ Test connections to all data sources and BigQuery
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from google.cloud import bigquery
-from src.utils.keychain_manager import get_api_key
+try:
+    from src.utils.keychain_manager import get_api_key
+except ImportError:
+    # Fallback if module not found
+    def get_api_key(key_name: str):
+        return None
 import logging
 
 logging.basicConfig(level=logging.INFO)
