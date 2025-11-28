@@ -39,45 +39,8 @@ SELECT
   p.target_6m_price,
   p.price_current,
   
-  -- Technical Indicators (19 features)
-  t.dist_ema_5,
-  t.dist_ema_10,
-  t.dist_ema_21,
-  t.dist_sma_63,
-  t.dist_sma_200,
-  t.bb_pct_b,
-  t.bb_bandwidth,
-  t.ppo_12_26,
-  t.dist_vwap_21d,
-  t.vol_garman_klass_annualized,
-  t.vol_parkinson_annualized,
-  t.vol_21d,
-  t.amihud_illiquidity,
-  t.oi_volume_ratio,
-  t.boho_spread,
-  t.corr_zl_brl_60d,
-  t.terms_of_trade_zl_brl,
-  t.doy_sin,
-  t.doy_cos,
-  
-  -- FX Indicators (16 features) - Only for ZL
-  fx.brl_momentum_21d,
-  fx.brl_momentum_63d,
-  fx.brl_momentum_252d,
-  fx.dxy_momentum_21d,
-  fx.dxy_momentum_63d,
-  fx.dxy_momentum_252d,
-  fx.brl_volatility_21d,
-  fx.brl_volatility_63d,
-  fx.corr_zl_brl_30d,
-  fx.corr_zl_brl_60d,
-  fx.corr_zl_brl_90d,
-  fx.corr_zl_dxy_30d,
-  fx.corr_zl_dxy_60d,
-  fx.corr_zl_dxy_90d,
-  fx.terms_of_trade_zl_brl AS fx_terms_of_trade_zl_brl,
-  fx.corr_regime_zl_brl,
-  fx.corr_regime_zl_dxy,
+  -- Technical Indicators - DISABLED (need UDF fixes)
+  -- FX Indicators - DISABLED (need UDF fixes)
   
   -- Fundamental Spreads (5 features) - Only for ZL
   fund.board_crush,
@@ -123,10 +86,8 @@ SELECT
   lag.return_current
   
 FROM price_panel p
-LEFT JOIN ${ref("technical_indicators_us_oil_solutions")} t
-  ON p.date = t.date AND p.symbol = t.symbol
-LEFT JOIN ${ref("fx_indicators_daily")} fx
-  ON p.date = fx.date AND p.symbol = 'ZL'  -- FX indicators only for ZL
+-- LEFT JOIN technical_indicators_us_oil_solutions - DISABLED (need UDF fixes)
+-- LEFT JOIN fx_indicators_daily - DISABLED (need UDF fixes)
 LEFT JOIN ${ref("fundamental_spreads_daily")} fund
   ON p.date = fund.date AND p.symbol = 'ZL'  -- Fundamental spreads only for ZL
 LEFT JOIN ${ref("pair_correlations_daily")} corr_zl_zs
