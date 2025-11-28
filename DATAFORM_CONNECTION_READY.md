@@ -9,7 +9,7 @@
 
 1. ✅ SSH key pair generated
 2. ✅ Private key stored in Secret Manager (`dataform-github-ssh-key`)
-3. ✅ Dataform service account granted access
+3. ⚠️ Dataform service account will be created automatically when Dataform is first used
 4. ⚠️ **Public key needs to be added to GitHub** (see below)
 
 ---
