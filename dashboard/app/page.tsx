@@ -9,6 +9,7 @@ export default function ZLChart() {
   const [priceChange, setPriceChange] = useState(0);
   const [priceChangePct, setPriceChangePct] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -40,6 +41,7 @@ export default function ZLChart() {
         });
 
         setMergedData(merged);
+        setLastUpdate(new Date().toLocaleTimeString());
 
         if (zlData.length > 0) {
           const latest = zlData[zlData.length - 1].close;
@@ -60,7 +62,8 @@ export default function ZLChart() {
     }
 
     fetchData();
-    const interval = setInterval(fetchData, 60000); // Refresh every minute
+    // PULL EVERY 5 MINUTES (300,000ms)
+    const interval = setInterval(fetchData, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -72,7 +75,7 @@ export default function ZLChart() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white mb-1">CBI-V15 Dashboard</h1>
-              <p className="text-slate-400 text-sm">Soybean Oil Futures (ZL) • Live Feed + SHAP Drivers</p>
+              <p className="text-slate-400 text-sm">Soybean Oil Futures (ZL) • Live Databento Feed • Updates Every 5min</p>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-5xl font-bold text-white">${latestPrice.toFixed(2)}</span>
@@ -81,6 +84,11 @@ export default function ZLChart() {
               </span>
             </div>
           </div>
+          {lastUpdate && (
+            <div className="text-right mt-2">
+              <span className="text-xs text-slate-500">Last updated: {lastUpdate}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -242,8 +250,8 @@ export default function ZLChart() {
               <p className="text-2xl font-bold text-green-400">ZL</p>
             </div>
             <div className="bg-orange-900/30 backdrop-blur-sm rounded-lg p-4 border border-orange-700/50">
-              <p className="text-slate-400 text-xs mb-1">SHAP Drivers</p>
-              <p className="text-2xl font-bold text-orange-400">4 Live</p>
+              <p className="text-slate-400 text-xs mb-1">Update Freq</p>
+              <p className="text-2xl font-bold text-orange-400">5min</p>
             </div>
           </div>
         </div>
