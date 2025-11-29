@@ -1,46 +1,56 @@
-import { BigQuery } from '@google-cloud/bigquery';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Mock ZL data generator - replace with BigQuery once credentials are configured
+function generateMockZLData() {
+  const data = [];
+  const basePrice = 45.50;
+  const today = new Date();
+  
+  for (let i = 89; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    
+    // Generate realistic price movement
+    const trend = Math.sin(i / 10) * 2;
+    const noise = (Math.random() - 0.5) * 1.5;
+    const price = basePrice + trend + noise;
+    
+    data.push({
+      date: { value: date.toISOString().split('T')[0] },
+      open: price - 0.2,
+      high: price + 0.3,
+      low: price - 0.3,
+      close: price,
+      volume: Math.floor(15000 + Math.random() * 5000),
+      symbol: 'ZL'
+    });
+  }
+  
+  return data;
+}
+
 export async function GET() {
   try {
-    const bigquery = new BigQuery({
-      projectId: 'cbi-v15'
-    });
-
-    // Get last 90 days of ZL prices
-    const query = `
-      SELECT 
-        date,
-        open,
-        high,
-        low,
-        close,
-        volume,
-        symbol
-      FROM \`cbi-v15.raw.databento_futures_ohlcv_1d\`
-      WHERE symbol = 'ZL'
-      ORDER BY date DESC
-      LIMIT 90
-    `;
-
-    const [rows] = await bigquery.query(query);
+    // TODO: Replace with actual BigQuery query once credentials are configured
+    // For now, return mock data so chart renders immediately
+    const rows = generateMockZLData();
 
     return NextResponse.json({ 
       success: true,
-      data: rows.reverse(), // Oldest to newest for chart
+      data: rows,
       count: rows.length,
       symbol: 'ZL',
+      note: 'Using mock data - configure BigQuery credentials in Vercel to load real data',
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error('BigQuery API error:', error);
+    console.error('API error:', error);
     return NextResponse.json({ 
       success: false, 
       error: error.message 
     }, { status: 500 });
   }
 }
-
