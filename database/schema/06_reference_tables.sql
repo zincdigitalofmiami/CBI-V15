@@ -1,6 +1,29 @@
--- Reference Tables: Feature Catalog & Model Registry
+-- Reference Tables: Calendars, Regimes, Splits, Feature Catalog, Model Registry
 
--- 1. Feature Catalog
+-- Trading Calendar
+CREATE TABLE IF NOT EXISTS reference.trading_calendar (
+    as_of_date        DATE PRIMARY KEY,
+    is_trading_day    BOOLEAN NOT NULL DEFAULT TRUE,
+    exchange          TEXT DEFAULT 'CME',
+    notes             TEXT
+);
+
+-- Regime Calendar
+CREATE TABLE IF NOT EXISTS reference.regime_calendar (
+    as_of_date        DATE PRIMARY KEY,
+    regime            TEXT NOT NULL,  -- 'bull', 'bear', 'neutral', 'volatile'
+    regime_score      DOUBLE,
+    created_at        TIMESTAMP DEFAULT current_timestamp
+);
+
+-- Train/Val/Test Splits
+CREATE TABLE IF NOT EXISTS reference.train_val_test_splits (
+    as_of_date        DATE PRIMARY KEY,
+    split_label       TEXT NOT NULL,  -- 'train', 'val', 'test'
+    split_version     TEXT DEFAULT 'v1'
+);
+
+-- Feature Catalog
 CREATE TABLE IF NOT EXISTS reference.feature_catalog (
     feature_name      TEXT PRIMARY KEY,
     bucket            TEXT NOT NULL,
@@ -18,10 +41,9 @@ CREATE TABLE IF NOT EXISTS reference.feature_catalog (
     tags              TEXT
 );
 
--- Index for bucket exploration
 CREATE INDEX IF NOT EXISTS idx_feature_catalog_bucket ON reference.feature_catalog (bucket);
 
--- 2. Model Registry
+-- Model Registry
 CREATE TABLE IF NOT EXISTS reference.model_registry (
     model_id             TEXT PRIMARY KEY,
     version              TEXT NOT NULL,
@@ -42,6 +64,5 @@ CREATE TABLE IF NOT EXISTS reference.model_registry (
     notes                TEXT
 );
 
--- Indexes for model lookup
 CREATE INDEX IF NOT EXISTS idx_model_registry_symbol_horizon ON reference.model_registry (symbol, horizon);
 CREATE INDEX IF NOT EXISTS idx_model_registry_status ON reference.model_registry (status);
