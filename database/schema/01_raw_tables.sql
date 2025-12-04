@@ -26,3 +26,25 @@ CREATE TABLE IF NOT EXISTS raw.databento_ohlcv_daily (
 
 -- Index for date-based queries
 CREATE INDEX IF NOT EXISTS idx_databento_ohlcv_date ON raw.databento_ohlcv_daily (as_of_date);
+
+-- FRED Economic Data (from fred/ ingestion scripts)
+CREATE TABLE IF NOT EXISTS raw.fred_economic (
+    date          DATE NOT NULL,
+    series_id     TEXT NOT NULL,
+    value         DOUBLE,
+    created_at    TIMESTAMP DEFAULT current_timestamp,
+    PRIMARY KEY (date, series_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fred_series ON raw.fred_economic (series_id);
+
+-- EIA Biofuels Data (from eia/ ingestion scripts)
+CREATE TABLE IF NOT EXISTS raw.eia_biofuels (
+    date          DATE NOT NULL,
+    series_id     TEXT NOT NULL,
+    value         DOUBLE,
+    created_at    TIMESTAMP DEFAULT current_timestamp,
+    PRIMARY KEY (date, series_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_eia_series ON raw.eia_biofuels (series_id);
