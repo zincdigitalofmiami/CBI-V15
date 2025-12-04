@@ -1,0 +1,42 @@
+# Implementation Plan - TimeSeriesScientist Integration
+
+## Goal Description
+Integrate TimeSeriesScientist (TSci) reporting into the "Quant Admin" page of the web application. This will allow the user to view the latest forecast metrics, ensemble performance, and generated visualizations directly from the admin dashboard.
+
+## Proposed Changes
+
+### Backend (Next.js API Routes)
+
+#### [NEW] [app/api/tsci/report/route.ts](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/web/app/api/tsci/report/route.ts)
+- **Purpose**: Fetch the latest generated JSON report from the TSci results directory.
+- **Logic**:
+    - Scan `TimeSeriesScientist/time_series_agent/results/reports/` for the most recent `complete_time_series_report_*.json`.
+    - Read and parse the JSON.
+    - Return the report data.
+
+#### [NEW] [app/api/tsci/image/route.ts](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/web/app/api/tsci/image/route.ts)
+- **Purpose**: Serve the generated visualization images.
+- **Logic**:
+    - Accept a `filename` query parameter (e.g., [ensemble_forecast.png](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/TimeSeriesScientist/time_series_agent/results_ETTh2_720/ensemble_forecast.png)).
+    - Locate the file in the latest results directory (need to determine the correct folder dynamically or pass it from the report API).
+    - Serve the image file with appropriate headers.
+
+### Frontend (Admin Page)
+
+#### [MODIFY] [app/admin/page.tsx](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/web/app/admin/page.tsx)
+- **Changes**:
+    - Add a new section: **"TimeSeriesScientist Intelligence"**.
+    - **Metrics Cards**: Display Ensemble MAPE, Best Model, and Forecast Horizon.
+    - **Performance Table**: Compare ARIMA, LSTM, TBATS, and Ensemble metrics.
+    - **Visualizations**: Display [ensemble_forecast.png](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/TimeSeriesScientist/time_series_agent/results_ETTh2_720/ensemble_forecast.png) and [forecast_comparison.png](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/TimeSeriesScientist/time_series_agent/results_ETTh2_720/forecast_comparison.png) using the new image API.
+    - **Refresh Button**: Add a button to re-run the TSci pipeline (optional, or just refresh data).
+
+## Verification Plan
+
+### Automated Tests
+- None planned for this UI integration.
+
+### Manual Verification
+- **API Test**: Verify `/api/tsci/report` returns the correct JSON.
+- **Image Test**: Verify `/api/tsci/image?file=ensemble_forecast.png` loads the image.
+- **UI Test**: Navigate to `/admin` and verify the new section appears with correct data and images.

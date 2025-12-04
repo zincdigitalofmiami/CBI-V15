@@ -90,10 +90,6 @@ export default function ZLChart() {
         chart?.remove();
       };
     });
-
-    return () => {
-      chart?.remove?.();
-    };
   }, [seriesData]);
 
   return (

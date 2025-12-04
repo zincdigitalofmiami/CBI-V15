@@ -77,6 +77,7 @@ case $choice in
         store_keychain "FRED_API_KEY" "fred"
         store_keychain "SCRAPECREATORS_API_KEY" "scrapecreators"
         store_keychain "GLIDE_API_KEY" "glide"
+        store_keychain "OPENAI_API_KEY" "openai"
         ;;
     2)
         echo ""
@@ -85,6 +86,7 @@ case $choice in
         store_secret "fred-api-key"
         store_secret "scrapecreators-api-key"
         store_secret "glide-api-key"
+        store_secret "openai-api-key"
         ;;
     3)
         echo ""
@@ -95,12 +97,14 @@ case $choice in
         store_keychain "FRED_API_KEY" "fred"
         store_keychain "SCRAPECREATORS_API_KEY" "scrapecreators"
         store_keychain "GLIDE_API_KEY" "glide"
+        store_keychain "OPENAI_API_KEY" "openai"
         echo ""
         echo "=== Secret Manager ==="
         store_secret "databento-api-key"
         store_secret "fred-api-key"
         store_secret "scrapecreators-api-key"
         store_secret "glide-api-key"
+        store_secret "openai-api-key"
         ;;
     *)
         echo "Invalid choice"
@@ -113,7 +117,8 @@ echo "✅ API key storage complete!"
 echo ""
 echo "To retrieve from Keychain:"
 echo "  security find-generic-password -s DATABENTO_API_KEY -w"
+echo "  security find-generic-password -s OPENAI_API_KEY -w"
 echo ""
 echo "To retrieve from Secret Manager:"
 echo "  gcloud secrets versions access latest --secret=databento-api-key"
-
+echo "  gcloud secrets versions access latest --secret=openai-api-key"

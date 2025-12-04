@@ -84,7 +84,8 @@ def check_api_keys():
     keys_to_check = [
         "DATABENTO_API_KEY",
         "FRED_API_KEY",
-        "SCRAPECREATORS_API_KEY"
+        "SCRAPECREATORS_API_KEY",
+        "OPENAI_API_KEY"
     ]
     
     found_keys = []
@@ -141,4 +142,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

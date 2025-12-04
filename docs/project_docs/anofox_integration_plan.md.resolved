@@ -1,0 +1,184 @@
+# AnoFox Integration & Full‑Feature Pipeline Plan
+
+> **Goal**: Seamlessly ingest the legacy CBI‑V15 schema (including 7 news buckets), macro‑economic series, and additional signals (volatility, sentiment, weather) into a DuckDB store, run comprehensive data‑quality & anomaly detection via `anofox_tabular`, and train specialized AnoFox models for each bucket and signal.  The output will feed a unified forecasting pipeline that powers the Next.js UI.
+
+---
+
+## 1. Directory & Environment Setup
+
+```bash
+# External drive layout (adjust path if needed)
+/Volumes/QuantData/
+├── raw/                # Databento .dbn files + raw macro CSVs
+├── parquet/            # Partitioned Parquet (Year/Month)
+├── db/                 # local_duckdb.db (single file)
+├── models/             # Trained AnoFox model artifacts (.duckdb extensions)
+└── scripts/            # Python ETL & training scripts
+```
+
+* Create a dedicated Python virtual environment (`python -m venv venv && source venv/bin/activate`).
+* Install required packages:
+
+```bash
+pip install duckdb motherduck databento pandas polars scikit-learn
+# AnoFox extensions (install from DuckDB community)
+duckdb -c "INSTALL anofox_forecast FROM community; LOAD anofox_forecast;"
+duckdb -c "INSTALL anofox_tabular FROM community; LOAD anofox_tabular;"
+duckdb -c "INSTALL anofox_statistics FROM community; LOAD anofox_statistics;"
+```
+
+---
+
+## 2. Data Ingestion
+
+### 2.1 Market Data (Databento)
+1. Use the existing [scripts/databento_to_motherduck.py](file:///Users/zincdigital/.gemini/antigravity/workspaces/zl-intelligence/scripts/databento_to_motherduck.py) as a template; modify to write raw `.dbn` files into `raw/`.
+2. Convert each `.dbn` to partitioned Parquet (Year/Month) using DuckDB:
+
+```sql
+COPY (SELECT * FROM read_dbn('raw/zl_15y.dbn'))
+TO 'parquet/zl/{year}/{month}.parquet' (FORMAT PARQUET, PARTITION_BY (year, month));
+```
+
+### 2.2 Macro & Weather Series
+* Pull FRED series (e.g., `WPU064101312`, `PSOILUSDM`) via `pandas_datareader` or direct CSV download into `raw/fred/`.
+* Pull NOAA climate indices (e.g., temperature, precipitation) into `raw/noaa/`.
+* Store each series as a simple CSV; later load into DuckDB.
+
+---
+
+## 3. DuckDB Schema & Views
+
+Create a single DuckDB file `db/local_duckdb.db` and define the following tables/views:
+
+```sql
+-- Market data view (high‑frequency)
+CREATE VIEW market_price AS SELECT * FROM read_parquet('parquet/zl/**/*.parquet');
+
+-- Macro tables (low‑frequency)
+CREATE TABLE macro_fred (date DATE, series_name TEXT, value DOUBLE);
+CREATE TABLE macro_noaa (date DATE, indicator TEXT, value DOUBLE);
+
+-- News bucket tables (legacy)
+-- Each bucket is a separate table derived from CBI‑V15 definitions
+CREATE TABLE bucket_biofuel_policy AS SELECT * FROM read_parquet('raw/buckets/biofuel_policy.parquet');
+CREATE TABLE bucket_china_demand AS SELECT * FROM read_parquet('raw/buckets/china_demand.parquet');
+-- ... repeat for all 7 buckets
+```
+
+---
+
+## 4. Data‑Quality & Anomaly Detection (anofox_tabular)
+
+### 4.1 Run Quality Checks
+```sql
+SELECT * FROM anofox_metric_isolation_forest(
+    SELECT * FROM market_price,
+    column_list => ['price', 'volume'],
+    n_estimators => 100
+) LIMIT 10;
+```
+* Store the resulting anomaly score as `market_price.anomaly_score`.
+* Repeat for each macro series and bucket table.
+
+### 4.2 Schema Drift Monitoring
+```sql
+SELECT * FROM anofox_schema_drift(
+    SELECT * FROM bucket_biofuel_policy,
+    reference_schema => (SELECT * FROM bucket_biofuel_policy LIMIT 1)
+);
+```
+* Alerts will be logged; any drift triggers a re‑ingest of that bucket.
+
+---
+
+## 5. Feature Engineering (Technical Indicator Networks)
+
+Re‑implement the 276 engineered features as **SQL‑based window functions** or **Polars pipelines**. Example for a moving‑average feature:
+
+```sql
+ALTER TABLE market_price ADD COLUMN sma_20 DOUBLE;
+UPDATE market_price SET sma_20 = AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 19 PRECEDING AND CURRENT ROW);
+```
+* For each legacy feature, create a corresponding column.
+* Store all features in a materialized view `daily_ml_matrix` (identical to the original CBI‑V15 `daily_ml_matrix` definition).
+
+---
+
+## 6. Bucket‑Specific Model Training (anofox_forecast)
+
+For each news bucket (7 total) and each auxiliary signal (volatility, sentiment, weather), train a dedicated forecast model:
+
+```sql
+-- Example: Forecast for biofuel_policy bucket
+CALL anofox_train_forecast(
+    model_name => 'biofuel_policy_forecast',
+    table_name => 'bucket_biofuel_policy',
+    target_column => 'price',
+    horizon => 5,               -- 5‑day ahead
+    models => ['auto_arima','mstl','tbats']
+);
+```
+* The `anofox_train_forecast` procedure automatically selects the best model based on the 12 built‑in evaluation metrics.
+* Store the trained model artifacts in `models/` (they are DuckDB extensions, not external files).
+
+---
+
+## 7. Unified Forecast Pipeline
+
+1. **Collect Features**: Join `daily_ml_matrix` with macro tables (using MIDAS alignment) and bucket anomaly scores.
+2. **Generate Predictions**:
+   * Run each bucket‑specific model to obtain a forecast series.
+   * Optionally ensemble the bucket forecasts (weighted by recent performance).
+3. **Persist Forecasts**:
+   ```sql
+   CREATE OR REPLACE TABLE forecasts AS
+   SELECT date, symbol, forecast_price, bucket_name FROM (
+       SELECT * FROM anofox_predict('biofuel_policy_forecast'),
+       SELECT * FROM anofox_predict('china_demand_forecast'),
+       ...
+   );
+   ```
+
+---
+
+## 8. Export to MotherDuck (for Vercel UI)
+
+```python
+import duckdb, motherduck
+con = duckdb.connect('db/local_duckdb.db')
+con.execute("SELECT * FROM forecasts").df().to_sql('app_data.forecasts', motherduck.connect(token='YOUR_TOKEN'), if_exists='replace')
+```
+* Only the final forecast table and regime signals are pushed; raw high‑frequency data stays local.
+
+---
+
+## 9. UI Integration (Next.js)
+* Create an API route `/api/forecasts` that runs a lightweight DuckDB query against MotherDuck and returns JSON.
+* Update the dashboard to consume this endpoint and render TradingView‑style gauges (use `tradingview-widget` with custom CSS for pure‑black background, ultra‑thin fonts).
+* Hide the `/quant-admin` page behind a secret route; it will display bucket‑level backtests, SHAP values, and regime diagnostics.
+
+---
+
+## 10. Validation & Backtesting
+* Use the **HFTBacktest** library to replay raw tick data against the generated forecasts.
+* Compare forecast error metrics (MAE, RMSE) per bucket and overall.
+* Verify that anomaly‑score features improve out‑of‑sample performance.
+
+---
+
+## 11. Checklist (for you)
+- [ ] Install DuckDB extensions (`anofox_forecast`, `anofox_tabular`, `anofox_statistics`).
+- [ ] Set up external‑drive directory layout.
+- [ ] Pull 15‑year ZL data via Databento.
+- [ ] Ingest macro & weather series.
+- [ ] Run `anofox_tabular` quality checks and store anomaly scores.
+- [ ] Re‑implement the 276 engineered features as SQL/Polars.
+- [ ] Train bucket‑specific forecasts.
+- [ ] Export final forecasts to MotherDuck.
+- [ ] Update Next.js API & UI (black theme, TradingView gauges).
+- [ ] Run HFTBacktest for validation.
+
+---
+
+**Next Steps**: Let me know which sections you’d like me to flesh out first (e.g., code for the ingestion script, SQL for the feature view, or the Next.js API route). I can also generate the required Python/SQL files directly.

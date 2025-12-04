@@ -67,6 +67,12 @@ else
     echo "   ⚠️  ScrapeCreators key (not stored)"
 fi
 
+if security find-generic-password -s "OPENAI_API_KEY" &> /dev/null; then
+    echo "   ✅ OpenAI key (Keychain)"
+else
+    echo "   ⚠️  OpenAI key (not stored)"
+fi
+
 # GitHub Connection
 echo ""
 echo "6️⃣  GitHub Connection:"
@@ -107,4 +113,3 @@ echo "   1. Add SSH key to GitHub (if not done)"
 echo "   2. Connect Dataform in UI"
 echo "   3. Store API keys: ./scripts/setup/store_api_keys.sh"
 echo "   4. Begin data ingestion"
-

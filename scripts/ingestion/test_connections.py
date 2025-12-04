@@ -76,6 +76,20 @@ def test_fred_key():
         logger.warning(f"⚠️  FRED key check: {e}")
         return False
 
+def test_openai_key():
+    """Test OpenAI API key retrieval"""
+    try:
+        key = get_api_key("OPENAI_API_KEY")
+        if key:
+            logger.info("✅ OpenAI API key found in Keychain")
+            return True
+        else:
+            logger.warning("⚠️  OpenAI API key not found (optional unless using GPT)")
+            return False
+    except Exception as e:
+        logger.warning(f"⚠️  OpenAI key check: {e}")
+        return False
+
 def main():
     """Run all connection tests"""
     logger.info("🔍 Testing CBI-V15 Connections")
@@ -86,6 +100,7 @@ def main():
         "Databento Key": test_databento_key(),
         "ScrapeCreators Key": test_scrapecreators_key(),
         "FRED Key": test_fred_key(),
+        "OpenAI Key": test_openai_key(),
     }
     
     logger.info("")
@@ -107,4 +122,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

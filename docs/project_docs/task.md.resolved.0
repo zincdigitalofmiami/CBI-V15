@@ -1,0 +1,29 @@
+# U.S. Oil Solutions Intelligence Platform
+
+## Phase 1: Prototype (Complete)
+- [x] Initial ZL forecasting prototype
+- [x] Tested concepts and components
+
+## Phase 2: Platform Restructure (In Progress)
+- [ ] **Page Structure**
+    - [ ] Dashboard (Main - Stunner Chart)
+    - [ ] Strategy (Scenario Sliders for Chris)
+    - [ ] Vegas Intel (Kevin's Sales Tool)
+    - [ ] Sentiment (News Flow Intelligence)
+    - [ ] Legislation (Policy Intelligence)
+    - [ ] Admin (Data Management)
+- [ ] **Components**
+    - [x] DashdarkX Theme
+    - [x] Lightweight Charts
+    - [ ] Scenario Sliders
+    - [ ] Big 8 Drivers Gauges
+    - [ ] P10/P50/P90 Bands Visualization
+- [ ] **Branding**
+    - [ ] Update to "U.S. Oil Solutions Intelligence Platform"
+    - [ ] Change language: procurement not trading
+    - [ ] Add user-specific messaging (Chris, Kevin)
+- [ ] **Database & Deployment**
+    - [ ] Structure MotherDuck database
+    - [ ] Deploy to Vercel
+    - [ ] Connect MotherDuck to Vercel
+    - [ ] Configure environment variables
