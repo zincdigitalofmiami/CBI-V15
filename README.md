@@ -205,6 +205,14 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
+## 🙏 Acknowledgments
+
+- [MotherDuck](https://motherduck.com) — Cloud DuckDB
+- [Databento](https://databento.com) — Market data
+- [Vercel](https://vercel.com) — Dashboard hosting
+
+---
+
 ## ⚡ About Zinc Digital
 
 **Institutional Quantitative Architecture & AI Strategy**
