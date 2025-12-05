@@ -1,98 +1,91 @@
 #!/usr/bin/env python3
 """
-Execute MotherDuck Schema Creation
-Runs all DDL scripts in order to create 8 schemas + ~37 tables
+Execute Local DuckDB Schema Creation
+Runs all DDL scripts in order from the definitions directory,
+ensuring correct creation order (schemas, then tables, then indexes).
 """
 import duckdb
-import os
 from pathlib import Path
+import glob
 
-# MotherDuck connection
-MOTHERDUCK_TOKEN = os.getenv('MOTHERDUCK_TOKEN')
-if not MOTHERDUCK_TOKEN:
-    raise ValueError("MOTHERDUCK_TOKEN environment variable not set")
+# Local DuckDB connection
+DB_DIR = Path("data/duckdb")
+DB_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = DB_DIR / "cbi_v15.duckdb"
 
 # Schema SQL files directory
-SCHEMA_DIR = Path("/Volumes/Satechi Hub/CBI-V15/Data/db/schema")
+SCHEMA_DIR = Path("database/definitions")
 
-# Execution order
-SCHEMA_FILES = [
-    "00_motherduck_init.sql",
-    "01_raw_schema.sql",
-    "02_raw_staging_schema.sql",
-    "03_staging_schema.sql",
-    "04_features_schema.sql",
-    "05_training_schema.sql",
-    "06_forecast_schema.sql",
-    "07_reference_schema.sql",
-    "08_signals_schema.sql",
-    "09_ops_schema.sql",
-]
-
-def execute_schema_file(conn, filepath: Path):
-    """Execute a SQL schema file"""
+def execute_statements(conn, statements, statement_type):
+    """Execute a list of SQL statements of a given type."""
     print(f"\n{'='*60}")
-    print(f"Executing: {filepath.name}")
+    print(f"Executing {len(statements)} {statement_type} statements...")
     print(f"{'='*60}")
     
-    sql = filepath.read_text()
-    
-    try:
-        # Split by semicolon and execute each statement
-        statements = [s.strip() for s in sql.split(';') if s.strip() and not s.strip().startswith('--')]
-        
-        for i, stmt in enumerate(statements, 1):
-            if stmt:
-                print(f"  [{i}/{len(statements)}] {stmt[:80]}...")
-                conn.execute(stmt)
-        
-        print(f"✅ {filepath.name} completed successfully")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Error in {filepath.name}: {e}")
-        return False
+    success_count = 0
+    for i, stmt in enumerate(statements, 1):
+        # Preview the first line of the statement
+        preview = stmt.strip().split('\n')[0][:80]
+        try:
+            print(f"  [{i}/{len(statements)}] {preview}...")
+            conn.execute(stmt)
+            success_count += 1
+        except Exception as e:
+            print(f"  ❌ FAILED: {preview}")
+            print(f"     Error: {e}")
+
+    print(f"✅ Executed {success_count}/{len(statements)} {statement_type} statements successfully.")
+    return success_count == len(statements)
 
 def main():
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
-║          MotherDuck Schema Initialization                    ║
-║          usoil_intelligence Database                         ║
+║          Local DuckDB Schema Initialization                  ║
+║          Database: {DB_PATH}                                 ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
     
-    # Connect to MotherDuck
-    print("Connecting to MotherDuck...")
-    conn = duckdb.connect(f'md:usoil_intelligence?motherduck_token={MOTHERDUCK_TOKEN}')
-    print("✅ Connected to MotherDuck\n")
+    # Connect to Local DuckDB
+    print(f"Connecting to local DuckDB at {DB_PATH}...")
+    conn = duckdb.connect(str(DB_PATH), config={'allow_unsigned_extensions': 'true'})
+    print("✅ Connected to Local DuckDB")
     
-    # Execute each schema file
-    results = {}
-    for filename in SCHEMA_FILES:
-        filepath = SCHEMA_DIR / filename
-        
-        if not filepath.exists():
-            print(f"⚠️  File not found: {filename}")
-            results[filename] = False
-            continue
-        
-        results[filename] = execute_schema_file(conn, filepath)
+    # Find all SQL files and sort them to ensure `00_init` runs first
+    sql_files = sorted(glob.glob(f"{SCHEMA_DIR}/**/*.sql", recursive=True))
     
-    # Summary
-    print(f"\n{'='*60}")
-    print("EXECUTION SUMMARY")
-    print(f"{'='*60}")
+    create_schema_statements = []
+    create_table_statements = []
+    other_statements = []
     
-    for filename, success in results.items():
-        status = "✅ SUCCESS" if success else "❌ FAILED"
-        print(f"{status:12} - {filename}")
+    # Separate statements into three categories for ordered execution
+    for filepath_str in sql_files:
+        filepath = Path(filepath_str)
+        sql = filepath.read_text()
+
+        # Split file content into individual statements
+        statements = [s.strip() for s in sql.split(';') if s.strip()]
+
+        for stmt in statements:
+            # Clean statement by removing comments for accurate type detection
+            clean_stmt = "\n".join([line for line in stmt.split('\n') if not line.strip().startswith('--')]).strip()
+
+            if not clean_stmt:
+                continue
+
+            # Categorize the original statement (with comments)
+            if clean_stmt.upper().startswith("CREATE SCHEMA"):
+                create_schema_statements.append(stmt)
+            elif clean_stmt.upper().startswith("CREATE TABLE"):
+                create_table_statements.append(stmt)
+            else:
+                other_statements.append(stmt)
     
-    total = len(results)
-    passed = sum(results.values())
+    # Execute statements in the correct order
+    execute_statements(conn, create_schema_statements, "CREATE SCHEMA")
+    execute_statements(conn, create_table_statements, "CREATE TABLE")
+    execute_statements(conn, other_statements, "other")
     
-    print(f"\n{passed}/{total} schema files executed successfully")
-    
-    # Verify schemas created
+    # --- VERIFICATION ---
     print(f"\n{'='*60}")
     print("VERIFICATION")
     print(f"{'='*60}")
@@ -102,18 +95,17 @@ def main():
     for schema in schemas:
         print(f"   - {schema[0]}")
     
-    # Count tables per schema
     print(f"\n✅ Tables created:")
-    for schema in schemas:
-        if schema[0] in ['information_schema', 'pg_catalog', 'main']:
-            continue
-        table_count = conn.execute(f"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{schema[0]}'").fetchone()[0]
-        print(f"   - {schema[0]}: {table_count} tables")
+    for schema_tuple in schemas:
+        schema_name = schema_tuple[0]
+        if schema_name not in ['information_schema', 'pg_catalog', 'main']:
+            table_count_result = conn.execute(f"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{schema_name}'").fetchone()
+            if table_count_result:
+                print(f"   - {schema_name}: {table_count_result[0]} tables")
     
     print(f"\n{'='*60}")
-    print("✅ MotherDuck schema initialization complete")
+    print("✅ Local DuckDB schema initialization complete")
     print(f"{'='*60}\n")
 
 if __name__ == "__main__":
     main()
-
