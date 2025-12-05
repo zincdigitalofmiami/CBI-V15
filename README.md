@@ -82,7 +82,7 @@ CBI-V15/
 │   └── components/       # Visualizations (TradingView, Nivo)
 │
 ├── database/             # 🗄️ SQL Schemas & Macros
-│   ├── schema/           # 00-08 DDL files
+│   ├── definitions/      # 00-08 DDL files
 │   └── macros/           # Feature SQL macros
 │
 ├── src/                  # 🐍 Python Source
