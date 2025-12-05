@@ -23,14 +23,15 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 
 ## ✨ Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 🧠 **TSci Agents** | AI-powered experiment planning, model selection, and QA |
-| ⚡ **AnoFox Engine** | SQL-native feature engineering with DuckDB macros |
-| 📊 **Big 8 Drivers** | Crush, China, FX, Fed, Tariff, Biofuel, Energy, Vol |
-| 🦆 **MotherDuck** | Cloud data warehouse with local DuckDB mirroring |
-| 📈 **Multi-Horizon** | Forecasts at 1W, 1M, 3M, 6M, 12M horizons |
-| 🎛️ **Regime-Aware** | Adaptive models based on market conditions |
+| Feature                | Description                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
+| 🧠 **TSci Agents**     | AI-powered experiment planning, model selection, and QA           |
+| ⚡ **AnoFox Engine**   | SQL-native feature engineering with DuckDB macros                 |
+| 📊 **Big 8 Drivers**   | Crush, China, FX, Fed, Tariff, Biofuel, Energy, Vol               |
+| 🦆 **MotherDuck**      | Cloud data warehouse with local DuckDB mirroring                  |
+| 📉 **TradingView**     | Live ZL charts, Forex Heatmap, and Tech Gauges (Dark Mode)        |
+| 🔮 **Crystal Ball AI** | "Driver of Drivers" analysis for Lobbying, SAF, and Weather risks |
+| 🎛️ **Regime-Aware**    | Adaptive models based on market conditions                        |
 
 ---
 
@@ -48,7 +49,7 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
-│               AnoFox Engine (src/anofox/)                │
+│               AnoFox Engine (src/engines/anofox/)        │
 │  • build_features.py   • build_training.py              │
 │  • build_forecasts.py  • anofox_bridge.py               │
 └──────────────────────┬───────────────────────────────────┘
@@ -59,13 +60,14 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
-│               TSci Agents (src/tsci/)                    │
+│               TSci Agents (src/models/tsci/)             │
 │  • planner.py   • curator.py   • forecaster.py          │
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
 │               Next.js Dashboard (dashboard/)             │
-│  • /forecasts   • /quant-admin   • /sentiment           │
+│  • /forecasts   • /neural-quant  • /sentiment           │
+│  • /market-overview  • /quant-admin                     │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -77,30 +79,23 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 CBI-V15/
 ├── dashboard/            # 🌐 Next.js Dashboard
 │   ├── app/              # App Router pages
-│   └── components/       # React components
+│   └── components/       # Visualizations (TradingView, Nivo)
 │
 ├── database/             # 🗄️ SQL Schemas & Macros
 │   ├── schema/           # 00-08 DDL files
 │   └── macros/           # Feature SQL macros
 │
 ├── src/                  # 🐍 Python Source
-│   ├── anofox/           # AnoFox engine
-│   ├── engines/          # Multi-engine registry
+│   ├── engines/          # AnoFox engine
+│   ├── models/           # TSci agents (Planner, Curator, Forecaster)
 │   ├── ingestion/        # Data ingestion
-│   │   ├── databento/    # Market data
-│   │   ├── scrape_creator/ # News data
-│   │   ├── fred/         # Economic data
-│   │   └── eia/          # Biofuels data
-│   ├── training/         # Model training
-│   └── tsci/             # TSci agents
+│   └── training/         # Model training
 │
 ├── docs/                 # 📚 Documentation
 │   ├── architecture/     # System design
 │   └── project_docs/     # Migrated docs
 │
 ├── scripts/              # 🔧 Utility Scripts
-│   ├── setup/            # Environment setup
-│   └── ingestion/        # Ingestion utilities
 │
 └── config/               # ⚙️ Configuration
     └── requirements/     # Python dependencies
@@ -160,14 +155,14 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## 🔑 Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `MOTHERDUCK_DB` | MotherDuck database name | ✅ |
-| `MOTHERDUCK_TOKEN` | MotherDuck auth token | ✅ |
-| `SCRAPECREATOR_API_KEY` | ScrapeCreator API key | ✅ |
-| `FRED_API_KEY` | FRED API key | ✅ |
-| `DATABENTO_API_KEY` | Databento API key | ✅ |
-| `EIA_API_KEY` | EIA API key | Optional |
+| Variable                | Description              | Required |
+| ----------------------- | ------------------------ | -------- |
+| `MOTHERDUCK_DB`         | MotherDuck database name | ✅       |
+| `MOTHERDUCK_TOKEN`      | MotherDuck auth token    | ✅       |
+| `SCRAPECREATOR_API_KEY` | ScrapeCreator API key    | ✅       |
+| `FRED_API_KEY`          | FRED API key             | ✅       |
+| `DATABENTO_API_KEY`     | Databento API key        | ✅       |
+| `EIA_API_KEY`           | EIA API key              | Optional |
 
 ---
 
@@ -192,8 +187,8 @@ python src/ingestion/fred/collect_fred_fx.py
 ### Build Features
 
 ```bash
-python src/anofox/build_features.py
-python src/anofox/build_training.py
+python src/engines/anofox/build_features.py
+python src/engines/anofox/build_training.py
 ```
 
 ### Run Dashboard Locally
@@ -210,8 +205,8 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+<br />
 
-- [MotherDuck](https://motherduck.com) — Cloud DuckDB
-- [Databento](https://databento.com) — Market data
-- [Vercel](https://vercel.com) — Dashboard hosting
+<div align="center">
+  <p>Made with ❤️ by <a href="https://zinc.digital">Zinc Digital</a></p>
+</div>
