@@ -205,8 +205,18 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
+## ⚡ About Zinc Digital
+
+**Institutional Quantitative Architecture & AI Strategy**
+
+Building high-performance trading infrastructure and agentic forecasting engines involved in the global markets.
+
+🌐 **[www.zincdigital.co](https://www.zincdigital.co)**
+
+> _14 hour days, all hustle. Straight outta Miami._ 🌴
+
 <br />
 
 <div align="center">
-  <p>Made with ❤️ by <a href="https://zinc.digital">Zinc Digital</a></p>
+  <p>Made with ❤️ by <a href="https://www.zincdigital.co">Zinc Digital</a></p>
 </div>
