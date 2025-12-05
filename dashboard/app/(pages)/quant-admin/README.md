@@ -1,0 +1,101 @@
+# Quant Admin / TSci + AnoFox (`/quant-admin`)
+
+## Purpose
+Internal quant cockpit for:
+- Pipeline health (ingestion + feature + training).
+- Feature and training matrix completeness.
+- Model registry and experiment metrics.
+- TSci runs and QA checks.
+
+## Data Sources (MotherDuck)
+- `ops.ingestion_status`, `ops.pipeline_metrics`
+- `features.daily_ml_matrix_zl_v15`
+- `training.daily_ml_matrix_zl_v15`
+- `reference.feature_catalog`, `reference.model_registry`
+- `tsci.jobs`, `tsci.runs`, `tsci.qa_checks`
+
+## Key Components
+
+### 1. Pipeline Health
+- Ingestion lag (hours since last successful run)
+- Error counts by source
+- Last successful run timestamp
+- Data freshness by table
+
+### 2. Matrix Status
+- Row counts by date
+- Missing dates (gaps in coverage)
+- Feature coverage (% of expected features populated)
+- Training/validation/test split distribution
+
+### 3. Model Registry
+- Active models by horizon
+- Metrics from `metrics_json`:
+  - MAE, RMSE, R²
+  - Sharpe ratio
+  - Hit rate
+- Champion vs challenger comparison
+
+### 4. TSci Runs
+- Table of runs with filters
+- Status (running, completed, failed)
+- Links to logs and artifacts
+- Narratives and recommendations
+
+## Schema Reference
+
+### `ops.ingestion_status`
+```sql
+CREATE TABLE ops.ingestion_status (
+  source TEXT,
+  last_run TIMESTAMP,
+  status TEXT, -- 'success', 'failed', 'running'
+  rows_ingested BIGINT,
+  error_message TEXT
+);
+```
+
+### `reference.model_registry`
+```sql
+CREATE TABLE reference.model_registry (
+  model_id TEXT PRIMARY KEY,
+  horizon TEXT, -- '1W', '1M', '3M', '6M'
+  model_type TEXT, -- 'chronos', 'autogluon', 'ensemble'
+  status TEXT, -- 'champion', 'challenger', 'retired'
+  metrics_json JSON,
+  created_at TIMESTAMP
+);
+```
+
+### `tsci.runs`
+```sql
+CREATE TABLE tsci.runs (
+  run_id TEXT PRIMARY KEY,
+  job_id TEXT,
+  status TEXT,
+  metrics_json JSON,
+  narrative TEXT,
+  started_at TIMESTAMP,
+  completed_at TIMESTAMP
+);
+```
+
+## Metrics Display
+
+### Model Performance
+- **MAE** (Mean Absolute Error) - Lower is better
+- **RMSE** (Root Mean Squared Error) - Lower is better
+- **R²** (Coefficient of Determination) - Higher is better
+- **Sharpe** - Risk-adjusted returns
+- **Hit Rate** - % of directional calls correct
+
+### Pipeline Health
+- **Ingestion Lag** - Hours since last successful run
+- **Error Rate** - % of failed ingestion attempts
+- **Data Freshness** - Latest date in each table
+
+## Notes
+- This route should **not appear in the main nav**.
+- Authentication/authorization required (dev/ops only).
+- This is the primary consumer of TSci report artifacts.
+- No business-friendly simplification needed; this is the cockpit.

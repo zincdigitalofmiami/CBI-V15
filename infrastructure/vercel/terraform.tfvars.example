@@ -1,0 +1,8 @@
+# Terraform Variables Example
+# Copy to terraform.tfvars and fill in your values
+
+# MotherDuck service account token
+motherduck_token = "your_motherduck_token_here"
+
+# Optional: Databento API key
+databento_api_key = "your_databento_key_here"

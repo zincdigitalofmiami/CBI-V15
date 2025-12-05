@@ -17,7 +17,7 @@ env/
 !package-lock.json
 
 # Models
-models/
+/models/
 *.pkl
 *.h5
 *.pt
