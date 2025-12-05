@@ -1,0 +1,17 @@
+{
+  "name": "cbi-v15-dataform",
+  "version": "1.0.0",
+  "description": "Dataform ETL for CBI-V15",
+  "scripts": {
+    "compile": "dataform compile",
+    "test": "dataform test",
+    "run": "dataform run"
+  },
+  "dependencies": {
+    "@dataform/core": "^3.0.38"
+  },
+  "devDependencies": {
+    "@dataform/cli": "^3.0.38"
+  }
+}
+

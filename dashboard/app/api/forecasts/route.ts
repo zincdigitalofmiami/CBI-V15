@@ -1,36 +1,26 @@
-import { BigQuery } from '@google-cloud/bigquery';
+import { queryMotherDuck } from '@/lib/md';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const bigquery = new BigQuery();
+    const rows = await queryMotherDuck(`
+      SELECT *
+      FROM forecasts.zl_v15_1w
+      ORDER BY as_of_date DESC
+      LIMIT 50
+    `);
 
-    const query = `
-      SELECT 
-        date,
-        predicted_price,
-        symbol,
-        model_type
-      FROM \`cbi-v15.api.vw_latest_forecast\`
-      WHERE symbol = 'ZL'
-      ORDER BY date DESC
-      LIMIT 90
-    `;
-
-    const [rows] = await bigquery.query(query);
-
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       data: rows,
-      count: rows.length,
+      count: Array.isArray(rows) ? rows.length : 0,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error('BigQuery API error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
+    console.error('Database Error:', error);
+    return NextResponse.json({
+      success: false,
+      error: error.message
     }, { status: 500 });
   }
 }
-

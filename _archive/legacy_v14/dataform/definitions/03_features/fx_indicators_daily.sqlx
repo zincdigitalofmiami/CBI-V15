@@ -1,0 +1,201 @@
+-- FX Indicators - Institutional Grade
+-- GS Quant, JPM, Hedge Fund aligned
+-- Focus: ZL-BRL, ZL-DXY relationships
+
+config {
+  type: "table",
+  schema: "features",
+  name: "fx_indicators_daily",
+  description: "FX indicators for commodity-currency relationships (ZL-BRL, ZL-DXY)",
+  bigquery: {
+    partitionBy: "DATE_TRUNC(date, MONTH)",
+    clusterBy: ["currency_pair", "date"]
+  }
+}
+
+-- Pivot all market data by date (ZL, BRL/6L, DXY/DX) - JOIN-free pattern
+WITH base_fx AS (
+  SELECT
+    date,
+    symbol,
+    close,
+    LN(close / NULLIF(LAG(close) OVER (PARTITION BY symbol ORDER BY date), 0)) AS ret
+  FROM ${ref("market_daily")}
+  WHERE symbol IN ('ZL', '6L', 'DX')
+    AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
+),
+market_pivoted AS (
+  SELECT 
+    date,
+    MAX(IF(symbol = 'ZL', close, NULL)) AS zl_price,
+    MAX(IF(symbol = '6L', close, NULL)) AS brl_rate,
+    MAX(IF(symbol = 'DX', close, NULL)) AS dxy_level,
+    MAX(IF(symbol = 'ZL', ret, NULL)) AS zl_return,
+    MAX(IF(symbol = '6L', ret, NULL)) AS brl_return,
+    MAX(IF(symbol = 'DX', ret, NULL)) AS dxy_return
+  FROM base_fx
+  GROUP BY date
+),
+
+rolling_stats AS (
+  SELECT 
+    date,
+    
+    -- BRL Data
+    brl_rate,
+    brl_return,
+    
+    -- DXY Data
+    dxy_level,
+    dxy_return,
+    
+    -- ZL Data
+    zl_price,
+    zl_return,
+    
+    -- BRL Momentum (Multi-Horizon) - using window functions
+    calculate_currency_momentum(
+      ARRAY_AGG(brl_rate) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+      ),
+      21
+    ) AS brl_momentum_21d,
+    
+    calculate_currency_momentum(
+      ARRAY_AGG(brl_rate) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 62 PRECEDING AND CURRENT ROW
+      ),
+      63
+    ) AS brl_momentum_63d,
+    
+    calculate_currency_momentum(
+      ARRAY_AGG(brl_rate) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 251 PRECEDING AND CURRENT ROW
+      ),
+      252
+    ) AS brl_momentum_252d,
+    
+    -- DXY Momentum (Multi-Horizon)
+    calculate_currency_momentum(
+      ARRAY_AGG(dxy_level) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+      ),
+      21
+    ) AS dxy_momentum_21d,
+    
+    calculate_currency_momentum(
+      ARRAY_AGG(dxy_level) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 62 PRECEDING AND CURRENT ROW
+      ),
+      63
+    ) AS dxy_momentum_63d,
+    
+    calculate_currency_momentum(
+      ARRAY_AGG(dxy_level) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 251 PRECEDING AND CURRENT ROW
+      ),
+      252
+    ) AS dxy_momentum_252d,
+    
+    -- BRL Volatility (Multi-Horizon)
+    calculate_currency_volatility(
+      ARRAY_AGG(brl_return) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+      ),
+      TRUE
+    ) AS brl_volatility_21d,
+    
+    calculate_currency_volatility(
+      ARRAY_AGG(brl_return) OVER (
+        ORDER BY date 
+        ROWS BETWEEN 62 PRECEDING AND CURRENT ROW
+      ),
+      TRUE
+    ) AS brl_volatility_63d,
+    
+    -- ZL-BRL Correlation (Multi-Horizon)
+    CORR(zl_return, brl_return) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+    ) AS corr_zl_brl_30d,
+    
+    CORR(zl_return, brl_return) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
+    ) AS corr_zl_brl_60d,
+    
+    CORR(zl_return, brl_return) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 89 PRECEDING AND CURRENT ROW
+    ) AS corr_zl_brl_90d,
+    
+    -- ZL-DXY Correlation (Multi-Horizon)
+    CORR(zl_return, dxy_return) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+    ) AS corr_zl_dxy_30d,
+    
+    CORR(zl_return, dxy_return) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
+    ) AS corr_zl_dxy_60d,
+    
+    CORR(zl_return, dxy_return) OVER (
+      ORDER BY date 
+      ROWS BETWEEN 89 PRECEDING AND CURRENT ROW
+    ) AS corr_zl_dxy_90d,
+    
+    -- Terms of Trade (ZL / BRL)
+    CASE
+      WHEN brl_rate = 0 THEN NULL
+      ELSE zl_price / brl_rate
+    END AS terms_of_trade_zl_brl
+    
+  FROM market_pivoted
+  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
+)
+
+SELECT 
+  date,
+  'ZL-BRL' AS currency_pair,
+  
+  -- BRL Momentum
+  ROUND(brl_momentum_21d, 5) AS brl_momentum_21d,
+  ROUND(brl_momentum_63d, 5) AS brl_momentum_63d,
+  ROUND(brl_momentum_252d, 5) AS brl_momentum_252d,
+  
+  -- BRL Volatility
+  ROUND(brl_volatility_21d, 4) AS brl_volatility_21d,
+  ROUND(brl_volatility_63d, 4) AS brl_volatility_63d,
+  
+  -- DXY Momentum
+  ROUND(dxy_momentum_21d, 5) AS dxy_momentum_21d,
+  ROUND(dxy_momentum_63d, 5) AS dxy_momentum_63d,
+  ROUND(dxy_momentum_252d, 5) AS dxy_momentum_252d,
+  
+  -- Correlations
+  ROUND(corr_zl_brl_30d, 4) AS corr_zl_brl_30d,
+  ROUND(corr_zl_brl_60d, 4) AS corr_zl_brl_60d,
+  ROUND(corr_zl_brl_90d, 4) AS corr_zl_brl_90d,
+  
+  ROUND(corr_zl_dxy_30d, 4) AS corr_zl_dxy_30d,
+  ROUND(corr_zl_dxy_60d, 4) AS corr_zl_dxy_60d,
+  ROUND(corr_zl_dxy_90d, 4) AS corr_zl_dxy_90d,
+  
+  -- Terms of Trade
+  ROUND(terms_of_trade_zl_brl, 4) AS terms_of_trade_zl_brl,
+  
+  -- Correlation Regimes
+  classify_correlation_regime(corr_zl_brl_60d) AS corr_regime_zl_brl,
+  classify_correlation_regime(corr_zl_dxy_60d) AS corr_regime_zl_dxy
+  
+FROM rolling_stats
+WHERE date IS NOT NULL
+ORDER BY date

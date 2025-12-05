@@ -1,0 +1,388 @@
+-- BigQuery Skeleton Structure - No Joins
+-- All tables partitioned by date, clustered by symbol
+-- This is the foundation structure before any joins
+
+-- ============================================================================
+-- RAW LAYER (01_raw)
+-- ============================================================================
+
+-- Market Data (Databento)
+config {
+  type: "table",
+  schema: "raw",
+  name: "databento_futures_ohlcv_1d",
+  description: "Daily OHLCV from Databento GLBX.MDP3",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("databento_daily")} WHERE FALSE; -- Skeleton only
+
+-- FRED Macro Data
+config {
+  type: "table",
+  schema: "raw",
+  name: "fred_economic",
+  description: "FRED economic indicators (55-60 series)",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("fred_macro")} WHERE FALSE; -- Skeleton only
+
+-- USDA Data
+config {
+  type: "table",
+  schema: "raw",
+  name: "usda_reports",
+  description: "USDA reports (WASDE, crop progress, exports)",
+  bigquery: {
+    partitionBy: "DATE(report_date)"
+  }
+}
+SELECT * FROM ${ref("usda_comprehensive")} WHERE FALSE; -- Skeleton only
+
+-- CFTC COT Data
+config {
+  type: "table",
+  schema: "raw",
+  name: "cftc_cot",
+  description: "CFTC Commitments of Traders positions",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("cftc_cot")} WHERE FALSE; -- Skeleton only
+
+-- EIA Biofuels Data
+config {
+  type: "table",
+  schema: "raw",
+  name: "eia_biofuels",
+  description: "EIA biofuels data (RIN prices, biodiesel production)",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("eia_biofuels")} WHERE FALSE; -- Skeleton only
+
+-- Weather Data
+config {
+  type: "table",
+  schema: "raw",
+  name: "weather_noaa",
+  description: "NOAA weather station data",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("noaa_weather")} WHERE FALSE; -- Skeleton only
+
+-- ScrapeCreators Data
+config {
+  type: "table",
+  schema: "raw",
+  name: "scrapecreators_trump",
+  description: "Trump policy intelligence from ScrapeCreators",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("scrapecreators_trump")} WHERE FALSE; -- Skeleton only
+
+-- ============================================================================
+-- STAGING LAYER (02_staging)
+-- ============================================================================
+
+-- Market Daily (Cleaned)
+config {
+  type: "table",
+  schema: "staging",
+  name: "market_daily",
+  description: "Cleaned daily OHLCV with forward-fill",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("market_daily")} WHERE FALSE; -- Skeleton only
+
+-- FRED Macro Clean
+config {
+  type: "table",
+  schema: "staging",
+  name: "fred_macro_clean",
+  description: "FRED series with forward-fill, daily interpolation",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("fred_macro_clean")} WHERE FALSE; -- Skeleton only
+
+-- USDA Reports Clean
+config {
+  type: "table",
+  schema: "staging",
+  name: "usda_reports_clean",
+  description: "Cleaned USDA reports",
+  bigquery: {
+    partitionBy: "DATE(report_date)"
+  }
+}
+SELECT * FROM ${ref("usda_reports_clean")} WHERE FALSE; -- Skeleton only
+
+-- CFTC Positions
+config {
+  type: "table",
+  schema: "staging",
+  name: "cftc_positions",
+  description: "CFTC COT positions by category",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("cftc_positions")} WHERE FALSE; -- Skeleton only
+
+-- EIA Biofuels Clean
+config {
+  type: "table",
+  schema: "staging",
+  name: "eia_biofuels_clean",
+  description: "Cleaned EIA biofuels data",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("eia_biofuels_clean")} WHERE FALSE; -- Skeleton only
+
+-- Weather Aggregated
+config {
+  type: "table",
+  schema: "staging",
+  name: "weather_regions_aggregated",
+  description: "Weather data aggregated by region",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("weather_regions_aggregated")} WHERE FALSE; -- Skeleton only
+
+-- Trump Policy Intelligence
+config {
+  type: "table",
+  schema: "staging",
+  name: "trump_policy_intelligence",
+  description: "Trump policy events and ZL impact scores",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("trump_policy_intelligence")} WHERE FALSE; -- Skeleton only
+
+-- ============================================================================
+-- FEATURES LAYER (03_features)
+-- ============================================================================
+
+-- Technical Indicators
+config {
+  type: "table",
+  schema: "features",
+  name: "technical_indicators_us_oil_solutions",
+  description: "Institutional-grade technical indicators (19 features)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("technical_indicators_us_oil_solutions")} WHERE FALSE; -- Skeleton only
+
+-- FX Indicators
+config {
+  type: "table",
+  schema: "features",
+  name: "fx_indicators_daily",
+  description: "FX indicators for commodity-currency relationships (16 features)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["currency_pair"]
+  }
+}
+SELECT * FROM ${ref("fx_indicators_daily")} WHERE FALSE; -- Skeleton only
+
+-- Fundamental Spreads
+config {
+  type: "table",
+  schema: "features",
+  name: "fundamental_spreads_daily",
+  description: "Synthetic fundamental spreads (5 features)",
+  bigquery: {
+    partitionBy: "DATE(date)"
+  }
+}
+SELECT * FROM ${ref("fundamental_spreads_daily")} WHERE FALSE; -- Skeleton only
+
+-- Pair Correlations
+config {
+  type: "table",
+  schema: "features",
+  name: "pair_correlations_daily",
+  description: "All pairwise correlations across all symbols (112 features)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol_pair"]
+  }
+}
+SELECT * FROM ${ref("pair_correlations_daily")} WHERE FALSE; -- Skeleton only
+
+-- Cross-Asset Betas
+config {
+  type: "table",
+  schema: "features",
+  name: "cross_asset_betas_daily",
+  description: "ZL beta vs all other assets (28 features)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["asset"]
+  }
+}
+SELECT * FROM ${ref("cross_asset_betas_daily")} WHERE FALSE; -- Skeleton only
+
+-- Lagged Features
+config {
+  type: "table",
+  schema: "features",
+  name: "lagged_features_daily",
+  description: "Lagged prices, returns, and indicators (96 features)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("lagged_features_daily")} WHERE FALSE; -- Skeleton only
+
+-- Daily ML Matrix (Master Join Table)
+config {
+  type: "table",
+  schema: "features",
+  name: "daily_ml_matrix",
+  description: "Master feature table with all features joined (276 features)",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("daily_ml_matrix")} WHERE FALSE; -- Skeleton only
+
+-- ============================================================================
+-- TRAINING LAYER (04_training)
+-- ============================================================================
+
+-- ZL Training 1w
+config {
+  type: "table",
+  schema: "training",
+  name: "zl_training_1w",
+  description: "Training data for 1w horizon with targets",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("zl_training_1w")} WHERE FALSE; -- Skeleton only
+
+-- ZL Training 1m
+config {
+  type: "table",
+  schema: "training",
+  name: "zl_training_1m",
+  description: "Training data for 1m horizon with targets",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("zl_training_1m")} WHERE FALSE; -- Skeleton only
+
+-- ZL Training 3m
+config {
+  type: "table",
+  schema: "training",
+  name: "zl_training_3m",
+  description: "Training data for 3m horizon with targets",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("zl_training_3m")} WHERE FALSE; -- Skeleton only
+
+-- ZL Training 6m
+config {
+  type: "table",
+  schema: "training",
+  name: "zl_training_6m",
+  description: "Training data for 6m horizon with targets",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+SELECT * FROM ${ref("zl_training_6m")} WHERE FALSE; -- Skeleton only
+
+-- ============================================================================
+-- FORECASTS LAYER (05_forecasts)
+-- ============================================================================
+
+-- ZL Predictions 1w
+config {
+  type: "table",
+  schema: "forecasts",
+  name: "zl_predictions_1w",
+  description: "Model predictions for 1w horizon",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["model_type"]
+  }
+}
+SELECT * FROM ${ref("zl_predictions_1w")} WHERE FALSE; -- Skeleton only
+
+-- ZL Predictions 1m
+config {
+  type: "table",
+  schema: "forecasts",
+  name: "zl_predictions_1m",
+  description: "Model predictions for 1m horizon",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["model_type"]
+  }
+}
+SELECT * FROM ${ref("zl_predictions_1m")} WHERE FALSE; -- Skeleton only
+
+-- ZL Predictions 3m
+config {
+  type: "table",
+  schema: "forecasts",
+  name: "zl_predictions_3m",
+  description: "Model predictions for 3m horizon",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["model_type"]
+  }
+}
+SELECT * FROM ${ref("zl_predictions_3m")} WHERE FALSE; -- Skeleton only
+
+-- ZL Predictions 6m
+config {
+  type: "table",
+  schema: "forecasts",
+  name: "zl_predictions_6m",
+  description: "Model predictions for 6m horizon",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["model_type"]
+  }
+}
+SELECT * FROM ${ref("zl_predictions_6m")} WHERE FALSE; -- Skeleton only
+

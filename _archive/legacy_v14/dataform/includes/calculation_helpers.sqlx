@@ -1,0 +1,48 @@
+-- Calculation helpers for complex feature engineering
+-- Crush margin, correlations, technical indicators
+
+-- Crush margin calculation
+CREATE TEMP FUNCTION calculate_crush_margin(
+  zs_price FLOAT64,
+  zm_price FLOAT64,
+  zl_price FLOAT64,
+  conversion_factor FLOAT64
+)
+RETURNS FLOAT64 AS (
+  -- Gross margin: (ZS * 60 + ZM * 48) / 100 - ZL
+  -- Conversion factor accounts for units (bushels to lbs)
+  (zs_price * 60 + zm_price * 48) / 100 - (zl_price * conversion_factor)
+);
+
+-- Rolling correlation helper
+CREATE TEMP FUNCTION rolling_correlation(
+  x FLOAT64,
+  y FLOAT64,
+  window_days INT64
+)
+RETURNS FLOAT64 AS (
+  CORR(x, y) OVER (
+    ORDER BY date
+    ROWS BETWEEN window_days PRECEDING AND CURRENT ROW
+  )
+);
+
+-- Rolling beta helper
+CREATE TEMP FUNCTION rolling_beta(
+  asset_return FLOAT64,
+  market_return FLOAT64,
+  window_days INT64
+)
+RETURNS FLOAT64 AS (
+  SAFE_DIVIDE(
+    COVAR_SAMP(asset_return, market_return) OVER (
+      ORDER BY date
+      ROWS BETWEEN window_days PRECEDING AND CURRENT ROW
+    ),
+    VAR_SAMP(market_return) OVER (
+      ORDER BY date
+      ROWS BETWEEN window_days PRECEDING AND CURRENT ROW
+    )
+  )
+);
+

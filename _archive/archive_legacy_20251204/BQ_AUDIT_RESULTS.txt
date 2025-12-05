@@ -1,0 +1,54 @@
+================================================================================
+BIGQUERY DATA AUDIT - CBI-V15
+================================================================================
+
+📊 DATASETS IN cbi-v15:
+--------------------------------------------------------------------------------
+  Error: Command 'bq ls --project_id=cbi-v15 --format=prettyjson' timed out after 30 seconds
+
+================================================================================
+TABLES BY DATASET:
+================================================================================
+
+📁 Dataset: external
+--------------------------------------------------------------------------------
+  Error accessing dataset: Command 'bq ls --project_id=cbi-v15 --dataset_id=external --max_results=100' timed out after 30 seconds
+
+📁 Dataset: raw
+--------------------------------------------------------------------------------
+  Error accessing dataset: Command 'bq ls --project_id=cbi-v15 --dataset_id=raw --max_results=100' timed out after 30 seconds
+
+📁 Dataset: staging
+--------------------------------------------------------------------------------
+  Error accessing dataset: Command 'bq ls --project_id=cbi-v15 --dataset_id=staging --max_results=100' timed out after 30 seconds
+
+📁 Dataset: models
+--------------------------------------------------------------------------------
+  Error accessing dataset: Command 'bq ls --project_id=cbi-v15 --dataset_id=models --max_results=100' timed out after 30 seconds
+
+📁 Dataset: neural
+--------------------------------------------------------------------------------
+  Error accessing dataset: Command 'bq ls --project_id=cbi-v15 --dataset_id=neural --max_results=100' timed out after 30 seconds
+
+📁 Dataset: forecasting_data_warehouse
+--------------------------------------------------------------------------------
+  Error accessing dataset: Command 'bq ls --project_id=cbi-v15 --dataset_id=forecasting_data_warehouse --max_results=100' timed out after 30 seconds
+
+================================================================================
+KEY VENDOR TABLES CHECK:
+================================================================================
+
+🔍 Databento:
+  No tables found for Databento
+
+🔍 FRED:
+  No tables found for FRED
+
+🔍 ScrapeCreators:
+  No tables found for ScrapeCreators
+
+🔍 USDA:
+  No tables found for USDA
+
+🔍 CFTC:
+  No tables found for CFTC

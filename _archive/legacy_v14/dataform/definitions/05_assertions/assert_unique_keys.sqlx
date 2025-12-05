@@ -1,0 +1,16 @@
+config {
+  type: "assertion",
+  schema: "reference",
+  tags: ["data_quality", "critical"]
+}
+
+-- Assert that (date, symbol) is unique in market_daily
+SELECT 1
+WHERE (
+  SELECT COUNT(*)
+  FROM ${ref("market_daily")}
+) != (
+  SELECT COUNT(DISTINCT CONCAT(CAST(date AS STRING), symbol))
+  FROM ${ref("market_daily")}
+)
+

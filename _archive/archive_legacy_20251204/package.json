@@ -1,0 +1,13 @@
+{
+  "name": "cbi-v15",
+  "version": "1.0.0",
+  "description": "CBI-V15: Soybean Oil Forecasting Platform",
+  "private": true,
+  "scripts": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "yahoo-finance2": "^3.10.2"
+  }
+}

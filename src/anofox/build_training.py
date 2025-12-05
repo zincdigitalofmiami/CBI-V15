@@ -6,6 +6,7 @@ Adds targets and train/val/test splits to feature matrix.
 
 import duckdb
 import os
+from pathlib import Path
 
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
 
@@ -15,16 +16,34 @@ def build_training(con: duckdb.DuckDBPyConnection = None) -> None:
     Build training.daily_ml_matrix_zl_v15 from features + targets.
     """
     if con is None:
-        con = duckdb.connect(f"md:{MOTHERDUCK_DB}")
+        motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
+        if motherduck_token:
+            con = duckdb.connect(
+                f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}"
+            )
+        else:
+            # Fallback to local or error
+            # For now, let's assume local if no token, consistent with build_features
+            ROOT_DIR = Path(__file__).resolve().parents[2]
+            DB_PATH = ROOT_DIR / "data" / "duckdb" / "cbi_v15.duckdb"
+            con = duckdb.connect(str(DB_PATH))
 
     print("Building training matrix...")
 
-    # Copy features and add targets
+    # Create training matrix dynamically to include all features
     con.execute(
         """
-        INSERT OR REPLACE INTO training.daily_ml_matrix_zl_v15
+        CREATE OR REPLACE TABLE training.daily_ml_matrix_zl_v15 AS
         SELECT 
             f.*,
+            -- Splits & Weights
+            CASE 
+                WHEN as_of_date < '2023-01-01' THEN 'train'
+                WHEN as_of_date < '2024-01-01' THEN 'val'
+                ELSE 'test'
+            END AS train_val_test_split,
+            1.0 AS training_weight,
+            
             -- Targets (forward returns)
             LEAD(close, 5) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_1w,
             LEAD(close, 21) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_1m,

@@ -1,0 +1,10 @@
+[line-length]
+length = 120
+
+[lint]
+select = ["E", "F", "I", "W", "B", "UP"]
+ignore = []
+
+[format]
+quote-style = "double"
+indent-style = "space"

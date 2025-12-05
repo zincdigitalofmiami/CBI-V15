@@ -1,0 +1,48 @@
+# Model Training Configuration
+# Mac M4 Local Training
+
+horizons:
+  - name: 1w
+    trading_days: 5
+    target: target_zl_1w
+    
+  - name: 1m
+    trading_days: 20
+    target: target_zl_1m
+    
+  - name: 3m
+    trading_days: 60
+    target: target_zl_3m
+    
+  - name: 6m
+    trading_days: 120
+    target: target_zl_6m
+
+models:
+  lightgbm:
+    num_leaves: 31
+    learning_rate: 0.05
+    n_estimators: 1000
+    early_stopping_rounds: 50
+    metric: mae
+    
+  pytorch_tft:
+    hidden_size: 128
+    attention_head_size: 4
+    max_encoder_length: 252
+    max_prediction_length: 20
+    
+splits:
+  train_end: 2023-01-01
+  val_end: 2024-01-01
+  test_start: 2024-01-01
+
+regime_weights:
+  base_multiplier: 100
+  max_weight: 3000
+  shock_multipliers:
+    policy: 0.15
+    vol: 0.15
+    supply: 0.15
+    geopol: 0.15
+

@@ -1,0 +1,130 @@
+# ScrapeCreators Ingestion Targets
+# Sources that move the ZL needle (Institutional Alpha Feed)
+
+targets:
+  # 1. Top 5 Aggregation News Sites (The Firehose)
+  - category: "Aggregation News Sites"
+    bucket: "market_intelligence"
+    sources:
+      - name: "AgriCensus (Fastmarkets)"
+        url: "https://www.agricensus.com"
+        focus: ["Cash premiums", "tender results", "export taxes"]
+        priority: "High"
+      - name: "Reuters Commodities"
+        url: "https://www.reuters.com/markets/commodities"
+        focus: ["Exclusive tags", "policy leaks", "geopolitical news"]
+        priority: "High"
+      - name: "Bloomberg Green/Commodities"
+        url: "https://www.bloomberg.com/green"
+        focus: ["Currency wars", "trade flow shifts", "fund flows"]
+        priority: "High"
+      - name: "Farm Policy News (Illini)"
+        url: "https://farmpolicynews.illinois.edu"
+        focus: ["Legislative friction", "subsidy updates", "Farm Bill", "Crop Insurance"]
+        priority: "Medium"
+      - name: "DTN / The Progressive Farmer"
+        url: "https://www.dtnpf.com/agriculture/web/ag/home"
+        focus: ["Weather", "Logistics", "Basis", "Barge rates"]
+        priority: "Medium"
+
+  # 2. Top 5 Soybean Market Sites (The Specialists)
+  - category: "Soybean Market Sites"
+    bucket: "market_fundamentals"
+    sources:
+      - name: "The Jacobsen"
+        url: "https://thejacobsen.com"
+        focus: ["Biofuels", "Veg Oil", "RIN prices", "Physical price bulletin", "D4 RINs"]
+        notes: "MANDATORY - Paid subscription required"
+        priority: "Critical"
+      - name: "Oil World (ISTA Mielke)"
+        url: "https://www.oilworld.biz"
+        focus: ["Global S&D", "Vegetable oil balances", "Global supply"]
+        priority: "Critical"
+      - name: "Soybean & Corn Advisor (Michael Cordonnier)"
+        url: "https://www.soybeansandcorn.com"
+        focus: ["South American crop conditions", "Brazil yield", "Argentina yield"]
+        priority: "High"
+      - name: "NOPA"
+        url: "https://www.nopa.org"
+        focus: ["Monthly Crush Report", "Crush volume", "Oil stocks"]
+        schedule: "15th of month"
+        priority: "Critical"
+      - name: "USDA FAS"
+        url: "https://apps.fas.usda.gov/esrquery/"
+        focus: ["Export Sales", "GAIN Reports"]
+        priority: "High"
+
+  # 3. Top 5 People to Follow (The Signal Generators)
+  - category: "People to Follow"
+    bucket: "social_influencers"
+    sources:
+      - name: "Karen Braun"
+        handle: "@kannbwx"
+        platform: "Twitter/X"
+        focus: ["USDA data anomalies", "yield discrepancies"]
+        role: "Global Ag Columnist (Reuters)"
+      - name: "Arlan Suderman"
+        handle: "@ArlanFF101"
+        platform: "Twitter/X"
+        focus: ["Institutional positioning", "China demand flow"]
+        role: "Chief Commodities Economist (StoneX)"
+      - name: "Scott Irwin"
+        handle: "@ScottIrwinUIUC"
+        platform: "Twitter/X"
+        focus: ["RFS", "Biofuel Policy", "EPA math"]
+        role: "Ag Economist (Univ of Illinois)"
+      - name: "Dr. Michael Cordonnier"
+        handle: "@SoybeanCorn"
+        platform: "Twitter/X"
+        focus: ["South American crop health", "Mato Grosso weather"]
+        role: "Agronomist"
+      - name: "Javier Blas"
+        handle: "@JavierBlas"
+        platform: "Twitter/X"
+        focus: ["Energy/Ags intersection", "Food vs Fuel"]
+        role: "Energy/Commodities Opinion (Bloomberg)"
+
+  # 4. Top 5 Institutions/Companies (The Market Movers)
+  - category: "Institutions/Companies"
+    bucket: "corporate_signals"
+    sources:
+      - name: "ADM"
+        ticker: "ADM"
+        focus: ["Crushing margins", "demand/capacity utilization", "Earnings Calls"]
+      - name: "Bunge Global"
+        ticker: "BG"
+        focus: ["South America exposure", "Biofuels", "Crushing"]
+      - name: "Clean Fuels Alliance America"
+        url: "https://cleanfuels.org"
+        focus: ["Lobbying", "EPA letters", "policy battles"]
+      - name: "Conab"
+        url: "https://www.conab.gov.br"
+        focus: ["Crop reports", "Brazil yield"]
+        notes: "Compare against USDA"
+      - name: "EPA"
+        url: "https://www.epa.gov"
+        focus: ["Notices of Rulemaking", "RFS updates", "RVO"]
+
+  # 5. Top 5 Policy/Laws to Watch (The Risk - Sentiment Bucket B1)
+  - category: "Policy/Laws"
+    bucket: "policy_risk"
+    sources:
+      - name: "RFS (Renewable Fuel Standard)"
+        keywords: ["RVO", "Renewable Volume Obligation", "SRE", "Small Refinery Exemptions"]
+        impact: "Direct ZL correlation (RVO up -> ZL up)"
+      - name: "Section 45Z (Clean Fuel Production Credit)"
+        keywords: ["Clean Fuel Production Credit", "Inflation Reduction Act", "Foreign feedstock", "UCO"]
+        start_date: "2025-01-01"
+        impact: "Feedstock eligibility (Domestic vs Foreign)"
+      - name: "California LCFS"
+        keywords: ["Low Carbon Fuel Standard", "Renewable Diesel", "RD"]
+        impact: "RD demand driver"
+      - name: "China Tariffs (Section 301)"
+        keywords: ["Section 301", "Trade War", "Retaliation", "Trump 2.0"]
+        impact: "ZS price crash risk -> ZL volatility"
+      - name: "UCO Import Bans"
+        keywords: ["Used Cooking Oil", "Import Ban", "Suspect UCO", "China UCO"]
+        impact: "Bullish ZL (Domestic oil switch)"
+
+
+

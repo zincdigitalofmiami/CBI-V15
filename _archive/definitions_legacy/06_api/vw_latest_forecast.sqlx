@@ -1,0 +1,19 @@
+config {
+  type: "view",
+  schema: "api",
+  name: "vw_latest_forecast",
+  description: "Public API view for latest ZL forecasts across all horizons (placeholder until predictions tables exist)"
+}
+
+-- Placeholder view - will be updated once zl_predictions_* tables are created
+SELECT
+  CURRENT_DATE() AS date,
+  'placeholder' AS model_type,
+  '1w' AS horizon,
+  0.0 AS predicted_price,
+  0.0 AS lower_bound,
+  0.0 AS upper_bound,
+  0.0 AS confidence_score,
+  CURRENT_TIMESTAMP() AS created_at
+WHERE FALSE
+

@@ -1,0 +1,119 @@
+-- FX Indicators UDFs - Institutional Grade
+-- Aligned with GS Quant, JPM, Hedge Fund best practices
+-- Focus: Commodity-Currency Relationships (ZL-BRL, ZL-DXY)
+
+-- Carry Trade: Interest Rate Differential
+CREATE TEMP FUNCTION calculate_carry_differential(
+  foreign_rate FLOAT64,
+  us_rate FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN us_rate = 0 THEN NULL
+    ELSE (foreign_rate - us_rate) / us_rate
+  END
+);
+
+-- Currency Momentum (Multi-Horizon)
+CREATE TEMP FUNCTION calculate_currency_momentum(
+  prices ARRAY<FLOAT64>,
+  horizon_days INT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN ARRAY_LENGTH(prices) < horizon_days + 1 THEN NULL
+    ELSE (
+      SELECT (price_current / price_lag) - 1
+      FROM (
+        SELECT 
+          price AS price_current,
+          LAG(price, horizon_days) OVER (ORDER BY idx) AS price_lag
+        FROM UNNEST(prices) AS price WITH OFFSET AS idx
+      )
+      WHERE price_lag IS NOT NULL
+      LIMIT 1
+    )
+  END
+);
+
+-- Currency Volatility (Realized)
+CREATE TEMP FUNCTION calculate_currency_volatility(
+  returns ARRAY<FLOAT64>,
+  annualize BOOL
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN ARRAY_LENGTH(returns) < 2 THEN NULL
+    ELSE
+      CASE
+        WHEN annualize THEN
+          STDDEV(return_val) * SQRT(252)
+        ELSE
+          STDDEV(return_val)
+      END
+    FROM UNNEST(returns) AS return_val
+  END
+);
+
+-- Forward Premium/Discount
+CREATE TEMP FUNCTION calculate_forward_premium(
+  forward_rate FLOAT64,
+  spot_rate FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN spot_rate = 0 THEN NULL
+    ELSE (forward_rate - spot_rate) / spot_rate
+  END
+);
+
+-- Volatility Term Structure Ratio
+CREATE TEMP FUNCTION calculate_vol_term_structure(
+  short_term_vol FLOAT64,
+  long_term_vol FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN long_term_vol = 0 THEN NULL
+    ELSE short_term_vol / long_term_vol
+  END
+);
+
+-- Correlation Regime Classification
+CREATE TEMP FUNCTION classify_correlation_regime(
+  correlation FLOAT64
+)
+RETURNS STRING AS (
+  CASE
+    WHEN correlation > 0.7 THEN 'high'
+    WHEN correlation > 0.3 THEN 'medium'
+    WHEN correlation > -0.3 THEN 'low'
+    ELSE 'negative'
+  END
+);
+
+-- Real Exchange Rate (Inflation-Adjusted)
+CREATE TEMP FUNCTION calculate_real_exchange_rate(
+  nominal_rate FLOAT64,
+  foreign_cpi FLOAT64,
+  us_cpi FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN us_cpi = 0 THEN NULL
+    ELSE nominal_rate * (us_cpi / foreign_cpi)
+  END
+);
+
+-- Carry Risk-Adjusted
+CREATE TEMP FUNCTION calculate_carry_risk_adjusted(
+  carry_differential FLOAT64,
+  currency_volatility FLOAT64
+)
+RETURNS FLOAT64 AS (
+  CASE
+    WHEN currency_volatility = 0 THEN NULL
+    ELSE carry_differential / currency_volatility
+  END
+);
+

@@ -1,0 +1,15 @@
+# Research/Validation Tools Only (Not Production Pipeline)
+# Use these for research, validation, and causal analysis
+
+# Regime Detection (Research)
+ruptures>=1.1.8  # Change point detection (validate manual regimes)
+
+# Factor Analysis (Research)
+alphalens-reloaded>=0.5.0  # Quantile spread analysis (validate sentiment features)
+
+# Causal Discovery (Research)
+tigramite>=0.6.0  # PCMCI causal discovery (validate Big 8 drivers)
+
+# Note: These tools are for research/validation only
+# Do NOT add to production pipeline to avoid bloat
+

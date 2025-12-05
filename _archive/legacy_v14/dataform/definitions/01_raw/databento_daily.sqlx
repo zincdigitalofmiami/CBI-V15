@@ -1,0 +1,11 @@
+config {
+  type: "declaration",
+  database: dataform.projectConfig.vars.project,
+  schema: dataform.projectConfig.vars.raw_dataset,
+  name: "databento_futures_ohlcv_1d",
+  description: "Raw Databento daily OHLCV futures data (ZL, ZS, ZM, CL, HO, FCPO)"
+}
+
+-- This is a declaration - the actual table is created by ingestion scripts
+-- Dataform tracks lineage from this declaration to staging tables
+

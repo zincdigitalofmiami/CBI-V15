@@ -1,0 +1,82 @@
+# Dashboard Pages Configuration
+# Compute costs and optimization settings
+
+pages:
+  zl_forecast:
+    name: "ZL Forecast"
+    description: "Soybean Oil Futures Forecast Dashboard"
+    compute:
+      cloud_run:
+        cpu: 0.5
+        memory_mb: 512
+        concurrency: 80
+        min_instances: 0
+        max_instances: 10
+      caching:
+        api_cache_ttl_minutes: 5
+        cdn_enabled: true
+    estimated_requests_per_day: 1000
+    estimated_compute_cost_per_month: 0.03
+    
+  vegas_intel:
+    name: "Vegas Intel"
+    description: "Las Vegas Restaurant & Casino Intelligence"
+    compute:
+      cloud_run:
+        cpu: 0.5
+        memory_mb: 512
+        concurrency: 80
+        min_instances: 0
+        max_instances: 10
+      caching:
+        api_cache_ttl_minutes: 5
+        cdn_enabled: true
+    estimated_requests_per_day: 500
+    estimated_compute_cost_per_month: 0.02
+    
+  signals:
+    name: "Trading Signals"
+    description: "Big 8 Drivers and Trading Signals"
+    compute:
+      cloud_run:
+        cpu: 0.5
+        memory_mb: 512
+        concurrency: 80
+        min_instances: 0
+        max_instances: 10
+      caching:
+        api_cache_ttl_minutes: 5
+        cdn_enabled: true
+    estimated_requests_per_day: 300
+    estimated_compute_cost_per_month: 0.01
+    
+  regimes:
+    name: "Market Regimes"
+    description: "Regime Classification and Weights"
+    compute:
+      cloud_run:
+        cpu: 0.5
+        memory_mb: 512
+        concurrency: 80
+        min_instances: 0
+        max_instances: 10
+      caching:
+        api_cache_ttl_minutes: 5
+        cdn_enabled: true
+    estimated_requests_per_day: 200
+    estimated_compute_cost_per_month: 0.01
+
+optimization:
+  # Global dashboard optimizations
+  cdn:
+    enabled: true
+    cache_ttl_minutes: 60
+    
+  api:
+    response_cache_ttl_minutes: 5
+    materialized_views: true
+    
+  monitoring:
+    cost_alert_threshold_usd: 1.00  # Alert if compute >$1/month
+    request_alert_threshold: 10000  # Alert if requests >10K/day
+

@@ -1,0 +1,254 @@
+-- Technical Indicators - US Oil Solutions Spec
+-- Institutional Grade: GS Quant, JPM, Vanguard aligned
+-- Optimized for BigQuery SQL
+
+config {
+  type: "table",
+  schema: "features",
+  name: "technical_indicators_us_oil_solutions",
+  description: "Institutional-grade technical indicators per US Oil Solutions spec",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+
+-- Load UDFs
+${ref("us_oil_solutions_indicators")}
+
+WITH base_calcs AS (
+  SELECT 
+    date,
+    symbol,
+    open,
+    high,
+    low,
+    close,
+    volume,
+    open_interest,
+    
+    -- Log returns for volatility calculations
+    LN(close / LAG(close) OVER (PARTITION BY symbol ORDER BY date)) AS log_ret,
+    
+    -- Simple Moving Averages (SMA)
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 4 PRECEDING AND CURRENT ROW
+    ) AS sma_5,
+    
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 9 PRECEDING AND CURRENT ROW
+    ) AS sma_10,
+    
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+    ) AS sma_21,
+    
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 62 PRECEDING AND CURRENT ROW
+    ) AS sma_63,
+    
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 199 PRECEDING AND CURRENT ROW
+    ) AS sma_200,
+    
+    -- Exponential Moving Averages (EMA) - Approximated via weighted average
+    -- Note: True EMA requires recursive calculation, using weighted average as proxy
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 4 PRECEDING AND CURRENT ROW
+    ) AS ema_5,
+    
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 9 PRECEDING AND CURRENT ROW
+    ) AS ema_10,
+    
+    AVG(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+    ) AS ema_21,
+    
+    -- Standard Deviation for Bollinger Bands
+    STDDEV(close) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 19 PRECEDING AND CURRENT ROW
+    ) AS std_20,
+    
+    -- Rolling VWAP Components (21 Day)
+    SUM(close * volume) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+    ) AS vwap_num_21,
+    
+    SUM(volume) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+    ) AS vwap_denom_21,
+    
+    -- Garman-Klass Volatility
+    calc_garman_klass(
+      open,
+      high,
+      low,
+      close
+    ) AS gk_vol,
+    
+    -- Parkinson Volatility
+    calc_parkinson(high, low) AS parkinson_vol,
+    
+    -- Standard Deviation Volatility (21d)
+    STDDEV(log_ret) OVER (
+      PARTITION BY symbol 
+      ORDER BY date 
+      ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
+    ) * SQRT(252) AS vol_21d,
+    
+    -- Amihud Illiquidity
+    calculate_amihud(
+      log_ret,
+      volume,
+      close
+    ) AS amihud_illiquidity,
+    
+    -- OI/Volume Ratio
+    CASE
+      WHEN volume = 0 THEN NULL
+      ELSE open_interest / volume
+    END AS oi_volume_ratio
+    
+  FROM ${ref("market_daily")}
+  WHERE symbol IN ('ZL', 'ZS', 'ZM', 'CL', 'HO', 'FCPO', '6L', 'DX')
+),
+
+bollinger_calcs AS (
+  SELECT 
+    *,
+    -- Bollinger Bands
+    sma_21 + (2 * std_20) AS bb_upper,
+    sma_21 - (2 * std_20) AS bb_lower,
+    sma_21 AS bb_middle
+  FROM base_calcs
+),
+
+ppo_calcs AS (
+  SELECT 
+    *,
+    -- PPO (Percentage Price Oscillator) - Approximated
+    -- True PPO requires recursive EMA, using SMA approximation
+    CASE
+      WHEN sma_21 = 0 THEN NULL
+      ELSE ((sma_10 - sma_21) / sma_21) * 100
+    END AS ppo_12_26
+  FROM bollinger_calcs
+),
+
+cross_asset AS (
+  SELECT 
+    t1.date,
+    t1.symbol,
+    
+    -- BOHO Spread (ZL vs HO)
+    CASE
+      WHEN t1.symbol = 'ZL' AND t2.close IS NOT NULL THEN
+        calculate_boho_spread(t1.close, t2.close)
+      ELSE NULL
+    END AS boho_spread,
+    
+    -- ZL-BRL Correlation (60-day rolling)
+    CASE
+      WHEN t1.symbol = 'ZL' THEN
+        CORR(t1.log_ret, t3.log_ret) OVER (
+          ORDER BY t1.date 
+          ROWS BETWEEN 59 PRECEDING AND CURRENT ROW
+        )
+      ELSE NULL
+    END AS corr_zl_brl_60d,
+    
+    -- Terms of Trade (ZL / BRL)
+    CASE
+      WHEN t1.symbol = 'ZL' AND t3.close IS NOT NULL THEN
+        calculate_terms_of_trade(t1.close, t3.close)
+      ELSE NULL
+    END AS terms_of_trade_zl_brl
+    
+  FROM base_calcs t1
+  LEFT JOIN base_calcs t2 
+    ON t1.date = t2.date 
+    AND t2.symbol = 'HO'
+  LEFT JOIN base_calcs t3 
+    ON t1.date = t3.date 
+    AND t3.symbol = '6L'
+  WHERE t1.symbol = 'ZL'
+)
+
+SELECT 
+  p.date,
+  p.symbol,
+  p.close,
+  
+  -- 1. TREND DISTANCES (Stationary Features)
+  ROUND((p.close / NULLIF(p.ema_5, 0)) - 1, 5) AS dist_ema_5,
+  ROUND((p.close / NULLIF(p.ema_10, 0)) - 1, 5) AS dist_ema_10,
+  ROUND((p.close / NULLIF(p.ema_21, 0)) - 1, 5) AS dist_ema_21,
+  ROUND((p.close / NULLIF(p.sma_63, 0)) - 1, 5) AS dist_sma_63,
+  ROUND((p.close / NULLIF(p.sma_200, 0)) - 1, 5) AS dist_sma_200,
+  
+  -- 2. BOLLINGER %B (Regime Normalization)
+  ROUND(
+    calculate_bb_pct_b(p.close, p.bb_upper, p.bb_lower),
+    4
+  ) AS bb_pct_b,
+  
+  -- 3. BOLLINGER BANDWIDTH (Volatility Squeeze)
+  ROUND(
+    calculate_bb_bandwidth(p.bb_upper, p.bb_lower, p.bb_middle),
+    4
+  ) AS bb_bandwidth,
+  
+  -- 4. PPO (Percentage Price Oscillator)
+  ROUND(p.ppo_12_26, 4) AS ppo_12_26,
+  
+  -- 5. VWAP DISTANCE (Who is trapped?)
+  ROUND(
+    (p.close / NULLIF(p.vwap_num_21 / NULLIF(p.vwap_denom_21, 0), 0)) - 1,
+    5
+  ) AS dist_vwap_21d,
+  
+  -- 6. ADVANCED VOLATILITY
+  ROUND(p.gk_vol * SQRT(252), 4) AS vol_garman_klass_annualized,
+  ROUND(p.parkinson_vol * SQRT(252), 4) AS vol_parkinson_annualized,
+  ROUND(p.vol_21d, 4) AS vol_21d,
+  
+  -- 7. MICROSTRUCTURE
+  ROUND(p.amihud_illiquidity, 8) AS amihud_illiquidity,
+  ROUND(p.oi_volume_ratio, 4) AS oi_volume_ratio,
+  
+  -- 8. CROSS-ASSET FEATURES (ZL only)
+  ROUND(c.boho_spread, 4) AS boho_spread,
+  ROUND(c.corr_zl_brl_60d, 4) AS corr_zl_brl_60d,
+  ROUND(c.terms_of_trade_zl_brl, 4) AS terms_of_trade_zl_brl,
+  
+  -- 9. METADATA
+  calculate_seasonality(p.date).sin AS doy_sin,
+  calculate_seasonality(p.date).cos AS doy_cos
+  
+FROM ppo_calcs p
+LEFT JOIN cross_asset c ON p.date = c.date AND p.symbol = c.symbol
+WHERE p.symbol = 'ZL'  -- ZL-only focus
+

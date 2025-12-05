@@ -1,0 +1,117 @@
+-- Daily ML Matrix - Master Feature Table
+-- DENORMALIZED - No runtime JOINs
+-- All features pre-computed in staging layer
+
+config {
+  type: "table",
+  schema: "features",
+  name: "daily_ml_matrix",
+  description: "Master feature table - denormalized, no JOINs",
+  bigquery: {
+    partitionBy: "DATE(date)",
+    clusterBy: ["symbol"]
+  }
+}
+
+-- Single source: market_daily with all features computed inline
+WITH base AS (
+  SELECT 
+    date,
+    symbol,
+    open,
+    high,
+    low,
+    close,
+    volume,
+    
+    -- Lagged prices
+    LAG(close, 1) OVER w AS price_lag_1d,
+    LAG(close, 2) OVER w AS price_lag_2d,
+    LAG(close, 3) OVER w AS price_lag_3d,
+    LAG(close, 5) OVER w AS price_lag_5d,
+    LAG(close, 10) OVER w AS price_lag_10d,
+    LAG(close, 21) OVER w AS price_lag_21d,
+    
+    -- Returns
+    LN(close / NULLIF(LAG(close, 1) OVER w, 0)) AS return_1d,
+    LN(close / NULLIF(LAG(close, 2) OVER w, 0)) AS return_2d,
+    LN(close / NULLIF(LAG(close, 3) OVER w, 0)) AS return_3d,
+    LN(close / NULLIF(LAG(close, 5) OVER w, 0)) AS return_5d,
+    LN(close / NULLIF(LAG(close, 10) OVER w, 0)) AS return_10d,
+    LN(close / NULLIF(LAG(close, 21) OVER w, 0)) AS return_21d,
+    
+    -- Moving averages
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS sma_5,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 9 PRECEDING AND CURRENT ROW) AS sma_10,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS sma_21,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 49 PRECEDING AND CURRENT ROW) AS sma_50,
+    AVG(close) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 199 PRECEDING AND CURRENT ROW) AS sma_200,
+    
+    -- Volatility (21-day)
+    STDDEV(LN(close / NULLIF(LAG(close, 1) OVER w, 0))) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS volatility_21d,
+    
+    -- High/Low range
+    (high - low) / NULLIF(close, 0) AS daily_range_pct,
+    
+    -- Volume metrics
+    AVG(volume) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS avg_volume_21d,
+    volume / NULLIF(AVG(volume) OVER (PARTITION BY symbol ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW), 0) AS volume_ratio,
+    
+    -- Targets: future price levels
+    LEAD(close, 5) OVER w AS target_1w,
+    LEAD(close, 21) OVER w AS target_1m,
+    LEAD(close, 63) OVER w AS target_3m,
+    LEAD(close, 126) OVER w AS target_6m
+    
+  FROM ${ref("market_daily")}
+  WHERE symbol = 'ZL'
+    AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
+  WINDOW w AS (PARTITION BY symbol ORDER BY date)
+)
+
+SELECT 
+  date,
+  symbol,
+  close AS price_current,
+  
+  -- Targets
+  target_1w,
+  target_1m,
+  target_3m,
+  target_6m,
+  
+  -- Lagged prices
+  price_lag_1d,
+  price_lag_2d,
+  price_lag_3d,
+  price_lag_5d,
+  price_lag_10d,
+  price_lag_21d,
+  
+  -- Returns
+  return_1d,
+  return_2d,
+  return_3d,
+  return_5d,
+  return_10d,
+  return_21d,
+  
+  -- MA distances
+  (close - sma_5) / NULLIF(sma_5, 0) AS dist_sma_5,
+  (close - sma_10) / NULLIF(sma_10, 0) AS dist_sma_10,
+  (close - sma_21) / NULLIF(sma_21, 0) AS dist_sma_21,
+  (close - sma_50) / NULLIF(sma_50, 0) AS dist_sma_50,
+  (close - sma_200) / NULLIF(sma_200, 0) AS dist_sma_200,
+  
+  -- Volatility
+  volatility_21d,
+  
+  -- Volume
+  volume_ratio,
+  
+  -- Range
+  daily_range_pct
+  
+FROM base
+WHERE date IS NOT NULL
+ORDER BY date

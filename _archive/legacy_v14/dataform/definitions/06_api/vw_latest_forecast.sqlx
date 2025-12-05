@@ -1,0 +1,28 @@
+config {
+  type: "view",
+  schema: "api",
+  name: "vw_latest_forecast",
+  description: "Public API view for latest ZL forecasts (1m horizon, minimal pipeline)"
+}
+
+WITH latest AS (
+  SELECT
+    date,
+    model_type,
+    horizon,
+    prediction,
+    target,
+    ROW_NUMBER() OVER (PARTITION BY horizon ORDER BY date DESC) AS rn
+  FROM `cbi-v15.forecasts.zl_predictions_1m`
+  WHERE horizon = '1m'
+)
+
+SELECT
+  date,
+  model_type,
+  horizon,
+  prediction AS predicted_price,
+  target,
+  CURRENT_TIMESTAMP() AS created_at
+FROM latest
+WHERE rn = 1

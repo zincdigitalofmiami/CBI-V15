@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^8.1.1",
+    "duckdb": "^1.1.1",
     "@nivo/geo": "^0.99.0",
     "@nivo/line": "^0.99.0",
     "clsx": "^2.1.1",

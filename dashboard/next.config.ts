@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["duckdb"],
+  webpack: (config) => {
+    config.externals.push({
+      "duckdb": "commonjs duckdb",
+    });
+    return config;
+  },
 };
 
 export default nextConfig;
