@@ -32,8 +32,8 @@ WITH crush_components AS (
     WHERE symbol IN ('ZL', 'ZS', 'ZM')
     GROUP BY as_of_date
 ),
-crush_cot AS (
-    -- Get latest COT positioning for crush components
+crush_cot_raw AS (
+    -- Get COT positioning for crush components (weekly data)
     SELECT
         report_date AS as_of_date,
         MAX(CASE WHEN symbol = 'ZL' THEN managed_money_net_pct_oi END) AS zl_mm_net_pct,
@@ -45,6 +45,16 @@ crush_cot AS (
     WHERE symbol IN ('ZL', 'ZS', 'ZM')
     GROUP BY report_date
 ),
+-- Forward-fill COT data to daily frequency (separate CTE to avoid nested windows)
+crush_cot_filled AS (
+    SELECT
+        c.as_of_date,
+        LAST_VALUE(cot.zl_mm_net_pct IGNORE NULLS) OVER (ORDER BY c.as_of_date) AS zl_spec_net_pct,
+        LAST_VALUE(cot.zs_mm_net_pct IGNORE NULLS) OVER (ORDER BY c.as_of_date) AS zs_spec_net_pct,
+        LAST_VALUE(cot.zl_comm_net_pct IGNORE NULLS) OVER (ORDER BY c.as_of_date) AS zl_hedger_net_pct
+    FROM crush_components c
+    LEFT JOIN crush_cot_raw cot ON c.as_of_date = cot.as_of_date
+),
 crush_calcs AS (
     SELECT
         c.as_of_date,
@@ -54,17 +64,14 @@ crush_calcs AS (
         (c.zl_close * 11) / NULLIF((c.zm_close * 0.022 + c.zl_close * 11), 0) AS oil_share,
         -- ZL/ZS Ratio
         c.zl_close / NULLIF(c.zs_close, 0) AS zl_zs_ratio,
-        -- COT positioning (forward-fill from weekly reports)
-        COALESCE(cot.zl_mm_net_pct,
-                 LAST_VALUE(cot.zl_mm_net_pct IGNORE NULLS) OVER (ORDER BY c.as_of_date)) AS zl_spec_net_pct,
-        COALESCE(cot.zs_mm_net_pct,
-                 LAST_VALUE(cot.zs_mm_net_pct IGNORE NULLS) OVER (ORDER BY c.as_of_date)) AS zs_spec_net_pct,
-        COALESCE(cot.zl_comm_net_pct,
-                 LAST_VALUE(cot.zl_comm_net_pct IGNORE NULLS) OVER (ORDER BY c.as_of_date)) AS zl_hedger_net_pct,
+        -- COT positioning (pre-filled from above)
+        cot.zl_spec_net_pct,
+        cot.zs_spec_net_pct,
+        cot.zl_hedger_net_pct,
         -- Positioning spread (speculators vs hedgers)
-        COALESCE(cot.zl_mm_net_pct, 0) - COALESCE(cot.zl_comm_net_pct, 0) AS zl_spec_hedger_spread
+        COALESCE(cot.zl_spec_net_pct, 0) - COALESCE(cot.zl_hedger_net_pct, 0) AS zl_spec_hedger_spread
     FROM crush_components c
-    LEFT JOIN crush_cot cot ON c.as_of_date = cot.as_of_date
+    LEFT JOIN crush_cot_filled cot ON c.as_of_date = cot.as_of_date
 ),
 crush_features AS (
     SELECT
@@ -78,7 +85,7 @@ crush_features AS (
         zl_spec_hedger_spread,
         -- Moving averages of crush
         AVG(board_crush) OVER (ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS crush_sma_21,
-        STDDEV(board_crush) OVER (ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS crush_vol_21,
+        STDDEV(board_crush) OVER (ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS crush_volatility_21,
         -- Z-score
         (board_crush - AVG(board_crush) OVER (ORDER BY as_of_date ROWS BETWEEN 60 PRECEDING AND CURRENT ROW)) /
         NULLIF(STDDEV(board_crush) OVER (ORDER BY as_of_date ROWS BETWEEN 60 PRECEDING AND CURRENT ROW), 0) AS crush_zscore,
@@ -111,7 +118,7 @@ SELECT
     zl_spec_net_pct,
     zl_hedger_net_pct,
     zl_spec_hedger_spread,
-    crush_vol_21
+    crush_volatility_21
 FROM crush_features;
 
 -- ============================================================================
@@ -177,15 +184,23 @@ WITH fx_data AS (
     WHERE symbol = 'DX'
     GROUP BY as_of_date
 ),
+fx_returns AS (
+    SELECT
+        as_of_date,
+        dx_close,
+        LN(dx_close / LAG(dx_close, 1) OVER (ORDER BY as_of_date)) AS dx_log_ret,
+        LAG(dx_close, 21) OVER (ORDER BY as_of_date) AS dx_close_21d_ago
+    FROM fx_data
+),
 fx_features AS (
     SELECT
         as_of_date,
         dx_close,
         -- Dollar momentum (inverse for ZL - strong dollar = bearish commodities)
-        (dx_close - LAG(dx_close, 21) OVER (ORDER BY as_of_date)) / NULLIF(LAG(dx_close, 21) OVER (ORDER BY as_of_date), 0) AS dx_momentum_21d,
-        -- Dollar volatility
-        STDDEV(LN(dx_close / LAG(dx_close, 1) OVER (ORDER BY as_of_date))) OVER (ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS dx_vol_21d
-    FROM fx_data
+        (dx_close - dx_close_21d_ago) / NULLIF(dx_close_21d_ago, 0) AS dx_momentum_21d,
+        -- Dollar volatility (annualized)
+        STDDEV(dx_log_ret) OVER (ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS dx_volatility_21d
+    FROM fx_returns
 )
 SELECT
     as_of_date,
@@ -193,7 +208,7 @@ SELECT
     50 - (dx_momentum_21d * 100) AS fx_bucket_score,
     dx_close AS dollar_index,
     dx_momentum_21d AS dollar_momentum,
-    dx_vol_21d AS dollar_volatility
+    dx_volatility_21d AS dollar_volatility
 FROM fx_features;
 
 -- ============================================================================
@@ -206,7 +221,7 @@ WITH fed_data AS (
         MAX(CASE WHEN series_id = 'DGS10' THEN value END) AS dgs10,
         MAX(CASE WHEN series_id = 'DGS2' THEN value END) AS dgs2,
         MAX(CASE WHEN series_id = 'DFEDTARU' THEN value END) AS fed_rate
-    FROM raw.fred_daily
+    FROM raw.fred_observations
     WHERE series_id IN ('DGS10', 'DGS2', 'DFEDTARU')
     GROUP BY date
 ),
@@ -240,13 +255,14 @@ WITH trump_sentiment AS (
         date AS as_of_date,
         -- Aggregate Trump sentiment from ScrapeCreators
         AVG(CASE
-            WHEN sentiment = 'BULLISH_ZL' THEN 1
-            WHEN sentiment = 'BEARISH_ZL' THEN -1
+            WHEN zl_sentiment = 'BULLISH_ZL' THEN 1
+            WHEN zl_sentiment = 'BEARISH_ZL' THEN -1
             ELSE 0
         END) AS trump_sentiment_avg,
         COUNT(*) AS trump_post_count
-    FROM raw.scrapecreators_trump_posts
-    WHERE policy_axis IN ('TRADE_CHINA', 'TRADE_TARIFFS')
+    FROM raw.scrapecreators_news_buckets
+    WHERE is_trump_related = TRUE
+      AND policy_axis IN ('TRADE_CHINA', 'TRADE_TARIFFS')
     GROUP BY date
 ),
 tariff_features AS (
@@ -362,21 +378,31 @@ WITH vol_data AS (
     SELECT
         date AS as_of_date,
         MAX(CASE WHEN series_id = 'VIXCLS' THEN value END) AS vix
-    FROM raw.fred_daily
+    FROM raw.fred_observations
     WHERE series_id = 'VIXCLS'
     GROUP BY date
 ),
-zl_vol AS (
+zl_returns AS (
+    -- First calculate log returns (separate CTE to avoid nested windows)
     SELECT
         as_of_date,
         symbol,
-        STDDEV(LN(close / LAG(close, 1) OVER (PARTITION BY symbol ORDER BY as_of_date))) OVER (
+        close,
+        LN(close / LAG(close, 1) OVER (PARTITION BY symbol ORDER BY as_of_date)) AS log_ret
+    FROM raw.databento_ohlcv_daily
+    WHERE symbol = 'ZL'
+),
+zl_vol AS (
+    -- Then calculate rolling volatility on the returns
+    SELECT
+        as_of_date,
+        symbol,
+        STDDEV(log_ret) OVER (
             PARTITION BY symbol
             ORDER BY as_of_date
             ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
         ) * SQRT(252) AS zl_realized_vol_21d
-    FROM raw.databento_ohlcv_daily
-    WHERE symbol = 'ZL'
+    FROM zl_returns
 ),
 vol_features AS (
     SELECT
@@ -385,19 +411,19 @@ vol_features AS (
         z.zl_realized_vol_21d,
         -- VIX momentum
         (v.vix - LAG(v.vix, 21) OVER (ORDER BY v.as_of_date)) / NULLIF(LAG(v.vix, 21) OVER (ORDER BY v.as_of_date), 0) AS vix_momentum,
-        -- ZL vol momentum
-        (z.zl_realized_vol_21d - LAG(z.zl_realized_vol_21d, 21) OVER (ORDER BY v.as_of_date)) / NULLIF(LAG(z.zl_realized_vol_21d, 21) OVER (ORDER BY v.as_of_date), 0) AS zl_vol_momentum
+        -- ZL volatility momentum
+        (z.zl_realized_vol_21d - LAG(z.zl_realized_vol_21d, 21) OVER (ORDER BY v.as_of_date)) / NULLIF(LAG(z.zl_realized_vol_21d, 21) OVER (ORDER BY v.as_of_date), 0) AS zl_volatility_momentum
     FROM vol_data v
     LEFT JOIN zl_vol z ON v.as_of_date = z.as_of_date
 )
 SELECT
     as_of_date,
     -- Score: Inverse of volatility (high volatility = risk-off = lower score)
-    50 - (vix_momentum * 25) - (zl_vol_momentum * 25) AS volatility_bucket_score,
+    50 - (vix_momentum * 25) - (zl_volatility_momentum * 25) AS volatility_bucket_score,
     vix,
     zl_realized_vol_21d AS zl_volatility,
     vix_momentum,
-    zl_vol_momentum
+    zl_volatility_momentum
 FROM vol_features;
 
 -- ============================================================================

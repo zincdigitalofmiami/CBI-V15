@@ -12,7 +12,7 @@
  * Uses Databento Historical API for backfills and Live API for real-time.
  */
 
-import { task, schedules } from "@trigger.dev/sdk/v3";
+import { schedules, task } from "@trigger.dev/sdk/v3";
 import { MotherDuckClient } from "../src/shared/motherduck_client";
 
 const DATABENTO_API_KEY = process.env.DATABENTO_API_KEY!;
@@ -48,7 +48,7 @@ async function fetchDatabentoBBO(
   endDate: string
 ): Promise<DatabentoBBO[]> {
   const url = new URL(`${DATABENTO_BASE_URL}/timeseries.get_range`);
-  
+
   const params = {
     dataset: "GLBX.MDP3", // CME Globex
     symbols: symbols.join(","),
@@ -93,7 +93,7 @@ function aggregateToOHLCV(bboData: DatabentoBBO[], interval: "1min" | "5min" | "
   for (const tick of bboData) {
     const ts = new Date(tick.ts_event).getTime();
     const bucketKey = `${tick.symbol}_${Math.floor(ts / intervalMs) * intervalMs}`;
-    
+
     if (!buckets.has(bucketKey)) {
       buckets.set(bucketKey, []);
     }
@@ -104,7 +104,7 @@ function aggregateToOHLCV(bboData: DatabentoBBO[], interval: "1min" | "5min" | "
   for (const [key, ticks] of buckets.entries()) {
     const [symbol, tsStr] = key.split("_");
     const midPrices = ticks.map((t) => (t.bid_px + t.ask_px) / 2);
-    
+
     ohlcv.push({
       symbol,
       timestamp: new Date(parseInt(tsStr)),
@@ -147,17 +147,17 @@ export const databentoIngestJob = task({
 
     for (let i = 0; i < symbols.length; i += BATCH_SIZE) {
       const batch = symbols.slice(i, i + BATCH_SIZE);
-      
+
       try {
         console.log(`[Databento] Batch ${i / BATCH_SIZE + 1}: ${batch.join(", ")}`);
-        
+
         const bboData = await fetchDatabentoBBO(batch, startDate, endDate);
         const ohlcv = aggregateToOHLCV(bboData, "1d");
-        
+
         allOHLCV.push(...ohlcv);
-        
+
         console.log(`[Databento] Fetched ${ohlcv.length} daily bars`);
-        
+
         // Rate limit: 1,500 req/min = 1 req per 40ms
         await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error) {
@@ -166,10 +166,22 @@ export const databentoIngestJob = task({
     }
 
     // Load to MotherDuck
+    // Transform to match raw.databento_ohlcv_daily schema (as_of_date, not timestamp)
     if (allOHLCV.length > 0) {
+      const records = allOHLCV.map(r => ({
+        as_of_date: r.timestamp.toISOString().split("T")[0],
+        symbol: r.symbol,
+        open: r.open,
+        high: r.high,
+        low: r.low,
+        close: r.close,
+        volume: r.volume,
+      }));
+
       const motherduck = new MotherDuckClient();
-      await motherduck.insertBatch("raw.databento_futures", allOHLCV);
-      console.log(`[Databento] Loaded ${allOHLCV.length} records to MotherDuck`);
+      await motherduck.insertBatch("raw.databento_ohlcv_daily", records);
+      await motherduck.close();
+      console.log(`[Databento] Loaded ${records.length} records to MotherDuck`);
     }
 
     return {

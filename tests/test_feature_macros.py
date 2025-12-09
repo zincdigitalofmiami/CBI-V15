@@ -19,6 +19,11 @@ def test_load_macros():
 
     con = duckdb.connect(":memory:")
 
+    # Create schemas first
+    con.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    con.execute("CREATE SCHEMA IF NOT EXISTS staging")
+    con.execute("CREATE SCHEMA IF NOT EXISTS features")
+
     # Create dummy raw data table
     con.execute(
         """
@@ -77,6 +82,11 @@ def test_technical_indicators():
     print("Testing technical indicators...")
 
     con = duckdb.connect(":memory:")
+
+    # Create schemas first
+    con.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    con.execute("CREATE SCHEMA IF NOT EXISTS staging")
+    con.execute("CREATE SCHEMA IF NOT EXISTS features")
 
     # Create sample data
     con.execute(
@@ -145,6 +155,11 @@ def test_feature_counts():
     print("Testing feature counts...")
 
     con = duckdb.connect(":memory:")
+
+    # Create schemas first
+    con.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    con.execute("CREATE SCHEMA IF NOT EXISTS staging")
+    con.execute("CREATE SCHEMA IF NOT EXISTS features")
 
     # Create sample data for multiple symbols
     con.execute(

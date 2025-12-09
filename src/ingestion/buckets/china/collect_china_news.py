@@ -7,16 +7,23 @@ Sources:
 - CONAB Brazil (China's main supplier)
 - ABIOVE Brazil oilseed stats
 - Reuters commodities (China-related)
+- Curated direct URLs on China soybean buy/sell (Reuters, Bloomberg, DTN, AgWeb, Farm Action, Soygrowers)
 """
 
 import hashlib
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import requests
 from bs4 import BeautifulSoup
 
 BUCKET_NAME = "china"
+UA_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+    )
+}
 
 
 def scrape_agrimoney_china() -> List[Dict[str, Any]]:
@@ -124,11 +131,9 @@ def scrape_conab_brazil() -> List[Dict[str, Any]]:
 def scrape_reuters_commodities_china() -> List[Dict[str, Any]]:
     """Scrape Reuters commodities for China-related news"""
     url = "https://www.reuters.com/business/commodities/"
-    
+
     try:
-        response = requests.get(url, timeout=30, headers={
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-        })
+        response = requests.get(url, timeout=30, headers=UA_HEADERS)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -175,6 +180,100 @@ def scrape_reuters_commodities_china() -> List[Dict[str, Any]]:
         return []
 
 
+def scrape_curated_china_trade_urls() -> List[Dict[str, Any]]:
+    """Scrape/ingest curated URLs about China soybean imports/exports"""
+    curated = [
+        {
+            "source": "Reuters",
+            "url": "https://www.reuters.com/world/china/us-soybean-farmers-deserted-by-big-buyer-china-scramble-other-importers-2025-10-03/",
+            "headline_hint": "Reuters: China deserted US soybean farmers, imports ~12.9 mmt from SA; no US buys since May",
+            "trust": 0.95,
+        },
+        {
+            "source": "Bloomberg",
+            "url": "https://www.bloomberg.com/news/articles/2025-09-19/china-seeks-trade-edge-by-shunning-us-soy-in-first-since-1990s",
+            "headline_hint": "Bloomberg: China shuns US soy at harvest start, first time since 1990s",
+            "trust": 0.93,
+        },
+        {
+            "source": "DTN Progressive Farmer",
+            "url": "https://www.dtnpf.com/agriculture/web/ag/news/article/2025/09/29/china-soybean-users-see-breakthrough",
+            "headline_hint": "DTN: FAS shows no China purchases since May 2025; breakthrough hopes",
+            "trust": 0.85,
+        },
+        {
+            "source": "AgWeb",
+            "url": "https://www.agweb.com/news/crops/soybeans/8-soybeans-thats-reality-some-farmers-china-remains-absent-buying",
+            "headline_hint": "AgWeb: $8 soybeans as China remains absent; Brazil exports record",
+            "trust": 0.82,
+        },
+        {
+            "source": "Farm Action",
+            "url": "https://farmaction.us/china-stopped-buying-u-s-soybeans-the-real-problem-started-decades-ago/",
+            "headline_hint": "Farm Action: Export gaps, 34% duty on US soy",
+            "trust": 0.75,
+        },
+        {
+            "source": "Soygrowers",
+            "url": "https://soygrowers.com/news-releases/soybeans-without-a-buyer-the-export-gap-hurting-u-s-farms/",
+            "headline_hint": "Soygrowers: Export gap hurting US farms; duties on US soy",
+            "trust": 0.78,
+        },
+    ]
+
+    articles: List[Dict[str, Any]] = []
+
+    for entry in curated:
+        url = entry["url"]
+        try:
+            resp = requests.get(url, timeout=30, headers=UA_HEADERS)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.content, "html.parser")
+
+            title_elem = (
+                soup.find("h1")
+                or soup.select_one("meta[property='og:title']")
+                or soup.select_one("title")
+            )
+            meta_desc = soup.select_one("meta[name='description']")
+
+            headline = (
+                title_elem.get("content") if title_elem and title_elem.has_attr("content") else title_elem.get_text(strip=True) if title_elem else ""
+            )
+            if not headline:
+                headline = entry["headline_hint"]
+
+            content: Optional[str] = None
+            # Prefer meta description as a short summary
+            if meta_desc and meta_desc.has_attr("content"):
+                content = meta_desc["content"]
+            else:
+                # Fallback: first paragraph text
+                first_p = soup.find("p")
+                content = first_p.get_text(strip=True) if first_p else ""
+
+            article_id = hashlib.md5(url.encode()).hexdigest()
+
+            articles.append(
+                {
+                    "article_id": article_id,
+                    "headline": headline,
+                    "content": content or entry["headline_hint"],
+                    "source": entry["source"],
+                    "source_trust_score": entry["trust"],
+                    "published_at": datetime.utcnow().isoformat(),
+                    "url": url,
+                    "bucket_name": BUCKET_NAME,
+                }
+            )
+        except Exception as e:
+            print(f"[{BUCKET_NAME}] Curated URL error ({url}): {e}")
+            continue
+
+    print(f"[{BUCKET_NAME}] Curated direct URLs: {len(articles)} articles")
+    return articles
+
+
 def fetch_china_bucket_news() -> List[Dict[str, Any]]:
     """Fetch all China bucket news from all sources"""
     all_articles = []
@@ -182,12 +281,12 @@ def fetch_china_bucket_news() -> List[Dict[str, Any]]:
     all_articles.extend(scrape_agrimoney_china())
     all_articles.extend(scrape_conab_brazil())
     all_articles.extend(scrape_reuters_commodities_china())
+    all_articles.extend(scrape_curated_china_trade_urls())
     
-    print(f"[{BUCKET_NAME}] Total: {len(all_articles)} articles from 3 sources")
+    print(f"[{BUCKET_NAME}] Total: {len(all_articles)} articles from 4 sources")
     return all_articles
 
 
 if __name__ == "__main__":
     articles = fetch_china_bucket_news()
     print(f"\nFetched {len(articles)} China bucket articles")
-

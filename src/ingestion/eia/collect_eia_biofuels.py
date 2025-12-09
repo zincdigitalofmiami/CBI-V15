@@ -1,26 +1,33 @@
 #!/usr/bin/env python3
 """
-EIA Biofuels Ingestion - MotherDuck/DuckDB
+EIA Petroleum & Biofuels Ingestion - MotherDuck/DuckDB (API v2)
 
-Bucket: eia_biofuels
+Purpose: Collect EIA data critical for soybean oil PROCUREMENT decisions
 
-Role:
-- Pull biofuel / RIN-related series from the EIA API
-- Write to raw.eia_biofuels (date, series_id, value)
-- Save to Parquet data lake
+BIOFUEL FEEDSTOCKS (drives soybean oil demand):
+  - Soybean oil inputs to biodiesel/renewable diesel production
+  - Competing feedstocks (corn oil, yellow grease, tallow)
+  - Biodiesel production capacity
 
-Series (set via environment):
-  - EIA_SERIES_RIN_D4
-  - EIA_SERIES_RIN_D6
-  - EIA_SERIES_BIODIESEL_PROD
-  - EIA_SERIES_RFS_VOLUMES
+ENERGY COSTS (manufacturing & transport):
+  - ULSD diesel spot prices (Gulf Coast, NY Harbor)
+  - Heating oil prices (biodiesel competitor)
+  - Crude oil prices (WTI)
+
+REFINERY (demand indicator):
+  - Refinery utilization rates
+  - Gross inputs to refineries
+
+Output Tables:
+  - raw.eia_petroleum (date, series_id, value, category, units)
+  - data/raw/eia/eia_petroleum_YYYYMMDD.parquet
 """
 
-import os
 import logging
-from datetime import datetime, date
+import os
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any
 
 import duckdb
 import pandas as pd
@@ -31,170 +38,191 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 PARQUET_DIR = Path("/Volumes/Satechi Hub/CBI-V15/data/raw/eia")
-EIA_BASE_URL = "https://api.eia.gov/series/"
-
-# Map from logical bucket names to environment variables that hold EIA series IDs
-SERIES_ENV_MAP: Dict[str, str] = {
-    "rin_prices_d4": "EIA_SERIES_RIN_D4",
-    "rin_prices_d6": "EIA_SERIES_RIN_D6",
-    "biodiesel_production": "EIA_SERIES_BIODIESEL_PROD",
-    "rfs_volumes": "EIA_SERIES_RFS_VOLUMES",
-}
+EIA_V2_BASE = "https://api.eia.gov/v2"
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
     """Get MotherDuck connection."""
+    token = os.getenv("MOTHERDUCK_TOKEN")
+    if token:
+        return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={token}")
     return duckdb.connect(f"md:{MOTHERDUCK_DB}")
 
 
-def resolve_series_ids_from_env() -> Dict[str, str]:
-    """Resolve logical series aliases to actual EIA series IDs via environment variables."""
-    resolved: Dict[str, str] = {}
-    for alias, env_var in SERIES_ENV_MAP.items():
-        sid = os.getenv(env_var)
-        if sid:
-            resolved[alias] = sid
-        else:
-            logger.info(f"Env var {env_var} not set; skipping alias '{alias}'")
-    return resolved
+def fetch_eia_v2(
+    endpoint: str, params: dict[str, Any], api_key: str
+) -> list[dict[str, Any]]:
+    """Fetch data from EIA API v2."""
+    url = f"{EIA_V2_BASE}{endpoint}"
+    params["api_key"] = api_key
+    logger.info(f"Fetching EIA v2: {endpoint}")
 
-
-def get_last_loaded_date_for_series(
-    con: duckdb.DuckDBPyConnection, series_id: str
-) -> Optional[date]:
-    """Get the last loaded date for a given EIA series."""
-    query = f"""
-    SELECT MAX(date) AS last_date
-    FROM raw.eia_biofuels
-    WHERE series_id = '{series_id}'
-    """
-    try:
-        result = con.execute(query).fetchone()
-        if result and result[0]:
-            return result[0]
-    except Exception as e:
-        logger.warning(f"Could not determine last date for {series_id}: {e}")
-    return None
-
-
-def parse_eia_date(date_str: str) -> date:
-    """Parse EIA series date strings into a Python date."""
-    ds = date_str.strip()
-    for fmt in ("%Y-%m-%d", "%Y%m%d"):
-        try:
-            return datetime.strptime(ds, fmt).date()
-        except ValueError:
-            pass
-
-    # Monthly (YYYYMM) -> first of month
-    if len(ds) == 6:
-        return datetime.strptime(ds, "%Y%m").date().replace(day=1)
-
-    # Yearly (YYYY) -> Jan 1
-    if len(ds) == 4:
-        return datetime.strptime(ds, "%Y").date().replace(month=1, day=1)
-
-    return pd.to_datetime(ds).date()
-
-
-def fetch_eia_series(series_id: str, api_key: str) -> pd.DataFrame:
-    """Fetch a single EIA series and return as DataFrame."""
-    params = {
-        "api_key": api_key,
-        "series_id": series_id,
-    }
-    logger.info(f"Fetching EIA series {series_id}")
-    resp = requests.get(EIA_BASE_URL, params=params, timeout=30)
+    resp = requests.get(url, params=params, timeout=60)
     resp.raise_for_status()
     data = resp.json()
 
-    series_list = data.get("series", [])
-    if not series_list:
-        logger.warning(f"No 'series' field in EIA response for {series_id}")
-        return pd.DataFrame(columns=["date", "series_id", "value"])
+    return data.get("response", {}).get("data", [])
 
-    series_obj = series_list[0]
-    observations = series_obj.get("data", [])
-    if not observations:
-        logger.warning(f"No data points for series {series_id}")
-        return pd.DataFrame(columns=["date", "series_id", "value"])
 
-    rows: List[Tuple[date, str, float]] = []
-    for obs in observations:
-        if not isinstance(obs, (list, tuple)) or len(obs) < 2:
+def parse_period(period: str) -> date:
+    """Parse EIA period string to date."""
+    if "-" in period and len(period) == 10:  # YYYY-MM-DD
+        return datetime.strptime(period, "%Y-%m-%d").date()
+    if "-" in period and len(period) == 7:  # YYYY-MM
+        return datetime.strptime(period, "%Y-%m").date()
+    if len(period) == 4:  # YYYY
+        return datetime.strptime(period, "%Y").date()
+    return pd.to_datetime(period).date()
+
+
+def collect_biofuel_feedstocks(api_key: str, start_date: str) -> pd.DataFrame:
+    """Collect biofuel feedstock inputs (monthly)."""
+    data = fetch_eia_v2(
+        "/petroleum/pnp/feedbiofuel/data",
+        {
+            "frequency": "monthly",
+            "data[0]": "value",
+            "start": start_date[:7],
+            "length": "1000",
+        },
+        api_key,
+    )
+
+    rows = []
+    for row in data:
+        if row.get("value") is None:
             continue
-        ds, val = obs[0], obs[1]
-        try:
-            dt = parse_eia_date(str(ds))
-            fv = float(val)
-            rows.append((dt, series_id, fv))
-        except (TypeError, ValueError):
+        period = row.get("period", "")
+        rows.append(
+            {
+                "date": f"{period}-01" if len(period) == 7 else period,
+                "series_id": row.get("series", ""),
+                "value": float(row["value"]),
+                "category": "biofuel_feedstock",
+                "units": row.get("units", "MMLB"),
+            }
+        )
+
+    logger.info(f"Collected {len(rows)} biofuel feedstock records")
+    return pd.DataFrame(rows)
+
+
+def collect_spot_prices(api_key: str, start_date: str) -> pd.DataFrame:
+    """Collect petroleum spot prices (weekly)."""
+    data = fetch_eia_v2(
+        "/petroleum/pri/spt/data",
+        {
+            "frequency": "weekly",
+            "data[0]": "value",
+            "start": start_date,
+            "length": "1000",
+        },
+        api_key,
+    )
+
+    rows = []
+    for row in data:
+        if row.get("value") is None:
             continue
+        rows.append(
+            {
+                "date": row.get("period", ""),
+                "series_id": row.get("series", ""),
+                "value": float(row["value"]),
+                "category": "spot_price",
+                "units": row.get("units", "$/GAL"),
+            }
+        )
 
-    if not rows:
-        logger.warning(f"All observations for {series_id} were invalid")
-        return pd.DataFrame(columns=["date", "series_id", "value"])
-
-    df = pd.DataFrame(rows, columns=["date", "series_id", "value"])
-    logger.info(f"Fetched {len(df)} rows for {series_id}")
-    return df
+    logger.info(f"Collected {len(rows)} spot price records")
+    return pd.DataFrame(rows)
 
 
-def main():
+def collect_refinery_utilization(api_key: str, start_date: str) -> pd.DataFrame:
+    """Collect refinery utilization (weekly)."""
+    data = fetch_eia_v2(
+        "/petroleum/pnp/wiup/data",
+        {
+            "frequency": "weekly",
+            "data[0]": "value",
+            "start": start_date,
+            "length": "500",
+        },
+        api_key,
+    )
+
+    rows = []
+    for row in data:
+        if row.get("value") is None:
+            continue
+        rows.append(
+            {
+                "date": row.get("period", ""),
+                "series_id": row.get("series", ""),
+                "value": float(row["value"]),
+                "category": "refinery",
+                "units": row.get("units", "%"),
+            }
+        )
+
+    logger.info(f"Collected {len(rows)} refinery records")
+    return pd.DataFrame(rows)
+
+
+def main(days_back: int = 90) -> None:
+    """Main entry point."""
     api_key = os.getenv("EIA_API_KEY")
     if not api_key:
         raise RuntimeError("EIA_API_KEY not set in environment")
 
-    series_alias_to_id = resolve_series_ids_from_env()
-    if not series_alias_to_id:
-        raise RuntimeError(
-            "No EIA series IDs configured. Set env vars: "
-            "EIA_SERIES_RIN_D4, EIA_SERIES_RIN_D6, EIA_SERIES_BIODIESEL_PROD, EIA_SERIES_RFS_VOLUMES"
-        )
+    start_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
+    logger.info(f"Collecting EIA data from {start_date}")
 
-    con = get_connection()
-    all_frames: List[pd.DataFrame] = []
+    # Collect all data
+    dfs = []
+    dfs.append(collect_biofuel_feedstocks(api_key, start_date))
+    dfs.append(collect_spot_prices(api_key, start_date))
+    dfs.append(collect_refinery_utilization(api_key, start_date))
 
-    for alias, series_id in series_alias_to_id.items():
-        last_dt = get_last_loaded_date_for_series(con, series_id)
-        df = fetch_eia_series(series_id, api_key)
-        if df.empty:
-            continue
-        if last_dt is not None:
-            df = df[df["date"] > last_dt]
-            logger.info(
-                f"After filtering, {len(df)} new rows for {series_id} (alias {alias})"
-            )
-        all_frames.append(df)
-
-    if not all_frames:
-        logger.info("No new EIA biofuels data to load.")
+    combined = pd.concat([df for df in dfs if not df.empty], ignore_index=True)
+    if combined.empty:
+        logger.warning("No data collected")
         return
 
-    combined = pd.concat(all_frames, ignore_index=True)
-    combined = combined.sort_values(["series_id", "date"]).drop_duplicates(
-        ["series_id", "date"]
-    )
-    logger.info(f"Total new rows: {len(combined)}")
+    combined = combined.drop_duplicates(["date", "series_id"])
+    logger.info(f"Total records: {len(combined)}")
 
     # Save to Parquet
     PARQUET_DIR.mkdir(parents=True, exist_ok=True)
     parquet_path = (
-        PARQUET_DIR / f"eia_biofuels_{datetime.utcnow().strftime('%Y%m%d')}.parquet"
+        PARQUET_DIR / f"eia_petroleum_{datetime.now().strftime('%Y%m%d')}.parquet"
     )
     combined.to_parquet(parquet_path, index=False)
     logger.info(f"Saved to {parquet_path}")
 
     # Upsert to MotherDuck
-    con.execute(
+    try:
+        con = get_connection()
+        con.register("staging_df", combined)
+        con.execute(
+            """
+            INSERT OR REPLACE INTO raw.eia_petroleum (date, series_id, value, category, units)
+            SELECT
+                CAST(date AS DATE),
+                series_id,
+                value,
+                category,
+                units
+            FROM staging_df
         """
-        INSERT OR REPLACE INTO raw.eia_biofuels (date, series_id, value)
-        SELECT date, series_id, value FROM combined
-    """
-    )
-    logger.info(f"✅ Upserted {len(combined)} rows to raw.eia_biofuels")
+        )
+        logger.info(f"✅ Upserted {len(combined)} rows to raw.eia_petroleum")
+        con.close()
+    except Exception as e:
+        logger.error(f"MotherDuck upsert failed: {e}")
+        logger.info("Data saved to Parquet only")
 
 
 if __name__ == "__main__":

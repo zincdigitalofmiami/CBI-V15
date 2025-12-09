@@ -7,7 +7,7 @@
 -- ============================================================================
 -- MACRO 1: Pairwise Correlation (Rolling)
 -- ============================================================================
-CREATE OR REPLACE MACRO calc_pairwise_correlation(sym1, sym2, window := 60) AS TABLE
+CREATE OR REPLACE MACRO calc_pairwise_correlation(sym1, sym2, lookback := 60) AS TABLE
 WITH returns AS (
     SELECT
         a.as_of_date,
@@ -24,15 +24,15 @@ SELECT
     symbol1,
     symbol2,
     CORR(ret1, ret2) OVER (
-        ORDER BY as_of_date 
-        ROWS BETWEEN window - 1 PRECEDING AND CURRENT ROW
+        ORDER BY as_of_date
+        ROWS BETWEEN lookback - 1 PRECEDING AND CURRENT ROW
     ) AS corr_60d
 FROM returns;
 
 -- ============================================================================
 -- MACRO 2: Rolling Beta (Asset vs Market/Benchmark)
 -- ============================================================================
-CREATE OR REPLACE MACRO calc_rolling_beta(sym, benchmark_sym, window := 60) AS TABLE
+CREATE OR REPLACE MACRO calc_rolling_beta(sym, benchmark_sym, lookback := 60) AS TABLE
 WITH returns AS (
     SELECT
         a.as_of_date,
@@ -52,7 +52,7 @@ stats AS (
         COVAR_POP(ret_asset, ret_benchmark) OVER w AS covar,
         VAR_POP(ret_benchmark) OVER w AS var_benchmark
     FROM returns
-    WINDOW w AS (ORDER BY as_of_date ROWS BETWEEN window - 1 PRECEDING AND CURRENT ROW)
+    WINDOW w AS (ORDER BY as_of_date ROWS BETWEEN lookback - 1 PRECEDING AND CURRENT ROW)
 )
 SELECT
     as_of_date,
@@ -120,11 +120,11 @@ SELECT * FROM spreads;
 -- ============================================================================
 -- MACRO 5: Cross-Asset Correlation Matrix (All Pairs)
 -- ============================================================================
-CREATE OR REPLACE MACRO calc_correlation_matrix(window := 60) AS TABLE
+CREATE OR REPLACE MACRO calc_correlation_matrix(lookback := 60) AS TABLE
 WITH symbols AS (
     SELECT DISTINCT symbol
     FROM raw.databento_ohlcv_daily
-    WHERE symbol IN ('ZL', 'ZS', 'ZM', 'ZC', 'ZW', 'CL', 'HO', 'RB', 'NG', 
+    WHERE symbol IN ('ZL', 'ZS', 'ZM', 'ZC', 'ZW', 'CL', 'HO', 'RB', 'NG',
                      'HG', 'GC', 'SI', 'PL', 'ZF', 'ZN', 'ZB', 'DX')
 ),
 returns AS (
@@ -167,5 +167,5 @@ SELECT
     CORR(ret_hg, ret_gc) OVER w AS corr_hg_gc_60d,
     CORR(ret_hg, ret_dx) OVER w AS corr_hg_dx_60d
 FROM pivoted
-WINDOW w AS (ORDER BY as_of_date ROWS BETWEEN window - 1 PRECEDING AND CURRENT ROW);
+WINDOW w AS (ORDER BY as_of_date ROWS BETWEEN lookback - 1 PRECEDING AND CURRENT ROW);
 

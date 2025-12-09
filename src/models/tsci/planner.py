@@ -58,14 +58,14 @@ def suggest_model_candidates(
 ) -> Dict[str, Any]:
     """
     Suggest model candidates and hyperparameter bands for a given bucket/horizon.
-    
+
     Args:
         bucket: Bucket name (e.g., 'crush', 'china', 'volatility')
         horizon: Forecast horizon (e.g., '1w', '1m', '3m')
         regime: Current market regime
         recent_metrics: Optional dict of recent model performance
         use_llm: Whether to use OpenAI for suggestions (default True)
-    
+
     Returns:
         Dict with candidate_models, hyperparam_ranges, focus_features
     """
@@ -82,7 +82,7 @@ def suggest_model_candidates(
             "hyperparam_ranges": {"depth": [3, 7], "lr": [0.01, 0.1]},
             "focus_features": ["all"],
         }
-    
+
     # LLM-assisted suggestion
     system_prompt = (
         "You are a model-selection strategist for commodity futures forecasting. "
@@ -94,14 +94,14 @@ def suggest_model_candidates(
         "The Big 8 buckets (Crush, China, FX, Fed, Tariff, Biofuel, Energy, Volatility) "
         "are emphasis overlays; models are NOT restricted to seeing only those features."
     )
-    
+
     payload = {
         "bucket": bucket,
         "horizon": horizon,
         "regime": regime,
         "recent_metrics": recent_metrics or {},
     }
-    
+
     try:
         response_text = run_chat(
             prompt=json.dumps(payload),
@@ -128,7 +128,7 @@ def plan_training_sweep(
 ) -> None:
     """
     Plan a training sweep across horizons and buckets.
-    
+
     Args:
         horizons: List of horizons (default: 1w, 1m, 3m, 6m, 12m)
         buckets: Optional Big 8 focus buckets (default: all 8)
@@ -136,7 +136,7 @@ def plan_training_sweep(
     """
     if horizons is None:
         horizons = ["1w", "1m", "3m", "6m", "12m"]
-    
+
     if buckets is None:
         # Big 8 as default focus, but models see all features
         buckets = [
@@ -161,7 +161,7 @@ def plan_training_sweep(
                 regime="adaptive",  # TODO: fetch from MotherDuck
                 use_llm=use_llm,
             )
-            
+
             job_config = {
                 "horizon": horizon,
                 "symbol": "ZL",
@@ -170,7 +170,7 @@ def plan_training_sweep(
                 "hyperparam_ranges": suggestions.get("hyperparam_ranges", {}),
                 "focus_features": "all",  # Models see all features
             }
-            
+
             job_id = create_job(
                 con,
                 job_name=f"Sweep - {bucket}/{horizon}",
@@ -178,7 +178,7 @@ def plan_training_sweep(
                 config=job_config,
             )
             logger.info(f"Created job {job_id}: {bucket}/{horizon}")
-    
+
     con.close()
 
 
