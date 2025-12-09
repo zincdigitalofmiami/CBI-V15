@@ -25,13 +25,15 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 
 | Feature                | Description                                                       |
 | ---------------------- | ----------------------------------------------------------------- |
-| 🧠 **TSci Agents**     | AI-powered experiment planning, model selection, and QA           |
-| ⚡ **AnoFox Engine**   | SQL-native feature engineering with DuckDB macros                 |
-| 📊 **Big 8 Drivers**   | Crush, China, FX, Fed, Tariff, Biofuel, Energy, Vol               |
+| 🧠 **TSci Agents**     | OpenAI-powered orchestration (Curator, Planner, Forecaster, Reporter) with hallucination guardrails |
+| ⚡ **AnoFox Engine**   | SQL-native feature engineering with 300+ features across 38 symbols |
+| 📊 **Big 8 Drivers**   | Crush, China, FX, Fed, Tariff, Biofuel, Energy, **Volatility** (focus overlays, not cages) |
+| 🎯 **Multi-Model**     | LightGBM, CatBoost, XGBoost quantile models with AutoML sweeps |
+| 📈 **QRA Ensemble**    | Regime-weighted Quantile Regression Averaging (L3) |
+| 🎲 **Monte Carlo**     | 1,000-path risk simulation with VaR/CVaR/downside metrics (L4) |
 | 🦆 **MotherDuck**      | Cloud data warehouse with local DuckDB mirroring                  |
 | 📉 **TradingView**     | Live ZL charts, Forex Heatmap, and Tech Gauges (Dark Mode)        |
-| 🔮 **Crystal Ball AI** | "Driver of Drivers" analysis for Lobbying, SAF, and Weather risks |
-| 🎛️ **Regime-Aware**    | Adaptive models based on market conditions                        |
+| 🎛️ **Regime-Aware**    | Adaptive models with TSci meta-learning framework                        |
 
 ---
 
@@ -39,35 +41,50 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Data Sources                         │
-│  Databento  │  ScrapeCreator  │  FRED  │  EIA          │
+│                    Data Sources (38+ symbols)           │
+│  Databento  │  ScrapeCreator  │  FRED  │  EIA  │ USDA  │
 └──────────────────────┬──────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
 │               Ingestion Layer (src/ingestion/)           │
 │  • databento/   • scrape_creator/   • fred/   • eia/    │
+│  • usda/        • cftc/             • weather/          │
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
-│               AnoFox Engine (src/engines/anofox/)        │
-│  • build_features.py   • build_training.py              │
-│  • build_forecasts.py  • anofox_bridge.py               │
+│          AnoFox Engine (src/engines/anofox/)             │
+│  • build_features.py (300+ features, all symbols)       │
+│  • build_training.py (train/val/test splits)           │
+│  • anofox_bridge.py (TSci ↔ SQL interface)             │
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
 │               MotherDuck (database/)                     │
 │  raw → staging → features → training → forecasts        │
+│  (8 schemas, 30+ tables, SQL macros, assertions, API)   │
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
-│               TSci Agents (src/models/tsci/)             │
-│  • planner.py   • curator.py   • forecaster.py          │
+│     TSci Agents + OpenAI (src/models/tsci/)              │
+│  • curator.py    (data QA + LLM quality analysis)       │
+│  • planner.py    (model selection + LLM suggestions)    │
+│  • forecaster.py (QRA ensemble + LLM weighting)         │
+│  • reporter.py   (narrative generation + LLM reports)   │
+│  • model_sweep.py (AutoML-lite per bucket/horizon)      │
+└──────────────────────┬───────────────────────────────────┘
+                       ↓
+┌──────────────────────────────────────────────────────────┐
+│        4-Level Model Stack (L1→L2→L3→L4)                 │
+│  L1: Base Models (LightGBM, CatBoost, XGBoost)          │
+│  L2: Meta-Learner (model_sweep.py, regime tagging)     │
+│  L3: QRA Ensemble (regime-weighted quantile averaging)  │
+│  L4: Monte Carlo (1,000 paths, VaR/CVaR, scenarios)    │
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
 │               Next.js Dashboard (dashboard/)             │
 │  • /forecasts   • /neural-quant  • /sentiment           │
-│  • /market-overview  • /quant-admin                     │
+│  • /market-overview  • /quant-admin (TSci reports)      │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -86,10 +103,13 @@ CBI-V15/
 │   └── macros/           # Feature SQL macros
 │
 ├── src/                  # 🐍 Python Source
-│   ├── engines/          # AnoFox engine
-│   ├── models/           # TSci agents (Planner, Curator, Forecaster)
-│   ├── ingestion/        # Data ingestion
-│   └── training/         # Model training
+│   ├── engines/          # AnoFox engine + engine registry
+│   ├── models/           # TSci agents (Curator, Planner, Forecaster, Reporter)
+│   ├── ingestion/        # Data collectors (databento, fred, eia, scrape_creator, etc.)
+│   ├── training/         # Baseline models (lightgbm, catboost, xgboost)
+│   ├── ensemble/         # L3: QRA ensemble
+│   ├── simulators/       # L4: Monte Carlo risk simulation
+│   └── utils/            # OpenAI client, keychain manager
 │
 ├── docs/                 # 📚 Documentation
 │   ├── architecture/     # System design
@@ -129,7 +149,7 @@ pip install -r config/requirements/requirements.txt
 ### 3. Configure Environment
 
 ```bash
-export MOTHERDUCK_DB=cbi-v15
+export MOTHERDUCK_DB=cbi_v15
 export MOTHERDUCK_TOKEN=<your-token>
 export SCRAPECREATOR_API_KEY=<your-key>
 export FRED_API_KEY=<your-key>
@@ -157,12 +177,17 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Variable                | Description              | Required |
 | ----------------------- | ------------------------ | -------- |
-| `MOTHERDUCK_DB`         | MotherDuck database name | ✅       |
+| `MOTHERDUCK_DB`         | MotherDuck database name (`cbi_v15`) | ✅       |
 | `MOTHERDUCK_TOKEN`      | MotherDuck auth token    | ✅       |
-| `SCRAPECREATOR_API_KEY` | ScrapeCreator API key    | ✅       |
-| `FRED_API_KEY`          | FRED API key             | ✅       |
+| `OPENAI_API_KEY`        | OpenAI API key (for TSci agents) | ✅       |
+| `OPENAI_MODEL`          | OpenAI model ID (default: `gpt-5.1`) | Optional |
 | `DATABENTO_API_KEY`     | Databento API key        | ✅       |
+| `FRED_API_KEY`          | FRED API key             | ✅       |
+| `SCRAPECREATOR_API_KEY` | ScrapeCreator API key    | ✅       |
 | `EIA_API_KEY`           | EIA API key              | Optional |
+| `USDA_NASS_API_KEY`     | USDA NASS API key        | Optional |
+
+> Secrets: keep tokens/keys in a local `.env` (already gitignored), direnv, or macOS Keychain. Use `MOTHERDUCK_DB` (not `MOTHERDUCK_DATABASE`) set to your actual database name (default `cbi_v15`). Avoid committing shell init files with secrets.
 
 ---
 
@@ -184,11 +209,26 @@ python src/ingestion/scrape_creator/collect.py
 python src/ingestion/fred/collect_fred_fx.py
 ```
 
-### Build Features
+### Build Features & Training Data
 
 ```bash
+# Build all features (300+ across 38 symbols)
 python src/engines/anofox/build_features.py
+
+# Build training tables with targets and splits
 python src/engines/anofox/build_training.py
+```
+
+### Train Models
+
+```bash
+# Train baseline models (quantile regression: P10/P50/P90)
+python src/training/baselines/lightgbm_zl.py
+python src/training/baselines/catboost_zl.py
+python src/training/baselines/xgboost_zl.py
+
+# Or run TSci-orchestrated sweep
+python src/models/tsci/planner.py
 ```
 
 ### Run Dashboard Locally

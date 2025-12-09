@@ -1,0 +1,32 @@
+# Sample Codex config for CBI-V15 (copy to ~/.codex/config.toml)
+model = "gpt-5-codex"
+model_provider = "openai"
+model_reasoning_effort = "high"      # deeper reasoning for complex pipelines
+model_reasoning_summary = "concise"  # short rationale, not verbose
+model_verbosity = "medium"
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+writable_roots = ["/Volumes/Satechi Hub/CBI-V15"]
+network_access = false
+
+[features]
+apply_patch_freeform = true      # enable freeform apply_patch tool
+view_image_tool = true           # keep image attachment support
+web_search_request = false       # block web search unless explicitly enabled
+ghost_commit = false
+experimental_sandbox_command_assessment = false
+
+# Make Codex pull project context from the repo docs if AGENTS.md is missing.
+project_doc_max_bytes = 200000
+project_doc_fallback_filenames = [
+  "AGENTS.md",
+  ".cursorrules",
+  "docs/architecture/MASTER_PLAN.md",
+  "docs/reference/BEST_PRACTICES.md"
+]
+
+[projects."/Volumes/Satechi Hub/CBI-V15"]
+trust_level = "trusted"

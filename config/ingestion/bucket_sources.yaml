@@ -1,0 +1,153 @@
+# Bucket-Level News Source Mapping
+# Maps each source to Big 8 buckets for direct scraping
+
+profarmer:
+  name: "ProFarmer"
+  type: "premium"
+  requires_auth: true
+  base_url: "https://www.profarmer.com"
+  sections:
+    - name: "First Thing Today"
+      url: "/news/first-thing-today"
+      edition_type: "pre_open"
+    - name: "Ahead of the Open"
+      url: "/news/ahead-of-the-open"
+      edition_type: "pre_open"
+    - name: "After the Bell"
+      url: "/news/after-the-bell"
+      edition_type: "post_close"
+    - name: "Agriculture News"
+      url: "/news/agriculture-news"
+      edition_type: "intraday"
+    - name: "Newsletters"
+      url: "/newsletters"
+      edition_type: "newsletter"
+  buckets: ["crush", "china", "tariff", "biofuel", "weather"]  # Multi-bucket
+
+crush:
+  sources:
+    - name: "NOPA"
+      url: "https://nopa.org/news/"
+      type: "public"
+    - name: "ProFarmer Crush"
+      url: "https://www.profarmer.com"
+      type: "premium"
+      requires_auth: true
+
+china:
+  sources:
+    - name: "Agrimoney China"
+      url: "https://www.agrimoney.com/news/china/"
+      type: "public"
+    - name: "CONAB Brazil"
+      url: "https://www.conab.gov.br/ultimas-noticias"
+      type: "public"
+    - name: "ABIOVE Brazil"
+      url: "https://abiove.org.br/en/statistics/"
+      type: "public"
+    - name: "Reuters Commodities"
+      url: "https://www.reuters.com/business/commodities/"
+      type: "public"
+
+fx:
+  sources:
+    - name: "Reuters Commodities"
+      url: "https://www.reuters.com/business/commodities/"
+      type: "public"
+
+fed:
+  sources:
+    - name: "Migration Policy Institute"
+      url: "https://www.migrationpolicy.org/"
+      type: "public"
+    - name: "Reuters Commodities"
+      url: "https://www.reuters.com/business/commodities/"
+      type: "public"
+
+tariff:
+  sources:
+    - name: "Immigration Impact"
+      url: "https://immigrationimpact.com/"
+      type: "public"
+    - name: "SPLC Immigrant Justice"
+      url: "https://www.splcenter.org/issues/immigrant-justice"
+      type: "public"
+    - name: "Farm Bureau Newsroom"
+      url: "https://www.fb.org/newsroom/"
+      type: "public"
+    - name: "California Farm Bureau"
+      url: "https://www.cfbf.com/news/"
+      type: "public"
+    - name: "Texas Agriculture"
+      url: "https://www.texasagriculture.gov/"
+      type: "public"
+    - name: "Florida Agriculture"
+      url: "https://www.fdacs.gov/"
+      type: "public"
+    - name: "Georgia Farm Bureau"
+      url: "https://www.gfb.org/"
+      type: "public"
+
+biofuel:
+  sources:
+    - name: "Clean Fuels Alliance"
+      url: "https://cleanfuels.org/"
+      type: "public"
+
+weather:
+  sources:
+    - name: "AgWeb Soybeans"
+      url: "https://www.agweb.com/news/crops/soybeans"
+      type: "public"
+    - name: "Farm Progress Soybeans"
+      url: "https://www.farmprogress.com/soybeans"
+      type: "public"
+    - name: "Agriculture.com Markets"
+      url: "https://www.agriculture.com/markets-commodities"
+      type: "public"
+
+energy:
+  sources:
+    - name: "Agrimoney Grains/Oilseeds"
+      url: "https://www.agrimoney.com/news/grains-oilseeds/"
+      type: "public"
+    - name: "World Grain"
+      url: "https://www.world-grain.com/"
+      type: "public"
+
+# Labor/Policy (cross-bucket)
+labor_policy:
+  sources:
+    - name: "Farm Labor Organizing Committee"
+      url: "https://www.farmlabororganizing.org/"
+      type: "public"
+    - name: "United Farm Workers"
+      url: "https://ufw.org/"
+      type: "public"
+    - name: "Writers Guild of America"
+      url: "https://www.wga.com/"
+      type: "public"
+  buckets: ["tariff", "fed"]  # Maps to multiple buckets
+
+# Vegas Intel (demand proxy)
+vegas_intel:
+  sources:
+    - name: "Eater Vegas"
+      url: "https://vegas.eater.com/"
+      type: "public"
+      trust_score: 0.85
+      keywords: ["restaurant", "opening", "closing", "food", "dining", "chef"]
+
+    - name: "LV Convention & Visitors Authority"
+      url: "https://www.lvcva.com/news/"
+      type: "public"
+      trust_score: 0.90
+      keywords: ["convention", "event", "attendance", "visitor", "tourism"]
+
+    - name: "Nevada Dept. of Tourism"
+      url: "https://travelnevada.com/news/"
+      type: "public"
+      trust_score: 0.90
+      keywords: ["tourism", "arrivals", "visitor", "spending", "food", "beverage"]
+  buckets: ["demand"]  # Demand proxy for F&B consumption
+

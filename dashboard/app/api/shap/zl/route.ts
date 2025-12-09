@@ -9,7 +9,7 @@ export async function GET() {
     // Assuming a table exists or will exist
     const rows = await queryMotherDuck(`
       SELECT *
-      FROM training.daily_ml_matrix_zl_v15
+      FROM training.daily_ml_matrix_zl
       ORDER BY as_of_date DESC
       LIMIT 20
     `);

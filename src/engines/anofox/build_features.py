@@ -1,9 +1,9 @@
 # src/anofox/build_features.py
 
-import duckdb
+import os
 from pathlib import Path
 
-import os
+import duckdb
 
 # Paths
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -32,12 +32,12 @@ def run():
     # Dummy data insertion removed as per user request (NO MOCK DATA)
 
     # 2. Define Target Table (if not exists, though schema script should handle it)
-    table_name = "features.daily_ml_matrix_zl_v15"
+    table_name = "features.daily_ml_matrix_zl"
 
     # Check if table exists
     table_exists = (
         con.execute(
-            f"SELECT count(*) FROM information_schema.tables WHERE table_schema = 'features' AND table_name = 'daily_ml_matrix_zl_v15'"
+            f"SELECT count(*) FROM information_schema.tables WHERE table_schema = 'features' AND table_name = 'daily_ml_matrix_zl'"
         ).fetchone()[0]
         > 0
     )
@@ -52,7 +52,7 @@ def run():
     # 3. Populate Table using Macros
     print(f"Populating {table_name} for symbol 'ZL'...")
 
-    # We use the macro feat_daily_ml_matrix_v15('ZL')
+    # We use the macro feat_daily_ml_matrix('ZL')
     # We use INSERT INTO ... SELECT ...
     # We need to ensure the columns match.
     # The schema script created the table with specific columns.
@@ -68,7 +68,7 @@ def run():
             f"""
             INSERT INTO {table_name}
             SELECT *
-            FROM feat_daily_ml_matrix_v15('ZL')
+            FROM feat_daily_ml_matrix('ZL')
         """
         )
     except Exception as e:
@@ -78,7 +78,7 @@ def run():
             f"""
             CREATE OR REPLACE TABLE {table_name} AS
             SELECT *
-            FROM feat_daily_ml_matrix_v15('ZL')
+            FROM feat_daily_ml_matrix('ZL')
         """
         )
 

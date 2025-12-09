@@ -83,3 +83,24 @@ Update config values (requires auth).
 - Writes should go through API route with auth.
 - Keep this page separate from Quant Admin (no model knobs here).
 - Changes take effect immediately (no restart required).
+
+## Visual Design
+
+### DashdarkX Theme
+- **Background:** `rgb(0, 0, 0)` - pure black
+- **Upload cards:** `border-zinc-800` with `font-extralight` titles
+- **Refresh buttons:** all `font-extralight`
+- **System status:** `font-extralight` throughout
+- **Badges:** all include `font-extralight`
+
+### Form Elements
+- Inputs: `bg-zinc-950 border-zinc-800`
+- Sliders: Custom styled with zinc track
+- Toggles: Green for enabled, zinc for disabled
+
+### Threshold Visualization
+| Zone | Color | Example |
+|------|-------|--------|
+| Green | `bg-green-500/20` | Safe zone |
+| Yellow | `bg-yellow-500/20` | Caution zone |
+| Red | `bg-red-500/20` | Alert zone |

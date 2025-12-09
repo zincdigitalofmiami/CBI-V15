@@ -20,135 +20,200 @@
 2. **Domain-Specific Features**: Calculate RSI, MACD, Bollinger Bands
 3. **Custom Transformations**: Log returns, volatility measures, regime indicators
 
-## The Solution: Anofox-First Workflow
+## The Solution: AnoFox-First Workflow
 
-**Anofox creates all features BEFORE TSci runs.**
+**AnoFox creates all features BEFORE TSci runs.**
 
 ### Pipeline Order:
 
 ```
-STEP 1: RAW DATA
+STEP 1: RAW DATA (Ingestion)
 ┌─────────────────────────────────┐
-│ Databento → DuckDB              │
-│ date         close               │
-│ 2024-01-01   23.50              │
-│ 2024-01-02   23.75              │
-│ ...                              │
+│ Databento → DuckDB (raw schema) │
+│ date, symbol, close             │
 └─────────────────────────────────┘
                 ↓
-STEP 2: ANOFOX FEATURE ENGINEERING (SQL)
-┌────────────────────────────────────────────────────────┐
-│ CREATE TABLE zl_enriched AS                            │
-│ SELECT                                                 │
-│     date,                                              │
-│     close,                                             │
-│     anofox_sma(close, 5) AS sma_5,                    │
-│     anofox_sma(close, 21) AS sma_21,                  │
-│     anofox_ema(close, 12) AS ema_12,                  │
-│     anofox_volatility(close, 21) AS volatility_21d,   │
-│     anofox_rsi(close, 14) AS rsi_14,                  │
-│     anofox_macd(close) AS macd,                       │
-│     anofox_bollinger_bands(close, 20) AS bb_upper,    │
-│     anofox_atr(high, low, close, 14) AS atr_14,       │
-│     -- ... all 276 features                           │
-│ FROM zl_raw_prices                                    │
-└────────────────────────────────────────────────────────┘
+STEP 2: ANOFOX FEATURE ENGINEERING (SQL Macros)
+┌─────────────────────────────────────────────────────┐
+│ database/macros/*.sql → features schema             │
+│ 93+ features per symbol × 38 symbols                │
+└─────────────────────────────────────────────────────┘
                 ↓
-STEP 3: EXPORT ENRICHED DATA TO PYTHON
-┌─────────────────────────────────────────────┐
-│ enriched_df = conn.execute("""              │
-│     SELECT * FROM zl_enriched               │
-│ """).fetchdf()                              │
-│                                             │
-│ # Now enriched_df has 280 columns:         │
-│ # - date, close (2 original)               │
-│ # - 276 Anofox-generated features          │
-└─────────────────────────────────────────────┘
+STEP 3: EXPORT TO PYTHON
+┌─────────────────────────────────────────────────────┐
+│ enriched_df = conn.execute(                         │
+│     "SELECT * FROM build_symbol_features('ZL')"     │
+│ ).fetchdf()                                         │
+└─────────────────────────────────────────────────────┘
                 ↓
 STEP 4: TSci RUNS ON ENRICHED DATA
-┌──────────────────────────────────────────────┐
-│ from TimeSeriesScientist import TSci         │
-│                                              │
-│ tsci = TSci(config)                          │
-│ result = tsci.run(enriched_df)  # ← Full    │
-│                                  # featured  │
-│ # TSci sees ALL 276 features    # dataset   │
-│ # and uses them for forecasting             │
-└──────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ TSci sees all 93+ features, selects best models,    │
+│ generates ensemble forecast                         │
+└─────────────────────────────────────────────────────┘
 ```
 
-## Code Example
+## Feature Inventory (93+ Features Per Symbol)
 
-### ❌ WRONG: Passing Raw Data to TSci
-```python
-# This will FAIL - TSci needs features!
-raw_df = pd.DataFrame({'date': [...], 'close': [...]})
-tsci.run(raw_df)  # Only has 2 columns, will produce poor forecasts
+### Price & Technical Indicators (40 features)
+Built by `database/macros/features.sql` and `technical_indicators_all_symbols.sql`:
+
+| Category | Features | Count |
+|----------|----------|-------|
+| **Price/Close** | `close` | 1 |
+| **Lags** | `lag_close_1d`, `lag_close_2d`, `lag_close_3d`, `lag_close_5d`, `lag_close_10d`, `lag_close_21d` | 6 |
+| **Log Returns** | `log_ret_1d`, `log_ret_2d`, `log_ret_3d`, `log_ret_5d`, `log_ret_10d`, `log_ret_21d` | 6 |
+| **Moving Averages** | `sma_5`, `sma_10`, `sma_21`, `sma_50`, `sma_200` | 5 |
+| **MA Distances** | `dist_sma_5`, `dist_sma_10`, `dist_sma_21`, `dist_sma_50`, `dist_sma_200` | 5 |
+| **Volatility** | `volatility_21d` | 1 |
+| **Volume** | `avg_volume_21d`, `volume_ratio`, `volume_zscore`, `obv` | 4 |
+| **Range** | `daily_range_pct` | 1 |
+| **RSI** | `rsi_14` | 1 |
+| **MACD** | `macd`, `macd_signal`, `macd_histogram` | 3 |
+| **Bollinger** | `bb_upper`, `bb_middle`, `bb_lower`, `bb_position`, `bb_width_pct` | 5 |
+| **ATR** | `atr_14`, `tr_pct` | 2 |
+| **Stochastic** | `stoch_k`, `stoch_d` | 2 |
+| **Momentum** | `roc_10d`, `roc_21d`, `roc_63d`, `momentum_10d`, `momentum_21d` | 5 |
+
+### Cross-Asset Correlations (11 features)
+Built by `database/macros/cross_asset_features.sql`:
+
+| Feature | Description |
+|---------|-------------|
+| `corr_zl_zs_60d` | ZL-Soybean correlation |
+| `corr_zl_zm_60d` | ZL-Meal correlation |
+| `corr_zl_cl_60d` | ZL-Crude correlation |
+| `corr_zl_ho_60d` | ZL-Heating Oil correlation |
+| `corr_zl_hg_60d` | ZL-Copper correlation |
+| `corr_zl_dx_60d` | ZL-Dollar correlation |
+| `corr_cl_ho_60d` | Crude-HO correlation |
+| `corr_cl_rb_60d` | Crude-RBOB correlation |
+| `corr_cl_dx_60d` | Crude-Dollar correlation |
+| `corr_hg_gc_60d` | Copper-Gold correlation |
+| `corr_hg_dx_60d` | Copper-Dollar correlation |
+
+### Fundamental Spreads (6 features)
+Built by `calc_fundamental_spreads()`:
+
+| Feature | Formula |
+|---------|---------|
+| `board_crush_spread` | (ZM × 0.022 + ZL × 11) - ZS |
+| `oil_share_of_crush` | (ZL × 11) / total crush value |
+| `boho_spread` | (ZL/100 × 7.5) - HO |
+| `crack_spread` | ((RB + HO) / 2) - CL |
+| `china_copper_proxy` | HG close |
+| `dollar_index` | DX close |
+
+### Big 8 Bucket Scores (16 features)
+Built by `database/macros/big8_bucket_features.sql`:
+
+| Bucket | Score Feature | Key Metrics |
+|--------|---------------|-------------|
+| **Crush** | `crush_bucket_score` | `board_crush`, `oil_share`, `zl_spec_net_pct` |
+| **China** | `china_bucket_score` | `china_pulse`, `copper_momentum` |
+| **FX** | `fx_bucket_score` | `dollar_index`, `dollar_momentum` |
+| **Fed** | `fed_bucket_score` | `yield_curve_slope`, `fed_rate_change_21d` |
+| **Tariff** | `tariff_bucket_score` | `tariff_activity`, `trump_sentiment_7d` |
+| **Biofuel** | `biofuel_bucket_score` | `rin_d4`, `biodiesel_momentum` |
+| **Energy** | `energy_bucket_score` | `crude_price`, `boho_momentum` |
+| **Volatility** | `volatility_bucket_score` | `vix`, `zl_volatility` |
+
+### Targets (8 features)
+Built by `feat_targets_block()`:
+
+| Feature | Description |
+|---------|-------------|
+| `target_price_1w` | Close in 5 trading days |
+| `target_price_1m` | Close in 21 trading days |
+| `target_price_3m` | Close in 63 trading days |
+| `target_price_6m` | Close in 126 trading days |
+| `target_ret_1w` | Log return over 5 days |
+| `target_ret_1m` | Log return over 21 days |
+| `target_ret_3m` | Log return over 63 days |
+| `target_ret_6m` | Log return over 126 days |
+
+### CFTC COT Features (12+ features per symbol)
+Built by `database/macros/big8_cot_enhancements.sql`:
+
+| Feature | Description |
+|---------|-------------|
+| `managed_money_net_pct_oi` | Speculator positioning |
+| `prod_merc_net_pct_oi` | Commercial hedger positioning |
+| `spec_hedger_spread` | Divergence signal |
+| `extreme_positioning_signal` | Crowded trade reversal |
+| `smart_money_signal` | Commercial vs spec divergence |
+
+## Total Feature Count
+
+| Category | Count |
+|----------|-------|
+| Price & Technical | 40 |
+| Cross-Asset Correlations | 11 |
+| Fundamental Spreads | 6 |
+| Big 8 Bucket Scores | 16 |
+| Targets | 8 |
+| CFTC COT (varies by symbol) | 12+ |
+| **Total Per Symbol** | **93+** |
+
+### Across All Symbols
+- 38 futures symbols × 93+ features = **3,500+ total features**
+- Not all features apply to all symbols (e.g., CFTC COT only for covered contracts)
+
+## SQL Macro Entry Points
+
+```sql
+-- Get all features for a single symbol
+SELECT * FROM build_symbol_features('ZL');
+
+-- Get all features for all symbols
+SELECT * FROM build_all_symbols_features();
+
+-- Get Big 8 bucket scores only
+SELECT * FROM calc_all_bucket_scores();
+
+-- Get technical indicators only
+SELECT * FROM calc_all_technical_indicators('ZL');
 ```
 
-### ✅ CORRECT: Anofox Feature Engineering First
+## Python Integration
+
 ```python
 import duckdb
 
-# 1. Load Anofox extensions
-conn = duckdb.connect('zl_futures.db')
-conn.execute("INSTALL anofox_tabular FROM community")
-conn.execute("INSTALL anofox_forecast FROM community")
-conn.execute("LOAD anofox_tabular")
-conn.execute("LOAD anofox_forecast")
+# Connect to DuckDB
+conn = duckdb.connect('Data/duckdb/cbi_v15.duckdb')
 
-# 2. Anofox creates all features (in SQL - FAST!)
-conn.execute("""
-    CREATE OR REPLACE TABLE zl_features AS
-    SELECT 
-        date,
-        close AS price_current,
-        
-        -- Moving Averages
-        anofox_sma(close, 5) AS sma_5,
-        anofox_sma(close, 10) AS sma_10,
-        anofox_sma(close, 21) AS sma_21,
-        anofox_sma(close, 50) AS sma_50,
-        
-        -- Exponential Moving Averages
-        anofox_ema(close, 12) AS ema_12,
-        anofox_ema(close, 26) AS ema_26,
-        
-        -- Volatility
-        anofox_volatility(close, 10) AS vol_10d,
-        anofox_volatility(close, 21) AS vol_21d,
-        anofox_volatility(close, 60) AS vol_60d,
-        
-        -- Technical Indicators
-        anofox_rsi(close, 14) AS rsi_14,
-        anofox_macd(close) AS macd,
-        anofox_bollinger_bands(close, 20) AS bb_upper,
-        anofox_atr(high, low, close, 14) AS atr_14,
-        
-        -- Statistical Features
-        anofox_trend_strength(close, 60) AS trend_60d,
-        anofox_correlation(close, wti_close, 90) AS wti_corr_90d,
-        
-        -- ... all 276 features
-    FROM zl_raw_prices
-""")
+# Load AnoFox SQL macros
+conn.execute(open('database/macros/features.sql').read())
+conn.execute(open('database/macros/big8_bucket_features.sql').read())
+conn.execute(open('database/macros/cross_asset_features.sql').read())
+conn.execute(open('database/macros/technical_indicators_all_symbols.sql').read())
+conn.execute(open('database/macros/master_feature_matrix.sql').read())
 
-# 3. Export to Python
-enriched_df = conn.execute("SELECT * FROM zl_features").fetchdf()
+# Build feature matrix for ZL
+enriched_df = conn.execute("SELECT * FROM build_symbol_features('ZL')").fetchdf()
 
-# 4. NOW run TSci with full feature set
+# Now enriched_df has 93+ columns - pass to TSci
 from TimeSeriesScientist import TSci
 
 tsci = TSci({
-    'data_path': enriched_df,  # ← 280 columns!
+    'data_path': enriched_df,
     'horizon': 30,
     'llm_model': 'gpt-4o'
 })
-
 result = tsci.run()
-# TSci will analyze all 276 features, select best models,
-# and generate ensemble forecast
 ```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `database/macros/features.sql` | Price, returns, volatility, targets |
+| `database/macros/technical_indicators_all_symbols.sql` | RSI, MACD, Bollinger, etc. |
+| `database/macros/cross_asset_features.sql` | Correlations, betas, spreads |
+| `database/macros/big8_bucket_features.sql` | Big 8 thematic scores |
+| `database/macros/big8_cot_enhancements.sql` | CFTC positioning features |
+| `database/macros/master_feature_matrix.sql` | Combines all above |
 
 ## Key Benefits of Anofox-First Approach
 

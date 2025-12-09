@@ -1,0 +1,32 @@
+{
+  "name": "cbi-v15",
+  "version": "1.0.0",
+  "description": "CBI-V15 Quantitative Trading System - ETL and Orchestration",
+  "private": true,
+  "scripts": {
+    "dev": "trigger.dev dev",
+    "deploy": "trigger.dev deploy",
+    "test": "jest",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@trigger.dev/sdk": "^3.0.0",
+    "@ai-sdk/openai": "^0.0.66",
+    "@ancorai/sdk": "^1.0.0",
+    "ai": "^3.4.0",
+    "duckdb": "^1.0.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@trigger.dev/cli": "^3.0.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

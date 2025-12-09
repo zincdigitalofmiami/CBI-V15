@@ -9,8 +9,8 @@ Internal quant cockpit for:
 
 ## Data Sources (MotherDuck)
 - `ops.ingestion_status`, `ops.pipeline_metrics`
-- `features.daily_ml_matrix_zl_v15`
-- `training.daily_ml_matrix_zl_v15`
+- `features.daily_ml_matrix_zl`
+- `training.daily_ml_matrix_zl`
 - `reference.feature_catalog`, `reference.model_registry`
 - `tsci.jobs`, `tsci.runs`, `tsci.qa_checks`
 
@@ -99,3 +99,31 @@ CREATE TABLE tsci.runs (
 - Authentication/authorization required (dev/ops only).
 - This is the primary consumer of TSci report artifacts.
 - No business-friendly simplification needed; this is the cockpit.
+
+## Visual Design
+
+### DashdarkX Theme
+- **Background:** `rgb(0, 0, 0)` - pure black
+- **All text:** `font-extralight` with `font-mono` for metrics
+- **Status indicators:** Color-coded by health
+- **Tables:** `border-zinc-800` with alternating row shading
+
+### Pipeline Health Colors
+| Status | Color | Indicator |
+|--------|-------|----------|
+| Healthy | Green | `bg-green-500` dot |
+| Warning | Yellow | `bg-yellow-500` dot |
+| Error | Red | `bg-red-500` dot |
+| Running | Blue | `bg-blue-500` animated pulse |
+
+### Model Registry Display
+- Champion models highlighted with gold border
+- Challenger models with dashed border
+- Retired models grayed out
+- Metrics displayed in `font-mono` for alignment
+
+### TSci Run Cards
+- Status badge (running/completed/failed)
+- Expandable log viewer
+- Narrative text in card body
+- Timestamp in `text-zinc-500`

@@ -1,7 +1,7 @@
 -- Training Tables: Features + Targets + Splits
 
--- Main V15 Training Matrix
-CREATE TABLE IF NOT EXISTS training.daily_ml_matrix_zl_v15 (
+-- Main Training Matrix
+CREATE TABLE IF NOT EXISTS training.daily_ml_matrix_zl (
     -- Keys
     as_of_date          DATE NOT NULL,
     symbol              TEXT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS training.daily_ml_matrix_zl_v15 (
     tariff_bucket_score   DOUBLE,
     biofuel_bucket_score  DOUBLE,
     energy_bucket_score   DOUBLE,
-    vol_bucket_score      DOUBLE,
+    volatility_bucket_score DOUBLE,
     
     -- Big 8 Neural Scores (LOCKED)
     crush_neural_score    DOUBLE,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS training.daily_ml_matrix_zl_v15 (
     tariff_neural_score   DOUBLE,
     biofuel_neural_score  DOUBLE,
     energy_neural_score   DOUBLE,
-    vol_neural_score      DOUBLE,
+    volatility_neural_score DOUBLE,
     
     -- Master Neural Score (LOCKED)
     master_neural_score   DOUBLE,
@@ -46,5 +46,5 @@ CREATE TABLE IF NOT EXISTS training.daily_ml_matrix_zl_v15 (
     PRIMARY KEY (as_of_date, symbol)
 );
 
-CREATE INDEX IF NOT EXISTS idx_training_date ON training.daily_ml_matrix_zl_v15 (as_of_date);
-CREATE INDEX IF NOT EXISTS idx_training_split ON training.daily_ml_matrix_zl_v15 (train_val_test_split);
+CREATE INDEX IF NOT EXISTS idx_training_date ON training.daily_ml_matrix_zl (as_of_date);
+CREATE INDEX IF NOT EXISTS idx_training_split ON training.daily_ml_matrix_zl (train_val_test_split);

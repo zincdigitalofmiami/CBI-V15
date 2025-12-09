@@ -4,16 +4,17 @@ AnoFox: Build Training Matrix
 Adds targets and train/val/test splits to feature matrix.
 """
 
-import duckdb
 import os
 from pathlib import Path
+
+import duckdb
 
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
 
 
 def build_training(con: duckdb.DuckDBPyConnection = None) -> None:
     """
-    Build training.daily_ml_matrix_zl_v15 from features + targets.
+    Build training.daily_ml_matrix_zl from features + targets.
     """
     if con is None:
         motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
@@ -33,7 +34,7 @@ def build_training(con: duckdb.DuckDBPyConnection = None) -> None:
     # Create training matrix dynamically to include all features
     con.execute(
         """
-        CREATE OR REPLACE TABLE training.daily_ml_matrix_zl_v15 AS
+        CREATE OR REPLACE TABLE training.daily_ml_matrix_zl AS
         SELECT 
             f.*,
             -- Splits & Weights
@@ -50,7 +51,7 @@ def build_training(con: duckdb.DuckDBPyConnection = None) -> None:
             LEAD(close, 63) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_3m,
             LEAD(close, 126) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_6m,
             LEAD(close, 252) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_12m
-        FROM features.daily_ml_matrix_zl_v15 f
+        FROM features.daily_ml_matrix_zl f
         LEFT JOIN staging.ohlcv_daily o USING (as_of_date, symbol)
     """
     )

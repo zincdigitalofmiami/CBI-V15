@@ -2,12 +2,14 @@
 AnoFox: Build Forecasts
 
 Applies trained models to generate predictions.
-Writes to forecasts.zl_v15_* tables and updates model_registry.
+Writes to unversioned forecasts tables (e.g. forecasts.zl_predictions) and
+updates model_registry (once wired to real models).
 """
 
-import duckdb
 import os
 from pathlib import Path
+
+import duckdb
 
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
 
@@ -41,15 +43,16 @@ def build_forecasts(
     # model = load_model(model_id)
 
     # Get latest features
-    # features = con.execute("SELECT * FROM features.daily_ml_matrix_zl_v15 WHERE as_of_date = (SELECT MAX(as_of_date) FROM features.daily_ml_matrix_zl_v15)").df()
+    # features = con.execute("SELECT * FROM features.daily_ml_matrix_zl WHERE as_of_date = (SELECT MAX(as_of_date) FROM features.daily_ml_matrix_zl)").df()
 
     # Generate predictions
     # predictions = model.predict(features)
 
-    # Write to forecasts table
+    # Write to forecasts table (currently writes metadata only; predictions
+    # stay NULL until real models are wired in).
     con.execute(
         f"""
-        INSERT INTO forecasts.zl_v15_predictions (
+        INSERT INTO forecasts.zl_predictions (
             as_of_date, symbol, model_id, horizon,
             y_pred, y_pred_lower, y_pred_upper,
             master_neural_score_at_run, regime_at_run
@@ -59,13 +62,13 @@ def build_forecasts(
             symbol,
             '{model_id}' AS model_id,
             '{horizon}' AS horizon,
-            NULL AS y_pred,  -- Placeholder
+            NULL AS y_pred,  -- Placeholder until real models are wired
             NULL AS y_pred_lower,
             NULL AS y_pred_upper,
             master_neural_score AS master_neural_score_at_run,
             regime AS regime_at_run
-        FROM features.daily_ml_matrix_zl_v15
-        WHERE as_of_date = (SELECT MAX(as_of_date) FROM features.daily_ml_matrix_zl_v15)
+        FROM features.daily_ml_matrix_zl
+        WHERE as_of_date = (SELECT MAX(as_of_date) FROM features.daily_ml_matrix_zl)
     """
     )
 
@@ -73,5 +76,6 @@ def build_forecasts(
 
 
 if __name__ == "__main__":
-    # Example usage
-    build_forecasts(model_id="lgbm_zl_v15_1w", horizon="1w")
+    # Example usage (model_id is illustrative; ensure it matches
+    # reference.model_registry once models are registered.)
+    build_forecasts(model_id="lgbm_zl_1w", horizon="1w")

@@ -27,6 +27,8 @@ env/
 .env
 .env.local
 .env.*.local
+.cbi-*.zsh
+.cbi-*.sh
 
 # IDE
 .vscode/
@@ -80,3 +82,7 @@ htmlcov/
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 data/duckdb/*.duckdb
+
+# Archive folder (legacy/backup files - not part of active repo)
+_archive/
+skaffold

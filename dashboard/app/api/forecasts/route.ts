@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const rows = await queryMotherDuck(`
       SELECT *
-      FROM forecasts.zl_v15_1w
+      FROM forecasts.zl_predictions
+      WHERE horizon = '1w'
       ORDER BY as_of_date DESC
       LIMIT 50
     `);

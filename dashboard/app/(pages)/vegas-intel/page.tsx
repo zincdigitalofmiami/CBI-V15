@@ -47,7 +47,7 @@ export default function VegasIntelPage() {
                             </p>
                         </div>
                         <div className="mt-4 text-sm text-gray-600">
-                            Context: <code className="text-gray-400">forecasts.zl_v15_*</code>
+                            Context: <code className="text-gray-400">forecasts.zl_predictions</code>
                         </div>
                     </section>
 

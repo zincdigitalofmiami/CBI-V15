@@ -51,7 +51,7 @@ export default function SentimentPage() {
               ))}
             </div>
             <div className="text-sm text-gray-600">
-              Data source: <code className="text-gray-400">features.daily_ml_matrix_zl_v15</code>
+              Data source: <code className="text-gray-400">features.daily_ml_matrix_zl</code>
             </div>
           </section>
 

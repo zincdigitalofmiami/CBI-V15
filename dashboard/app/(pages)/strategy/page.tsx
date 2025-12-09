@@ -34,7 +34,7 @@ export default function StrategyPage() {
                             ))}
                         </div>
                         <div className="mt-4 text-sm text-gray-600">
-                            Data source: <code className="text-gray-400">forecasts.zl_v15_*</code>
+                            Data source: <code className="text-gray-400">forecasts.zl_predictions</code>
                         </div>
                     </section>
 
@@ -62,7 +62,7 @@ export default function StrategyPage() {
                         <h2 className="text-xl font-light text-white mb-4">P&L Distribution</h2>
                         <p className="text-gray-500">Compare current strategy vs benchmarks</p>
                         <div className="mt-4 text-sm text-gray-600">
-                            Data source: <code className="text-gray-400">training.daily_ml_matrix_zl_v15</code>
+                            Data source: <code className="text-gray-400">training.daily_ml_matrix_zl</code>
                         </div>
                     </section>
                 </div>

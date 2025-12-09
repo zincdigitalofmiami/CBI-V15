@@ -49,7 +49,7 @@ SELECT
     AVG(close) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN 49 PRECEDING AND CURRENT ROW) AS sma_50,
     AVG(close) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN 199 PRECEDING AND CURRENT ROW) AS sma_200,
     -- Volatility (21d) - Now using pre-calculated log_ret_1d
-    STDDEV(log_ret_1d) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS vol_21d,
+    STDDEV(log_ret_1d) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS volatility_21d,
     -- Volume Metrics
     AVG(volume) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS avg_volume_21d,
     volume / NULLIF(AVG(volume) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW), 0) AS volume_ratio,
@@ -75,7 +75,7 @@ FROM raw.databento_ohlcv_daily
 WHERE symbol = sym;
 
 -- Master Feature Matrix Macro
-CREATE OR REPLACE MACRO feat_daily_ml_matrix_v15(sym) AS TABLE
+CREATE OR REPLACE MACRO feat_daily_ml_matrix(sym) AS TABLE
 WITH
     price_block AS (SELECT * FROM feat_price_block(sym)),
     target_block AS (SELECT * FROM feat_targets_block(sym))
@@ -93,7 +93,7 @@ SELECT
     (p.close - p.sma_21) / NULLIF(p.sma_21, 0) AS dist_sma_21,
     (p.close - p.sma_50) / NULLIF(p.sma_50, 0) AS dist_sma_50,
     (p.close - p.sma_200) / NULLIF(p.sma_200, 0) AS dist_sma_200,
-    p.vol_21d,
+    p.volatility_21d,
     p.avg_volume_21d,
     p.volume_ratio,
     p.daily_range_pct,

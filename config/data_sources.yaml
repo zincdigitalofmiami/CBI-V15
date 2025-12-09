@@ -1,0 +1,222 @@
+# ============================================================================
+# CBI-V15 Data Sources Configuration
+# ============================================================================
+# All external data sources, APIs, and endpoints
+# ============================================================================
+
+# ============================================================================
+# Market Data
+# ============================================================================
+market_data:
+  databento:
+    base_url: "https://api.databento.com"
+    datasets:
+      - "GLBX.MDP3"  # CME Globex
+      - "XNAS.ITCH"  # Nasdaq
+    symbols: 33  # See DATA_SOURCES_MASTER.md
+    auth: "DATABENTO_API_KEY"
+    
+  polygon:
+    base_url: "https://api.polygon.io"
+    endpoints:
+      aggregates: "/v2/aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{from}/{to}"
+    auth: "POLYGON_API_KEY"
+
+# ============================================================================
+# Economic & Macro Data
+# ============================================================================
+economic:
+  fred:
+    base_url: "https://api.stlouisfed.org/fred"
+    endpoints:
+      series: "/series/observations"
+    series_count: 24  # See DATA_SOURCES_MASTER.md
+    auth: "FRED_API_KEY"
+    
+  treasury:
+    base_url: "https://api.fiscaldata.treasury.gov/services/api/v1"
+    endpoints:
+      auctions: "/accounting/od/auctions"
+    
+  bls:
+    base_url: "https://api.bls.gov/publicAPI/v2"
+    
+  ecb:
+    base_url: "https://sdw-wsrest.ecb.europa.eu/service"
+    
+  banco_central_brasil:
+    base_url: "https://www3.bcb.gov.br/sgspub"
+    
+  pboc:
+    base_url: "http://www.pbc.gov.cn/en"
+    
+  bcra:
+    base_url: "http://www.bcra.gob.ar"
+
+# ============================================================================
+# Weather Data
+# ============================================================================
+weather:
+  noaa_cdo:
+    base_url: "https://www.ncei.noaa.gov/cdo-web/api/v2"
+    endpoints:
+      data: "/data"
+      stations: "/stations"
+    regions: 14  # See DATA_SOURCES_MASTER.md
+    auth: "NOAA_API_TOKEN"
+    
+  noaa_nws:
+    base_url: "https://api.weather.gov"
+    endpoints:
+      forecast: "/points/{lat},{lon}/forecast"
+    auth: null  # No auth required
+    
+  inmet_brazil:
+    base_url: "https://apitempo.inmet.gov.br"
+    endpoints:
+      station: "/estacao/{start}/{end}/{station_id}"
+      token: "/token"
+      stations: "/estacoes"
+    
+  smn_argentina:
+    base_url: "https://ssl.smn.gob.ar/dpd"
+    endpoints:
+      hourly: "/descarga_opendata.php?file=observaciones/datohorario{station_id}.txt"
+    
+  copernicus:
+    base_url: "https://cds.climate.copernicus.eu/api"
+    auth: "COPERNICUS_API_KEY"
+
+# ============================================================================
+# Agricultural Data
+# ============================================================================
+agricultural:
+  usda_nass:
+    base_url: "https://quickstats.nass.usda.gov/api"
+    endpoints:
+      data: "/api_GET"
+    auth: "USDA_NASS_API_KEY"
+    
+  usda_fas:
+    base_url: "https://apps.fas.usda.gov"
+    endpoints:
+      export_sales: "/export-sales/esrd1.html"
+      gain_reports: "/newgainapi/api/Report/DownloadReportByFileName"
+    
+  conab_brazil:
+    base_url: "https://www.conab.gov.br"
+    endpoints:
+      news: "/ultimas-noticias"
+    
+  abiove:
+    base_url: "https://abiove.org.br/en"
+    endpoints:
+      statistics: "/statistics"
+
+# ============================================================================
+# Energy & Biofuels
+# ============================================================================
+energy:
+  eia:
+    base_url: "https://api.eia.gov/v2"
+    endpoints:
+      crude_imports: "/crude-oil-imports/data"
+      international: "/international/data"
+      biodiesel: "/biofuels/biodiesel/production"
+    auth: "EIA_API_KEY"
+
+# ============================================================================
+# CFTC Data
+# ============================================================================
+cftc:
+  base_url: "https://www.cftc.gov/files/dea/history"
+  endpoints:
+    disaggregated_futures: "/fut_disagg_txt_{year}.zip"
+    disaggregated_combined: "/com_disagg_txt_{year}.zip"
+    tff_futures: "/fut_fin_txt_{year}.zip"
+    tff_combined: "/com_fin_txt_{year}.zip"
+  frequency: "weekly"  # Friday 3:30 PM ET
+  coverage: 38  # futures symbols
+
+# ============================================================================
+# News & Sentiment
+# ============================================================================
+news:
+  scrapecreators:
+    base_url: "https://api.scrapecreators.com/v1"
+    endpoints:
+      truthsocial: "/truthsocial"
+      truthsocial_post: "/truthsocial/post"
+      facebook_post: "/facebook/post"
+    auth: "SCRAPECREATORS_API_KEY"
+    
+  federal_register:
+    base_url: "https://www.federalregister.gov/api/v1"
+    endpoints:
+      documents: "/documents.json"
+    
+  reuters:
+    base_url: "https://www.reuters.com"
+    sections:
+      - "/business/commodities"
+      - "/markets/commodities"
+    
+  reddit:
+    base_url: "https://www.reddit.com"
+    endpoints:
+      agriculture: "/r/agriculture.json"
+
+# ============================================================================
+# Trade & Policy
+# ============================================================================
+trade:
+  trump_tariff_tracker:
+    url: "https://www.tradecomplianceresourcehub.com/2025/09/25/trump-2-0-tariff-tracker"
+    
+  congress:
+    base_url: "https://www.congress.gov"
+    
+  ice_news:
+    url: "https://www.ice.gov/news/releases"
+    
+  dhs_news:
+    url: "https://www.dhs.gov/news-releases"
+    
+  cbp_news:
+    url: "https://www.cbp.gov/newsroom"
+
+# ============================================================================
+# Shipping & Logistics
+# ============================================================================
+shipping:
+  marinetraffic:
+    base_url: "https://www.marinetraffic.com/en/data"
+    auth: "MARINETRAFFIC_API_KEY"
+
+# ============================================================================
+# Economic Calendars
+# ============================================================================
+calendars:
+  - url: "https://tradingeconomics.com/calendar"
+  - url: "https://www.forexfactory.com/calendar"
+  - url: "https://www.investing.com/economic-calendar"
+  - url: "https://www.marketwatch.com/economy-politics/calendar"
+
+# ============================================================================
+# Environment Variables Required
+# ============================================================================
+required_env_vars:
+  critical:
+    - MOTHERDUCK_TOKEN
+    - DATABENTO_API_KEY
+  important:
+    - FRED_API_KEY
+    - EIA_API_KEY
+    - NOAA_API_TOKEN
+    - SCRAPECREATORS_API_KEY
+  optional:
+    - USDA_NASS_API_KEY
+    - POLYGON_API_KEY
+    - COPERNICUS_API_KEY
+    - MARINETRAFFIC_API_KEY
+
