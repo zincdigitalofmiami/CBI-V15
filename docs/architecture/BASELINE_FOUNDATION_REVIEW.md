@@ -18,7 +18,7 @@
 1. ✅ Macro data is robust and complete
 2. ✅ Calculations are algebraically sound
 3. ✅ Baseline plan is solid
-4. ✅ BigQuery pre-compute is maximized
+4. ✅ DuckDB/MotherDuck pre-compute is maximized
 5. ✅ Foundation is ready for advanced models
 
 ---
@@ -321,13 +321,13 @@
 - ✅ Pair correlations (112 features)
 - ✅ Cross-asset betas (28 features)
 - ✅ Lagged features (96 features)
-- **Total**: ~275 features pre-computed in BigQuery
+- **Total**: ~275 features pre-computed in DuckDB/MotherDuck
 
 **Robustness**: ✅ **EXCELLENT**
 - ✅ Industry-standard model (LightGBM)
 - ✅ Proper train/val/test splits
 - ✅ Regime weighting
-- ✅ Feature pre-computation in BigQuery
+- ✅ Feature pre-computation in DuckDB/MotherDuck
 
 **Status**: ✅ **APPROVED**
 
@@ -377,7 +377,7 @@
 
 ---
 
-#### ✅ BigQuery Pre-Compute
+#### ✅ DuckDB/MotherDuck Pre-Compute
 - ✅ Technical indicators: 19 features
 - ✅ FX indicators: 16 features
 - ✅ Fundamental spreads: 4 features
@@ -407,7 +407,7 @@
 |-----------|-------|--------|
 | **Macro Data** | 85% | ✅ Solid |
 | **Calculations** | 100% | ✅ Robust |
-| **BigQuery Pre-Compute** | 80% | ✅ Excellent |
+| **DuckDB/MotherDuck Pre-Compute** | 80% | ✅ Excellent |
 | **Baseline Plan** | 100% | ✅ Solid |
 | **Overall** | **91%** | ✅ **READY** |
 
@@ -491,7 +491,7 @@
 #### ✅ Data Foundation
 - ✅ Macro data: 85% complete (solid)
 - ✅ Calculations: 100% robust
-- ✅ BigQuery pre-compute: 80% (excellent)
+- ✅ DuckDB/MotherDuck pre-compute: 80% (excellent)
 
 #### ✅ Baseline Foundation
 - ✅ LightGBM models: Planned
@@ -505,7 +505,7 @@
 - ⚠️ EIA: Complete ingestion (medium priority)
 
 #### ✅ Mac Training Pipeline
-- ✅ Data export from BigQuery
+- ✅ Data export from DuckDB/MotherDuck
 - ✅ LightGBM training scripts
 - ✅ Model evaluation
 - ✅ Prediction upload
@@ -526,7 +526,7 @@
 
 ---
 
-### Strategy: Maximize BigQuery Pre-Compute
+### Strategy: Maximize DuckDB/MotherDuck Pre-Compute
 
 #### Current Pre-Compute (80%)
 - ✅ Technical indicators: 19 features
@@ -545,7 +545,7 @@
 - **Total**: ~90 additional features
 
 #### Target Pre-Compute (90%)
-- **Total**: ~365 features pre-computed in BigQuery
+- **Total**: ~365 features pre-computed in DuckDB/MotherDuck
 - **Mac Compute Reduction**: ~85% (from ~500 to ~75 features)
 
 ---
@@ -553,19 +553,19 @@
 ### Mac Training Pipeline (After Baselines)
 
 #### What Mac Will Do (Minimal)
-1. ✅ Export training data from BigQuery (~365 features)
+1. ✅ Export training data from DuckDB/MotherDuck (~365 features)
 2. ✅ Train LightGBM models (baseline)
 3. ✅ Train TFT models (advanced)
 4. ✅ Train LSTM models (advanced)
 5. ✅ Ensemble models
-6. ✅ Upload predictions to BigQuery
+6. ✅ Upload predictions to DuckDB/MotherDuck
 
 #### What Mac Won't Do (Pre-Computed)
-- ❌ Feature engineering (done in BigQuery)
-- ❌ Correlations (done in BigQuery)
-- ❌ Betas (done in BigQuery)
-- ❌ Lagged features (done in BigQuery)
-- ❌ Rolling statistics (can be done in BigQuery)
+- ❌ Feature engineering (done in DuckDB/MotherDuck)
+- ❌ Correlations (done in DuckDB/MotherDuck)
+- ❌ Betas (done in DuckDB/MotherDuck)
+- ❌ Lagged features (done in DuckDB/MotherDuck)
+- ❌ Rolling statistics (can be done in DuckDB/MotherDuck)
 
 ---
 
@@ -576,7 +576,7 @@
 **Strengths**:
 - ✅ Macro data: 85% complete (solid)
 - ✅ Calculations: 100% robust
-- ✅ BigQuery pre-compute: 80% (excellent)
+- ✅ DuckDB/MotherDuck pre-compute: 80% (excellent)
 - ✅ Baseline plan: 100% solid
 
 **Gaps**:
@@ -597,7 +597,7 @@ The foundation is solid. We can proceed with baseline training while completing 
 2. ✅ Complete CFTC ingestion (managed money positions)
 3. ✅ Complete EIA ingestion (RIN prices, biodiesel production)
 4. ✅ Verify all calculations (algebraic soundness)
-5. ✅ Test BigQuery pre-compute (feature export)
+5. ✅ Test DuckDB/MotherDuck pre-compute (feature export)
 
 ### During Baseline Training
 1. ✅ Monitor feature quality (nulls, outliers)
@@ -609,7 +609,7 @@ The foundation is solid. We can proceed with baseline training while completing 
 1. ✅ Review baseline performance
 2. ✅ Identify feature gaps
 3. ✅ Plan advanced models (TFT, LSTM)
-4. ✅ Maximize BigQuery pre-compute (90% target)
+4. ✅ Maximize DuckDB/MotherDuck pre-compute (90% target)
 
 ---
 

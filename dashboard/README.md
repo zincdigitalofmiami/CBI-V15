@@ -22,7 +22,9 @@ Visit `http://localhost:3000`
 
 ### Tech Stack
 - **Framework:** Next.js 16 (App Router)
-- **Database:** MotherDuck (DuckDB cloud) via HTTP API
+- **Database:** MotherDuck (DuckDB cloud)
+- **API Routes:** Native DuckDB with `md:` connection (Vercel compatible)
+- **Client Components:** WASM client available (browser-only)
 - **Charts:** Lightweight Charts v5
 - **Styling:** Tailwind CSS v4
 - **Deployment:** Vercel
@@ -30,15 +32,38 @@ Visit `http://localhost:3000`
 ### Data Flow
 ```
 MotherDuck (cbi_v15) 
-  ↓ HTTP API
-lib/md.ts (query layer)
+  ↓ Native DuckDB (md: protocol)
+API Routes (/api/*) → lib/md.ts → DuckDB connection
   ↓
-API Routes (/api/*)
-  ↓
-Page Components
+Page Components (fetch from API routes)
   ↓
 Lightweight Charts
 ```
+
+### MotherDuck Connection Architecture
+
+The dashboard uses a **hybrid approach** based on execution context:
+
+**1. API Routes (Server-Side) - Native DuckDB**
+- **File**: `lib/md.ts`
+- **Method**: Native DuckDB Node.js client with `md:` connection string
+- **Connection**: `md:cbi_v15?motherduck_token={token}`
+- **Why**: Works in Vercel serverless, full DuckDB SQL support
+- **Used by**: All `/api/*` routes
+- **Status**: ✅ **Primary method for API routes (Vercel compatible)**
+
+**2. Client Components (Browser) - WASM Client**
+- **File**: `lib/motherduck.ts`
+- **Method**: `@motherduck/wasm-client` (WASM)
+- **Why**: Full DuckDB functionality in browser, better performance
+- **Used by**: Client components that need direct database access
+- **Status**: ✅ **Available for client-side use**
+
+**Configuration:**
+- Environment variable `MOTHERDUCK_TOKEN` required (for both methods)
+- Database name defaults to `cbi_v15` (configurable via `MOTHERDUCK_DB`)
+- COOP/COEP headers in `next.config.ts` enable WASM support for client-side
+- `serverExternalPackages: ["duckdb"]` in `next.config.ts` for native DuckDB
 
 ## Pages
 
@@ -182,13 +207,37 @@ See [Database Audit Report](../../docs/database_audit_report.md) for current sta
 ## Environment Variables
 
 ```bash
-# MotherDuck
-MOTHERDUCK_TOKEN=<your_token>
-MOTHERDUCK_READ_SCALING_TOKEN=<optional>
+# MotherDuck (REQUIRED)
+MOTHERDUCK_TOKEN=<your_motherduck_token>
+MOTHERDUCK_DB=cbi_v15  # Optional, defaults to cbi_v15
 
 # Vercel (auto-populated)
 VERCEL_OIDC_TOKEN=<auto>
 ```
+
+### Setting Up MotherDuck Token
+
+1. **Get Token:**
+   - Log in to [MotherDuck UI](https://app.motherduck.com/)
+   - Go to Settings → Create Token
+   - Choose "Read/Write" token type
+   - Copy the token
+
+2. **Local Development:**
+   ```bash
+   # Add to dashboard/.env.local
+   MOTHERDUCK_TOKEN=your_token_here
+   MOTHERDUCK_DB=cbi_v15
+   ```
+
+3. **Vercel Production:**
+   ```bash
+   cd dashboard
+   vercel env add MOTHERDUCK_TOKEN
+   # Paste token when prompted
+   vercel env add MOTHERDUCK_DB
+   # Enter: cbi_v15
+   ```
 
 ## Development
 
@@ -265,15 +314,15 @@ See [VERCEL_CONNECTION.md](./VERCEL_CONNECTION.md) for troubleshooting.
 
 | File | Purpose |
 |------|---------|
-| `lib/md.ts` | MotherDuck query layer (HTTP API) |
-| `lib/motherduck.ts` | WASM client (not used in prod) |
+| `lib/md.ts` | Native DuckDB connection (for API routes/server-side) |
+| `lib/motherduck.ts` | WASM client (for client components/browser) |
 | `lib/lightweight-charts/` | Chart component package |
 | `app/api/*/route.ts` | API routes for data fetching |
 | `app/components/` | Shared UI components |
 | `app/components/TradingViewGauge.tsx` | TradingView-style semicircle gauge |
 | `app/components/charts/Gauge.tsx` | Strong sell → Strong buy gauge |
 | `app/components/charts/TimeSeriesCharts.tsx` | Nivo-based yield curves |
-| `next.config.ts` | Next.js config (COOP/COEP headers) |
+| `next.config.ts` | Next.js config (COOP/COEP headers for WASM) |
 | `globals.css` | Pure black theme, ultra-thin fonts |
 | `tailwind.config.ts` | Color palette (zinc-800 borders, black backgrounds) |
 
@@ -302,14 +351,39 @@ See [VERCEL_CONNECTION.md](./VERCEL_CONNECTION.md) for troubleshooting.
 ## Troubleshooting
 
 ### MotherDuck Connection Issues
-- Check `MOTHERDUCK_TOKEN` is set
-- Verify token hasn't expired
-- See [VERCEL_CONNECTION.md](./VERCEL_CONNECTION.md)
+
+**Native DuckDB (API Routes):**
+```bash
+# Check token is set
+echo $MOTHERDUCK_TOKEN
+
+# Verify in Vercel
+vercel env ls
+```
+
+**Common Errors:**
+- `MOTHERDUCK_TOKEN is not defined` → Set environment variable
+- `Catalog Error: Table does not exist` → Table/schema doesn't exist yet (expected for new tables)
+- `Connection failed` → Check token validity or network connectivity
+
+**WASM Client (Client Components):**
+- `Worker is not defined` → Expected in server-side, WASM only works in browser
+- `Failed to initialize MotherDuck WASM client` → Check token validity
+- Use WASM client only in `'use client'` components, not in API routes
+
+**Debug Steps:**
+1. Check `MOTHERDUCK_TOKEN` is set in environment
+2. Verify token hasn't expired (check MotherDuck dashboard)
+3. For API routes: Use native DuckDB (`lib/md.ts`) - works in Vercel serverless
+4. For client components: Use WASM client (`lib/motherduck.ts`) - requires browser environment
+5. Test connection: Visit `/api/test-wasm` endpoint
+6. See [VERCEL_CONNECTION.md](./VERCEL_CONNECTION.md) for detailed troubleshooting
 
 ### Build Failures
-- DuckDB native binary doesn't work on Vercel (use HTTP API)
+- **DuckDB native binary doesn't work on Vercel** → Using WASM client (correct approach)
 - Check Next.js version is 16.0.7+
-- Verify all dependencies installed
+- Verify all dependencies installed: `npm install`
+- Ensure `@motherduck/wasm-client` is in `package.json`
 
 ### Empty Data
 - Check [Database Audit Report](../../docs/database_audit_report.md)

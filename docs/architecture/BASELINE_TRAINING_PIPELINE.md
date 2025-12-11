@@ -7,10 +7,10 @@
 
 ## 🎯 Pipeline Overview
 
-### Flow: BigQuery → Mac → BigQuery
+### Flow: DuckDB/MotherDuck → Mac → DuckDB/MotherDuck
 
 ```
-BigQuery (Pre-Compute)
+DuckDB/MotherDuck (Pre-Compute)
     ↓
 Export Training Data (~365 features)
     ↓
@@ -20,12 +20,12 @@ Model Evaluation
     ↓
 Upload Predictions
     ↓
-BigQuery (Forecasts)
+DuckDB/MotherDuck (Forecasts)
 ```
 
 ---
 
-## 📊 Step 1: BigQuery Pre-Compute (DONE)
+## 📊 Step 1: DuckDB/MotherDuck Pre-Compute (DONE)
 
 ### Features Pre-Computed (~365 features)
 
@@ -70,7 +70,7 @@ BigQuery (Forecasts)
 - Factor loadings: 10 features
 - Regime indicators: 10 features
 
-**Total**: ~365 features pre-computed in BigQuery ✅
+**Total**: ~365 features pre-computed in DuckDB/MotherDuck ✅
 
 ---
 
@@ -81,9 +81,9 @@ BigQuery (Forecasts)
 ```python
 #!/usr/bin/env python3
 """
-Export training data from BigQuery to Parquet for Mac training
+Export training data from DuckDB/MotherDuck to Parquet for Mac training
 """
-from google.cloud import bigquery
+from google.cloud import duckdb
 import pandas as pd
 from pathlib import Path
 
@@ -92,7 +92,7 @@ OUTPUT_DIR = Path("/Volumes/Satechi Hub/Projects/CBI-V15/03_Training_Exports")
 
 def export_training_data(horizon: str = "1m"):
     """Export training data for specified horizon"""
-    client = bigquery.Client(project=PROJECT_ID)
+    client = duckdb.Client(project=PROJECT_ID)
     
     query = f"""
     SELECT 
@@ -268,32 +268,32 @@ if __name__ == "__main__":
 ```python
 #!/usr/bin/env python3
 """
-Upload predictions to BigQuery
+Upload predictions to DuckDB/MotherDuck
 """
-from google.cloud import bigquery
+from google.cloud import duckdb
 import pandas as pd
 from pathlib import Path
 
 PROJECT_ID = "cbi-v15"
 
 def upload_predictions(horizon: str = "1m"):
-    """Upload predictions to BigQuery"""
-    client = bigquery.Client(project=PROJECT_ID)
+    """Upload predictions to DuckDB/MotherDuck"""
+    client = duckdb.Client(project=PROJECT_ID)
     
     # Load predictions
     predictions_path = Path(f"/Volumes/Satechi Hub/Projects/CBI-V15/03_Training_Exports/predictions_lightgbm_{horizon}.parquet")
     df = pd.read_parquet(predictions_path)
     
-    # Upload to BigQuery
+    # Upload to DuckDB/MotherDuck
     table_id = f"{PROJECT_ID}.forecasts.zl_predictions_{horizon}"
     
-    job_config = bigquery.LoadJobConfig(
+    job_config = duckdb.LoadJobConfig(
         write_disposition="WRITE_APPEND",
         schema=[
-            bigquery.SchemaField("date", "DATE"),
-            bigquery.SchemaField("target", "FLOAT64"),
-            bigquery.SchemaField("prediction", "FLOAT64"),
-            bigquery.SchemaField("horizon", "STRING"),
+            duckdb.SchemaField("date", "DATE"),
+            duckdb.SchemaField("target", "FLOAT64"),
+            duckdb.SchemaField("prediction", "FLOAT64"),
+            duckdb.SchemaField("horizon", "STRING"),
         ]
     )
     
@@ -312,7 +312,7 @@ if __name__ == "__main__":
 ## ✅ Pipeline Checklist
 
 ### Pre-Training
-- ✅ BigQuery pre-compute: ~365 features
+- ✅ DuckDB/MotherDuck pre-compute: ~365 features
 - ✅ Training data export script
 - ✅ Mac training script
 - ✅ Prediction upload script

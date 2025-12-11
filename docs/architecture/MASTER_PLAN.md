@@ -1,20 +1,21 @@
 # MASTER PLAN
-**Date:** November 28, 2025  
-**Last Revised:** November 28, 2025  
-**Status:** V15 Clean Architecture  
+**Date:** December 9, 2025  
+**Last Revised:** December 9, 2025  
+**Status:** V15.1 - AutoGluon Hybrid Architecture  
 **Purpose:** Single source of truth for CBI-V15 architecture
 
 ---
 
 ## PHILOSOPHY
 
-**"Clean architecture, Dataform-first ETL, Mac M4 training, institutional-grade"**
+**"SQL-first features, AutoGluon 1.4 forecasting, Mac M4 training, institutional-grade probabilistic forecasts"**
 
-- **Source Prefixing:** ALL columns prefixed with source (`databento_`, `fred_`, etc.)
-- **Mac M4:** ALL training + ALL feature engineering (100% local, deterministic)
-- **BigQuery:** Source-of-truth storage + Dataform ETL + Dashboard (NOT training)
-- **Dataform:** Primary ETL framework (version controlled, CI/CD integrated)
-- **External Drive:** Local cache + backup (never authoritative; reproducible from BigQuery)
+- **Source Prefixing:** ALL columns prefixed with source (`databento_`, `fred_`, `epa_`, etc.)
+- **MotherDuck Cloud:** Source-of-truth storage for all data (raw, features, forecasts)
+- **Local DuckDB Mirror:** Training landing pad (synced before each training run for fast I/O)
+- **AnoFox SQL Macros:** Feature engineering in `database/macros/` (1,428 lines of SQL)
+- **AutoGluon 1.4:** Hybrid TabularPredictor + TimeSeriesPredictor with foundation models
+- **Mac M4:** ALL training local (TabPFNv2, Mitra, Chronos-Bolt), deterministic, offline-capable
 
 ---
 
@@ -22,78 +23,141 @@
 
 > **This section is essential reading for all AI assistants working on CBI-V15.**
 
-### Current Architecture (V15)
-- Apple M4 Mac handles every training and inference task (PyTorch MPS + LightGBM + TensorFlow Metal)
-- BigQuery = storage + Dataform ETL + dashboard read layer only
-- NO BigQuery ML, NO AutoML, NO Vertex AI training
-- Predictions generated locally, uploaded with `scripts/upload/upload_predictions.py`
-- Dataform handles all ETL transformations (raw → staging → features → training)
+### Current Architecture (V15.1 - AutoGluon Hybrid)
 
-### Architecture Pattern: Dataform ETL + Mac Training
-**Data Collection**: Python scripts → BigQuery (via Dataform declarations)  
-**ETL**: Dataform (BigQuery SQL transformations)  
-**Feature Engineering**: 
-  - Dataform SQL: Correlations, moving averages, regimes, Big 8 drivers
-  - Python: Complex sentiment (FinBERT), policy extraction, technical indicators (pandas-ta)
-**Training**: Mac M4 (LightGBM, PyTorch/TFT)  
-**Storage**: BigQuery (us-central1 only)
+**Data Warehouse:**
+- **MotherDuck Cloud**: Source of truth for all data (raw ingestion, features, forecasts)
+- **Local DuckDB**: Training landing pad at `data/duckdb/cbi_v15.duckdb` (synced before training)
+- **Sync Strategy**: Sync MotherDuck → Local before training for 100-1000x faster I/O
 
-### Data Sources (V15)
-1. **Databento**: Market data (GLBX.MDP3) - futures, FX, options (2000→present)
-2. **FRED**: 55-60 economic series (rates, inflation, employment, GDP, DXY, VIX, PPOILUSDM)
-3. **NOAA**: Weather data (CDO, GFS forecasts)
-4. **INMET**: Brazil weather stations
-5. **Argentina SMN**: Argentina weather observations
-6. **Google Public Datasets**: GSOD, GFS, Normals, GDELT, BLS, FEC, COVID
-7. **USDA**: NASS reports (WASDE, crop progress, exports), FAS Export Sales Reports
-8. **CFTC**: Commitments of Traders (weekly)
-9. **EIA**: Biofuels (production, RIN prices, RFS volumes)
-10. **ScrapeCreators**: Trump posts (Truth Social) + news buckets (biofuel, China, tariffs)
-11. **Glide API**: Vegas Intel (restaurants, casinos, shifts, events)
-12. **World Bank**: Optional alternative macro series (documented use only)
+**Forecasting Engine:**
+- **AutoGluon 1.4**: Primary engine using hybrid TabularPredictor + TimeSeriesPredictor
+  - TabularPredictor with `presets='extreme_quality'` for bucket specialists (includes foundation models)
+     - TabularPredictor with `presets='extreme_quality'` for main ZL predictor (all 300+ features)
+     - TimeSeriesPredictor with Chronos-Bolt for zero-shot baseline (CPU-compatible)
+   - **NO Vertex AI, NO BQML, NO Cloud AutoML**
+   - **Mac M4**: All training runs locally on CPU.
+   - **Note**: Foundation models (TabPFNv2, Mitra, TabICL) included in `extreme_quality` will run on Mac M4 CPU, but will be significantly slower than with a GPU. The `libomp` fix in `scripts/setup/install_autogluon_mac.sh` is still required for the tree model components (LightGBM, CatBoost, XGBoost).
+
+**Model Stack** (~90-135 models total):
+- **L0**: 9 specialists (8 bucket specialists + 1 main ZL predictor)
+  - Each specialist: AutoGluon trains 10-15 models (LightGBM, CatBoost, XGBoost, Neural Nets)
+  - Each specialist: AutoGluon creates WeightedEnsemble_L2 (automatic stacking)
+  - Output: 9 OOF predictions (P10, P50, P90 quantiles)
+- **L1**: Meta-learner (ensemble of 9 specialist ensembles)
+  - Input: 9 OOF predictions from L0
+  - AutoGluon trains final ensemble (learns optimal specialist weights)
+  - Output: Final P10, P50, P90 forecasts for ZL
+- **L2**: Production forecasts (uploaded to MotherDuck)
+  - Table: `forecasts.zl_predictions` (horizons: 1w, 1m, 3m, 6m)
+  - Dashboard queries this table
+- **L3**: Monte Carlo simulation (risk metrics ONLY, NOT forecasting)
+  - Input: Final L2 predictions (P10, P50, P90)
+  - Generates 10,000 scenarios for VaR/CVaR calculation
+  - Output: `forecasts.monte_carlo_scenarios` (analytics only)
+  - NOT used for trading decisions - just risk reporting
+
+### Architecture Pattern: SQL Features + AutoGluon Training
+
+**Data Collection**: Trigger.dev jobs → MotherDuck cloud  
+**Feature Engineering**: AnoFox SQL macros in `database/macros/` (1,428 lines)  
+**Training Prep**: Sync MotherDuck → Local DuckDB (`scripts/sync_motherduck_to_local.py`)  
+**Training**: Mac M4 AutoGluon (reads from local DuckDB for speed)  
+**Predictions**: Upload to MotherDuck → Dashboard queries `forecasts.zl_predictions`  
+**Storage**: MotherDuck cloud (NOT BigQuery)
+
+### Data Sources (V15.1 - Updated Dec 2025)
+
+**Market Data:**
+1. **Databento**: 38 futures symbols (ZL/ZS/ZM/CL/HO/RB/HG/6L/DX/etc.) - OHLCV daily
+
+**Economic/Macro:**
+2. **FRED**: 24+ macro indicators (rates, yields, VIXCLS, DFEDTARU, DXY, NFCI, STLFSI4)
+3. **EIA**: Petroleum products (ULSD wholesale, gasoline, diesel)
+
+**Biofuels (CRITICAL for Biofuel Bucket):**
+4. **EPA RIN Prices**: Weekly D3/D4/D5/D6 RIN prices (July 2010-present, FREE)
+   - URL: https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information
+   - Weekly volume-weighted averages from EPA EMTS
+5. **EIA Biofuels**: Production, consumption, RFS volumes
+
+**Agricultural/Trade:**
+6. **USDA FAS Export Sales**: Weekly China soybean purchases (CRITICAL for China bucket)
+7. **USDA WASDE**: Monthly supply/demand reports
+8. **CFTC COT**: Weekly positioning data (disaggregated reports)
+
+**News/Intelligence (CRITICAL NEW SOURCES):**
+9. **Farm Policy News** (MANDATORY): Real-time China/tariff policy
+   - URL: https://farmpolicynews.illinois.edu/
+   - Categories: trade, ethanol, budget, regulations, immigration
+   - Author: Keith Good (University of Illinois)
+   - **Why Critical**: "China Soybean Buying Deadline", "$11B Farm Aid", Trump policy
+10. **farmdoc Daily** (HIGH VALUE): Academic ag economics analysis
+    - URL: https://farmdocdaily.illinois.edu/
+    - Scott Irwin RIN pricing models (75% R² accuracy)
+    - Trade policy analysis, grain outlook, weekly outlook
+11. **ScrapeCreators**: Trump posts (Truth Social) + news buckets
+12. **ProFarmer**: Weather, basis, barge rates (chris@usoilsolutions.com)
+
+**Weather:**
+13. **NOAA**: U.S. weather data
+14. **INMET**: Brazil weather stations
+15. **Argentina SMN**: Argentina weather observations
+
+**Other:**
+16. **Glide API**: Vegas Intel (optional)
 
 ### Primary Documents
-- `docs/architecture/MASTER_PLAN.md` (this document) – Source of truth
-- `docs/architecture/DATAFORM_ARCHITECTURE.md` – Dataform structure guide
-- `docs/plans/TRAINING_PLAN.md` – Training strategy
-- `docs/reference/AI_ASSISTANT_GUIDE.md` – AI assistant quick start
+- `docs/architecture/MASTER_PLAN.md` (this document) – Source of truth for V15.1
+- `AGENTS.md` – Agent workspace guide and Big 8 bucket reference
+- `database/README.md` – 8-schema layout, SQL macros, feature boundaries
+- `.cursorrules` – Cursor-specific rules and conventions
 
 ### Critical Rules
 1. **NO FAKE DATA** - Only real, verified data from authenticated APIs
 2. **ALWAYS CHECK BEFORE CREATING** - Tables, datasets, files, schemas
 3. **ALWAYS AUDIT AFTER WORK** - Data quality checks after any data modification
-4. **us-central1 ONLY** - All BigQuery datasets, GCS buckets, GCP resources
-5. **NO COSTLY RESOURCES** - Approval required for any resource >$5/month
-6. **API KEYS** - macOS Keychain (Mac) or Secret Manager (GCP scheduler)
-7. **Configuration** - YAML/JSON files, never hardcoded
-8. **Dataform First** - All ETL transformations in Dataform, version controlled
-9. **Mac Training Only** - All training on Mac M4, no cloud training
-10. **ZL Focus** - Soybean Oil Futures (ZL) primary target, single-asset multi-horizon
+4. **MotherDuck Cloud Storage** - All data in MotherDuck, NOT BigQuery
+5. **Local DuckDB Mirror** - MUST sync before training for fast I/O
+6. **NO COSTLY RESOURCES** - Approval required for any resource >$5/month
+7. **API KEYS** - macOS Keychain (Mac) or `.env` file, never hardcoded
+8. **Configuration** - YAML/JSON files, never hardcoded
+9. **SQL Macros First** - All features in `database/macros/`, not Python loops
+10. **AutoGluon 1.4** - TabularPredictor + TimeSeriesPredictor, NOT manual sklearn
+11. **Quantile Regression** - Always `problem_type='quantile'` for P10/P50/P90
+12. **Mac Training Only** - All training on Mac M4, no cloud training
+13. **ZL Focus** - Soybean Oil Futures (ZL) primary target, Big 8 bucket coverage
 
 ### File Organization
-- **Dataform SQL** → `dataform/definitions/`
-- **Python scripts** → `src/`
-- **Operational scripts** → `scripts/`
+- **DuckDB SQL Macros** → `database/macros/` (AnoFox feature engineering)
+- **Raw Table Definitions** → `database/definitions/01_raw/`
+- **Python/Trigger Ingestion** → `trigger/<Source>/Scripts/`
+- **AutoGluon Training** → `src/training/autogluon/`
+- **Trigger.dev Jobs** → `trigger/`
+- **Operational Scripts** → `scripts/`
 - **Configuration** → `config/`
 - **Documentation** → `docs/`
 
-### Workflow
-1. Run data quality checks: `python scripts/validation/data_quality_checks.py`
-2. Export training data: `python scripts/export/export_training_data.py --horizon 1m`
-3. Train models: `python src/training/baselines/lightgbm_zl.py --horizon 1m`
-4. Generate predictions: `python src/prediction/generate_forecasts.py`
-5. Upload predictions: `python scripts/upload/upload_predictions.py`
-6. Run Dataform: `cd dataform && dataform run`
+### Workflow (V15.1)
+1. **Data Ingestion**: Trigger.dev jobs run on schedule → MotherDuck
+2. **Feature Engineering**: AnoFox SQL macros execute → `features.daily_ml_matrix`
+3. **Sync to Local**: `python scripts/sync_motherduck_to_local.py` → Local DuckDB
+4. **Train Models**: `python src/training/autogluon/train_all_buckets.py` → Reads local DuckDB
+5. **Generate Forecasts**: AutoGluon predictions → MotherDuck `forecasts.zl_predictions`
+6. **Dashboard**: Vercel Next.js queries MotherDuck directly
 
 ### Big 8 Drivers (Complete Coverage Required)
-1. Crush Margin (ZS + ZM - ZL)
-2. China Imports (USDA exports + sentiment)
-3. Dollar Index (FRED DTWEXBGS)
-4. Fed Policy (Fed funds, yield curve)
-5. Tariffs (Policy events, intensity)
-6. Biofuels (Biodiesel margin + RIN prices)
-7. Crude Oil (CL price, ZL-CL correlation)
-8. VIX (VIX level, regime classification)
+
+| Bucket | Features | Primary Data Sources |
+|--------|----------|---------------------|
+| 1. **Crush** | ZL/ZS/ZM spreads, board crush, oil share | Databento, NOPA, farmdoc Grain Outlook |
+| 2. **China** | Export sales, HG-ZS correlation, trade policy | **Farm Policy News: Trade**, USDA FAS |
+| 3. **FX** | DX, BRL (6L), momentum, volatility | FRED FX series, Databento |
+| 4. **Fed** | Fed funds, curve (T10Y2Y), NFCI, STLFSI4 | FRED, Farm Policy: Budget |
+| 5. **Tariff** | Trump sentiment, policy events | **Farm Policy News: Trade**, ScrapeCreators |
+| 6. **Biofuel** | D4/D5/D6 RIN prices, BOHO spread, biodiesel | **EPA RIN Prices**, farmdoc RINs, EIA |
+| 7. **Energy** | CL/HO/RB, crack spreads, CL-ZL correlation | EIA, Databento |
+| 8. **Volatility** | VIX, realized vol, stress indices | FRED VIXCLS, STLFSI4 |
 
 ### Horizons
 - 1w (5 trading days)
@@ -103,15 +167,19 @@
 - 12m (240 trading days) - optional
 
 ### Project Structure
-- `dataform/` - All BigQuery ETL (Dataform)
-- `src/` - All Python source code
+- `database/` - DuckDB schema definitions + SQL macros (AnoFox)
+- `src/` - Python source code (ingestion, training, engines, models)
+  - `src/engines/anofox/` - AnoFox bridge to DuckDB
+  - `src/training/autogluon/` - AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
+  - `src/models/tsci/` - TSci LLM agents (optional strategic layer)
+  - `trigger/<Source>/Scripts/` - Data collection scripts (per-source)
+- `trigger/` - Trigger.dev orchestration jobs
+- `data/` - Local DuckDB mirror + model artifacts
 - `config/` - Configuration files (YAML/JSON)
 - `docs/` - Documentation
 - `scripts/` - Operational utilities
 - `tests/` - Unit and integration tests
 - `dashboard/` - Next.js dashboard (Vercel)
-
----
 
 ---
 
@@ -154,7 +222,7 @@
 **Lagged Features** (96 features):
 - 8 symbols × 12 lags (1d, 2d, 3d, 5d, 10d, 21d for prices & returns)
 
-**Total**: **276 features** pre-computed in BigQuery ✅
+**Total**: **276 features** pre-computed in DuckDB/MotherDuck ✅
 
 ### Symbols Locked In (10-12 symbols)
 
@@ -171,21 +239,23 @@
 - HG (Copper) - For China Pulse
 - GC (Gold) - For Real-Terms Price
 
-### Prerequisites Before Baselines
+### Prerequisites Before Training
 
-**Must Complete**:
-1. ✅ USDA Ingestion (WASDE, crop progress, exports)
-2. ✅ CFTC Ingestion (COT positions, managed money)
-3. ✅ EIA Ingestion (RIN prices, biodiesel production)
+**Must Complete** (Current Status):
+1. ⚠️ EPA RIN Prices ingestion (D3/D4/D5/D6 weekly)
+2. ⚠️ Farm Policy News scraper (China trade policy - CRITICAL)
+3. ⚠️ farmdoc Daily scraper (Scott Irwin RIN analysis)
+4. ⚠️ USDA FAS Export Sales (remove mock data, implement real API)
+5. ⚠️ CFTC COT Trigger.dev job (script exists, needs Trigger job)
+6. ⚠️ Local DuckDB mirror setup (training landing pad)
 
-**Status**: ⚠️ **REQUIRED** before baseline training
+**Status**: ⚠️ **IN PROGRESS** - Phase 0-1 implementation underway
 
-### BigQuery Structure
+### MotherDuck Schema Structure
 
-**Partitioning**: All tables `PARTITION BY DATE(date)`
-**Clustering**: `CLUSTER BY symbol` (where applicable)
-**No Joins**: Skeleton structure = table definitions only
-**Master Join**: `daily_ml_matrix` joins all features
+**Schemas**: raw, staging, features, training, forecasts, reference, ops, tsci
+**Primary Keys**: All tables use `as_of_date` (NOT `date`) for consistency
+**Indexing**: DuckDB handles automatically
+**Master Feature Table**: `features.daily_ml_matrix` (300+ features)
 
-**Last Updated**: November 28, 2025
-
+**Last Updated**: December 9, 2025

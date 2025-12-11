@@ -249,7 +249,7 @@ CLUSTER BY theme_primary, is_trump_related;
 
 ## ✅ Integration Checklist
 
-### Before BigQuery Setup:
+### Before DuckDB/MotherDuck Setup:
 
 - [ ] ✅ Review news bucket schema (add Trump tags)
 - [ ] ✅ Create `features.trump_news_features_daily` table
@@ -257,7 +257,7 @@ CLUSTER BY theme_primary, is_trump_related;
 - [ ] ✅ Document Legislative page integration
 - [ ] ✅ Update regime weight modulation logic
 
-### After BigQuery Setup:
+### After DuckDB/MotherDuck Setup:
 
 - [ ] ✅ Test Trump news bucket ingestion
 - [ ] ✅ Verify Trump feature calculation

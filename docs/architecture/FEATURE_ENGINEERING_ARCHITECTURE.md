@@ -126,10 +126,10 @@
 
 ```bash
 # 1. Ingest raw data (Databento, FRED, EIA, ScrapeCreators)
-python src/ingestion/databento/ingest_daily.py
-python src/ingestion/fred/ingest_daily.py
-python src/ingestion/eia/ingest_biofuels.py
-python src/ingestion/scrape_creator/ingest_trump_posts.py
+python trigger/DataBento/Scripts/collect_daily.py
+python trigger/FRED/Scripts/collect_fred_rates_curve.py
+python trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
+python trigger/ScrapeCreators/Scripts/collect_news_buckets.py
 
 # 2. Build features
 python src/engines/anofox/build_all_features.py
@@ -213,4 +213,3 @@ python src/ensemble/monte_carlo_ensemble.py
 ## 📝 Usage Examples
 
 See `database/macros/README_TECHNICAL_INDICATORS.md` for detailed usage examples.
-

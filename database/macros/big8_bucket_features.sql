@@ -288,15 +288,51 @@ FROM tariff_features;
 -- BUCKET 6: BIOFUEL (RFS/Biodiesel Demand)
 -- ============================================================================
 CREATE OR REPLACE MACRO calc_biofuel_bucket_score() AS TABLE
-WITH biofuel_data AS (
+WITH eia_data AS (
+    -- EIA biodiesel/biofuel production from canonical EIA table
     SELECT
         date AS as_of_date,
-        MAX(CASE WHEN series_id = 'biodiesel_production' THEN value END) AS biodiesel_prod,
+        MAX(CASE WHEN series_id = 'biodiesel_production' THEN value END) AS biodiesel_prod
+    FROM raw.eia_biofuels
+    WHERE series_id = 'biodiesel_production'
+    GROUP BY date
+),
+epa_data AS (
+    -- EPA RIN prices from canonical EPA table
+    SELECT
+        date AS as_of_date,
         MAX(CASE WHEN series_id = 'rin_d4_price' THEN value END) AS rin_d4,
         MAX(CASE WHEN series_id = 'rin_d6_price' THEN value END) AS rin_d6
-    FROM raw.eia_biofuels
-    WHERE series_id IN ('biodiesel_production', 'rin_d4_price', 'rin_d6_price')
+    FROM raw.epa_rin_prices
+    WHERE series_id IN ('rin_d4_price', 'rin_d6_price')
     GROUP BY date
+),
+biofuel_data AS (
+    -- Join EIA biodiesel production with EPA RIN prices
+    SELECT
+        COALESCE(e.as_of_date, r.as_of_date) AS as_of_date,
+        e.biodiesel_prod,
+        r.rin_d4,
+        r.rin_d6
+    FROM eia_data e
+    FULL OUTER JOIN epa_data r ON e.as_of_date = r.as_of_date
+),
+-- CRITICAL FIX: Fill weekly EPA RIN prices to daily frequency
+-- Without this, AutoGluon drops 80% of rows due to NaN
+-- Uses LAST_VALUE carry-forward for weekly->daily conversion
+biofuel_filled AS (
+    SELECT
+        as_of_date,
+        LAST_VALUE(biodiesel_prod IGNORE NULLS) OVER (ORDER BY as_of_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS biodiesel_prod,
+        LAST_VALUE(rin_d4 IGNORE NULLS) OVER (ORDER BY as_of_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS rin_d4,
+        LAST_VALUE(rin_d6 IGNORE NULLS) OVER (ORDER BY as_of_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS rin_d6
+    FROM (
+        -- Generate daily series from min to max date
+        SELECT DISTINCT as_of_date 
+        FROM raw.databento_ohlcv_daily 
+        WHERE symbol = 'ZL'
+    ) d
+    LEFT JOIN biofuel_data USING (as_of_date)
 ),
 biofuel_features AS (
     SELECT
@@ -308,7 +344,7 @@ biofuel_features AS (
         (biodiesel_prod - LAG(biodiesel_prod, 4) OVER (ORDER BY as_of_date)) / NULLIF(LAG(biodiesel_prod, 4) OVER (ORDER BY as_of_date), 0) AS biodiesel_momentum,
         -- RIN price momentum (higher RIN = more demand for biofuels)
         (rin_d4 - LAG(rin_d4, 4) OVER (ORDER BY as_of_date)) / NULLIF(LAG(rin_d4, 4) OVER (ORDER BY as_of_date), 0) AS rin_momentum
-    FROM biofuel_data
+    FROM biofuel_filled
 )
 SELECT
     as_of_date,
@@ -319,7 +355,6 @@ SELECT
     biodiesel_momentum,
     rin_momentum
 FROM biofuel_features;
-
 -- ============================================================================
 -- BUCKET 7: ENERGY (Crude Correlation)
 -- ============================================================================
@@ -469,4 +504,3 @@ FULL OUTER JOIN biofuel USING (as_of_date)
 FULL OUTER JOIN energy USING (as_of_date)
 FULL OUTER JOIN vol USING (as_of_date)
 ORDER BY as_of_date;
-

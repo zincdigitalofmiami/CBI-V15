@@ -70,6 +70,7 @@ def setup_raw_tables(con: duckdb.DuckDBPyConnection):
         "databento_daily.sql",
         "fred_macro.sql",
         "eia_biofuels.sql",
+        "epa_rin_prices.sql",
         "scrapecreators_buckets.sql",
         "cftc_cot.sql",  # CFTC COT tables
         "noaa_weather.sql",  # Weather data

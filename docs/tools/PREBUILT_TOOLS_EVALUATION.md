@@ -13,7 +13,7 @@
 2. ✅ **Institutional-Grade** (GS Quant/JPM standards)
 3. ✅ **Cost-Effective** (fits $50/month GCP cap)
 4. ✅ **Avoids Bloat** (adds value, not complexity)
-5. ✅ **Fits Architecture** (BigQuery + Dataform + Mac training)
+5. ✅ **Fits Architecture** (DuckDB/MotherDuck + AnoFox SQL macros + Mac training)
 
 ---
 
@@ -32,7 +32,7 @@
 
 **Use Case**:
 - Mac training: Calculate technical indicators locally
-- BigQuery: Pre-compute in SQL (already planned)
+- DuckDB/MotherDuck: Pre-compute in SQL (already planned)
 - Hybrid: Use pandas-ta for validation/comparison
 
 **Cost**: Free (open source)
@@ -215,7 +215,7 @@ schema = pa.DataFrameSchema({
 
 **Fit**: ❌ **REJECTED**
 - Commercial (costs money)
-- We already have Garman-Klass, Parkinson in BigQuery SQL
+- We already have Garman-Klass, Parkinson in DuckDB/MotherDuck SQL
 - Free alternatives exist (ta-lib, tsfracdiff)
 
 **Alternative**: Use ta-lib or tsfracdiff (free)
@@ -233,7 +233,7 @@ schema = pa.DataFrameSchema({
 - Pandera is lighter and sufficient
 - Adds complexity without proportional value
 
-**Alternative**: Use Pandera + custom assertions in Dataform
+**Alternative**: Use Pandera + custom assertions in AnoFox SQL macros
 
 **Action**: ❌ **DO NOT ADD**
 

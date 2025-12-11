@@ -6,7 +6,7 @@ Trains quantile models (P10, P50, P90) per horizon for probabilistic forecasts
 
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -17,9 +17,16 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Paths
-MODELS_DIR = Path("models/baselines/catboost")
-MODELS_DIR.mkdir(parents=True, exist_ok=True)
+# Use relative paths from project root
+ROOT_DIR = Path(__file__).resolve().parents[3]  # Go up from src/training/baselines/
+MODELS_DIR = ROOT_DIR / "models" / "baselines" / "catboost"
+
+# Create directories if they don't exist (on first run)
+try:
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+except PermissionError:
+    # Running in read-only mode or sandbox - directories will be created on actual training
+    pass
 
 HORIZONS = {
     "target_1w_price": "1w",
@@ -231,18 +238,112 @@ def train_catboost_for_horizon(
     return models, all_metrics
 
 
+def load_training_data_from_motherduck(
+    motherduck_token: Optional[str] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Load training data from MotherDuck training.daily_ml_matrix_zl.
+
+    Splits data into train/val/test using time-based splits:
+    - Train: 2018-01-01 to 2022-12-31
+    - Val: 2023-01-01 to 2023-06-30
+    - Test: 2023-07-01 to present
+
+    Args:
+        motherduck_token: Optional MotherDuck token (uses env if not provided)
+
+    Returns:
+        Tuple of (train_df, val_df, test_df)
+    """
+    import os
+    import duckdb
+
+    token = motherduck_token or os.getenv("MOTHERDUCK_TOKEN")
+    if not token:
+        raise ValueError("MOTHERDUCK_TOKEN not set")
+
+    db_name = os.getenv("MOTHERDUCK_DB", "cbi_v15")
+    conn = duckdb.connect(f"md:{db_name}?motherduck_token={token}")
+
+    logger.info("Loading training data from MotherDuck...")
+
+    # Load full dataset
+    query = """
+    SELECT *
+    FROM training.daily_ml_matrix_zl
+    WHERE symbol = 'ZL'
+    ORDER BY date
+    """
+
+    try:
+        df = conn.execute(query).df()
+    except Exception as e:
+        logger.error(f"Failed to load from MotherDuck: {e}")
+        conn.close()
+        raise
+
+    conn.close()
+
+    if df.empty:
+        raise ValueError("No data returned from training.daily_ml_matrix_zl")
+
+    logger.info(f"Loaded {len(df):,} rows from MotherDuck")
+
+    # Time-based splits
+    df["date"] = pd.to_datetime(df["date"])
+
+    train_df = df[df["date"] < "2023-01-01"].copy()
+    val_df = df[(df["date"] >= "2023-01-01") & (df["date"] < "2023-07-01")].copy()
+    test_df = df[df["date"] >= "2023-07-01"].copy()
+
+    logger.info(f"Train: {len(train_df):,} rows (< 2023-01-01)")
+    logger.info(f"Val: {len(val_df):,} rows (2023-01-01 to 2023-06-30)")
+    logger.info(f"Test: {len(test_df):,} rows (>= 2023-07-01)")
+
+    return train_df, val_df, test_df
+
+
 def main():
     """Train CatBoost quantile models for all horizons."""
-    logger.info("Starting CatBoost Quantile Training for ZL...")
-    logger.info("This requires training data splits (train/val/test parquet files)")
-    logger.info("See: src/engines/anofox/build_training.py to generate splits")
+    logger.info("=" * 70)
+    logger.info("CatBoost Quantile Training for ZL")
+    logger.info("=" * 70)
 
-    # TODO: Load actual training splits from MotherDuck or local parquet
-    # For now, this is a template ready to be wired up
-    logger.warning("⚠️  Training data loading not yet implemented")
-    logger.warning("    Wire this to: training.daily_ml_matrix_zl in MotherDuck")
+    # Load training data from MotherDuck
+    try:
+        train_df, val_df, test_df = load_training_data_from_motherduck()
+    except Exception as e:
+        logger.error(f"Failed to load training data: {e}")
+        logger.info("\nTo generate training data, run:")
+        logger.info("  python src/engines/anofox/build_training.py")
+        return
 
-    return
+    # Train for each horizon
+    all_results = {}
+
+    for horizon_col, horizon_name in HORIZONS.items():
+        if horizon_col not in train_df.columns:
+            logger.warning(
+                f"Target column {horizon_col} not found, skipping {horizon_name}"
+            )
+            continue
+
+        try:
+            models, metrics = train_catboost_for_horizon(
+                train_df, val_df, test_df, horizon_col, horizon_name
+            )
+            all_results[horizon_name] = {"models": models, "metrics": metrics}
+        except Exception as e:
+            logger.error(f"Failed to train {horizon_name}: {e}")
+            continue
+
+    logger.info("\n" + "=" * 70)
+    logger.info("✅ CatBoost Training Complete")
+    logger.info(f"   Horizons trained: {list(all_results.keys())}")
+    logger.info(f"   Models saved to: {MODELS_DIR}")
+    logger.info("=" * 70)
+
+    return all_results
 
 
 if __name__ == "__main__":

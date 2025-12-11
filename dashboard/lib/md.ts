@@ -1,50 +1,68 @@
-// MotherDuck connection using WASM client for Vercel serverless compatibility
-// Note: The native DuckDB binary doesn't work on Vercel due to GLIBC requirements
+// MotherDuck connection for Next.js API routes (server-side)
+// 
+// Uses native DuckDB with md: connection string for Vercel serverless compatibility.
+// WASM client (lib/motherduck.ts) is available for client-side components in the browser.
+//
+// For API routes (server-side): Use native DuckDB (this file)
+// For client components (browser): Use WASM client (lib/motherduck.ts)
+
+import duckdb from 'duckdb';
 
 const MOTHERDUCK_TOKEN = process.env.MOTHERDUCK_TOKEN;
+const MOTHERDUCK_DB = process.env.MOTHERDUCK_DB || 'cbi_v15';
 
-interface QueryResult {
-    data: {
-        toRows: () => Record<string, unknown>[];
-    };
+// Connection pool for reuse across requests
+let connectionPool: duckdb.Database | null = null;
+
+function getConnection(): duckdb.Connection {
+    if (!MOTHERDUCK_TOKEN) {
+        throw new Error("MOTHERDUCK_TOKEN is not defined in environment variables");
+    }
+
+    // Create database instance if not exists (lightweight, can be reused)
+    if (!connectionPool) {
+        const connectionString = `md:${MOTHERDUCK_DB}?motherduck_token=${MOTHERDUCK_TOKEN}`;
+        connectionPool = new duckdb.Database(connectionString);
+    }
+
+    // Create a new connection for each query (connections are lightweight)
+    return connectionPool.connect();
 }
 
+/**
+ * Query MotherDuck using native DuckDB (for server-side API routes)
+ * 
+ * This uses the native DuckDB Node.js client with MotherDuck's md: protocol.
+ * Works in Vercel serverless functions and Next.js API routes.
+ * 
+ * @param sql SQL query to execute
+ * @returns Array of row objects with column names as keys
+ * 
+ * @example
+ * ```typescript
+ * const rows = await queryMotherDuck('SELECT * FROM forecasts.zl_predictions LIMIT 10');
+ * // Returns: [{ as_of_date: '2025-12-10', horizon: '1w', price_p50: 51.2, ... }, ...]
+ * ```
+ */
 export async function queryMotherDuck(sql: string): Promise<Record<string, unknown>[]> {
-    if (!MOTHERDUCK_TOKEN) {
-        throw new Error("MOTHERDUCK_TOKEN is not defined");
-    }
-
-    // Use MotherDuck's HTTP API which is compatible with serverless
-    const response = await fetch('https://api.motherduck.com/v1/sql', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${MOTHERDUCK_TOKEN}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            database: 'cbi_v15',
-            sql: sql,
-        }),
-    });
-
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`MotherDuck query failed: ${error}`);
-    }
-
-    const result = await response.json();
-
-    // MotherDuck API returns { data: { columns: [...], rows: [[...], ...] } }
-    if (result.data && result.data.columns && result.data.rows) {
-        const columns = result.data.columns;
-        return result.data.rows.map((row: unknown[]) => {
-            const obj: Record<string, unknown> = {};
-            columns.forEach((col: string, i: number) => {
-                obj[col] = row[i];
+    const conn = getConnection();
+    
+    return new Promise((resolve, reject) => {
+        try {
+            conn.all(sql, (err: Error | null, rows: unknown[]) => {
+                conn.close();
+                
+                if (err) {
+                    reject(new Error(`MotherDuck query failed: ${err.message}`));
+                    return;
+                }
+                
+                // DuckDB returns rows as array of objects with column names as keys
+                resolve(rows as Record<string, unknown>[]);
             });
-            return obj;
-        });
-    }
-
-    return [];
+        } catch (error: any) {
+            conn.close();
+            reject(new Error(`MotherDuck query execution failed: ${error.message || error}`));
+        }
+    });
 }

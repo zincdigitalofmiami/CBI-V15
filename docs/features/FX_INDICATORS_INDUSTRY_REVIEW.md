@@ -271,9 +271,9 @@ FX indicators used by top quant firms fall into 5 categories:
 
 ## ✅ Integration into V15
 
-### BigQuery SQL Implementation
+### DuckDB/MotherDuck SQL Implementation
 
-**File**: `dataform/definitions/03_features/fx_indicators_daily.sqlx`
+**File**: `anofox/definitions/03_features/fx_indicators_daily.sqlx`
 
 **Features**:
 - BRL-US Rate Differential
@@ -287,7 +287,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **Data Sources**:
 - FRED: Interest rates (BRL, US)
 - Databento: FX futures (6L = BRL, DX = DXY)
-- BigQuery: ZL prices (for correlations)
+- DuckDB/MotherDuck: ZL prices (for correlations)
 
 ---
 

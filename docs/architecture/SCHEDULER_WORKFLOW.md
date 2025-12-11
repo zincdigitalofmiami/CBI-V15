@@ -17,7 +17,7 @@
 
 **Drawbacks**:
 - ⚠️ More complex (multiple schedulers to manage)
-- ⚠️ Need coordination for Dataform triggers
+- ⚠️ Need coordination for AnoFox SQL macros triggers
 
 **Verdict**: ✅ **SEPARATE SCHEDULERS** - Benefits outweigh complexity
 
@@ -32,19 +32,19 @@ Cloud Scheduler (per data source)
     ↓
 Cloud Function (ingestion script)
     ↓
-BigQuery Raw Table
+DuckDB/MotherDuck Raw Table
     ↓
-Dataform Trigger (staging transformation)
+AnoFox SQL macros Trigger (staging transformation)
     ↓
-BigQuery Staging Table
+DuckDB/MotherDuck Staging Table
     ↓
-Dataform Trigger (feature computation)
+AnoFox SQL macros Trigger (feature computation)
     ↓
-BigQuery Features Table
+DuckDB/MotherDuck Features Table
     ↓
-Dataform Trigger (daily_ml_matrix build)
+AnoFox SQL macros Trigger (daily_ml_matrix build)
     ↓
-BigQuery Training Table
+DuckDB/MotherDuck Training Table
 ```
 
 ---
@@ -57,12 +57,12 @@ BigQuery Training Table
 
 **Workflow**:
 1. Cloud Scheduler triggers Cloud Function
-2. Cloud Function runs `src/ingestion/databento/collect_daily.py`
+2. Cloud Function runs `trigger/DataBento/Scripts/collect_daily.py`
 3. Script pulls from Databento API (ZL price)
 4. Local Parquet cache (7 days retention)
-5. Upload to BigQuery `raw.databento_futures_ohlcv_1d`
-6. Trigger Dataform staging transformation
-7. Dataform builds `staging.market_daily`
+5. Upload to DuckDB/MotherDuck `raw.databento_futures_ohlcv_1d`
+6. Trigger AnoFox SQL macros staging transformation
+7. AnoFox SQL macros builds `staging.market_daily`
 
 **Dependencies**: None (independent)
 
@@ -76,12 +76,12 @@ BigQuery Training Table
 
 **Workflow**:
 1. Cloud Scheduler triggers Cloud Function
-2. Cloud Function runs `src/ingestion/fred/collect_comprehensive.py`
+2. Cloud Function runs `trigger/FRED/Scripts/collect_fred_rates_curve.py`
 3. Script pulls from FRED API (55-60 series)
 4. Forward-fill missing values
-5. Upload to BigQuery `raw.fred_economic`
-6. Trigger Dataform staging transformation
-7. Dataform builds `staging.fred_macro_clean`
+5. Upload to DuckDB/MotherDuck `raw.fred_economic`
+6. Trigger AnoFox SQL macros staging transformation
+7. AnoFox SQL macros builds `staging.fred_macro_clean`
 
 **Dependencies**: None (independent)
 
@@ -95,22 +95,22 @@ BigQuery Training Table
 
 **Workflow**:
 1. Cloud Scheduler triggers Cloud Function
-2. Cloud Function runs `src/ingestion/scrapecreators/buckets/collect_news_buckets.py`
+2. Cloud Function runs `trigger/ScrapeCreators/Scripts/collect_news_buckets.py`
 3. Script pulls from ScrapeCreators API
 4. **SEGMENT INTO BUCKETS AT INGESTION** (biofuel, China, tariffs)
 5. Calculate sentiment per bucket (FinBERT)
 6. Tag with temporal markers (regime, date buckets)
 7. Tag with source metadata (trust scores)
 8. Normalize sentiment by volume
-9. Upload to BigQuery `raw.scrapecreators_news_buckets`
-10. Trigger Dataform staging transformation
-11. Dataform builds `staging.news_bucketed` and `staging.sentiment_buckets`
+9. Upload to DuckDB/MotherDuck `raw.scrapecreators_news_buckets`
+10. Trigger AnoFox SQL macros staging transformation
+11. AnoFox SQL macros builds `staging.news_bucketed` and `staging.sentiment_buckets`
 
 **Dependencies**: None (independent)
 
 **Failure Handling**: Retry 3x, max backoff 1800s
 
-**Critical**: ✅ **SEGMENTATION MUST HAPPEN AT STEP 4** (before BigQuery)
+**Critical**: ✅ **SEGMENTATION MUST HAPPEN AT STEP 4** (before DuckDB/MotherDuck)
 
 ---
 
@@ -120,13 +120,13 @@ BigQuery Training Table
 
 **Workflow**:
 1. Cloud Scheduler triggers Cloud Function
-2. Cloud Function runs `src/ingestion/scrapecreators/collect_trump_posts.py`
+2. Cloud Function runs `trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py`
 3. Script pulls from ScrapeCreators API (Truth Social)
 4. Extract policy events
 5. Calculate ZL impact scores
-6. Upload to BigQuery `raw.scrapecreators_trump`
-7. Trigger Dataform staging transformation
-8. Dataform builds `staging.trump_policy_intelligence`
+6. Upload to DuckDB/MotherDuck `raw.scrapecreators_trump`
+7. Trigger AnoFox SQL macros staging transformation
+8. AnoFox SQL macros builds `staging.trump_policy_intelligence`
 
 **Dependencies**: None (independent)
 
@@ -146,9 +146,9 @@ BigQuery Training Table
 2. Cloud Function runs ingestion script
 3. Script pulls from API
 4. Parse and clean data
-5. Upload to BigQuery `raw.*`
-6. Trigger Dataform staging transformation
-7. Dataform builds `staging.*`
+5. Upload to DuckDB/MotherDuck `raw.*`
+6. Trigger AnoFox SQL macros staging transformation
+7. AnoFox SQL macros builds `staging.*`
 
 **Dependencies**: None (independent)
 
@@ -162,12 +162,12 @@ BigQuery Training Table
 
 **Workflow**:
 1. Cloud Scheduler triggers Cloud Function
-2. Cloud Function runs `src/ingestion/weather/collect_noaa_comprehensive.py`
+2. Cloud Function runs `trigger/Weather/Scripts/ingest_weather.py`
 3. Script pulls from NOAA/INMET/SMN APIs
 4. Aggregate by region (US Midwest, Brazil, Argentina)
-5. Upload to BigQuery `raw.weather_noaa`
-6. Trigger Dataform staging transformation
-7. Dataform builds `staging.weather_regions_aggregated`
+5. Upload to DuckDB/MotherDuck `raw.weather_noaa`
+6. Trigger AnoFox SQL macros staging transformation
+7. AnoFox SQL macros builds `staging.weather_regions_aggregated`
 
 **Dependencies**: None (independent)
 
@@ -175,14 +175,14 @@ BigQuery Training Table
 
 ---
 
-### 7. Dataform Feature Computation
+### 7. AnoFox SQL macros Feature Computation
 
-**Scheduler**: `dataform-features-daily` (daily at 3 AM ET)
+**Scheduler**: `anofox-features-daily` (daily at 3 AM ET)
 
 **Workflow**:
-1. Cloud Scheduler triggers Dataform API
+1. Cloud Scheduler triggers AnoFox SQL macros API
 2. **WAIT FOR ALL INGESTION COMPLETE** (check completion flags)
-3. Run Dataform transformations (staging → features)
+3. Run AnoFox SQL macros transformations (staging → features)
 4. Build feature tables:
    - `features.technical_indicators_us_oil_solutions`
    - `features.fx_indicators_daily`
@@ -203,10 +203,10 @@ BigQuery Training Table
 
 ### 8. Daily ML Matrix Build
 
-**Scheduler**: `dataform-daily-ml-matrix-daily` (daily at 4 AM ET)
+**Scheduler**: `anofox-daily-ml-matrix-daily` (daily at 4 AM ET)
 
 **Workflow**:
-1. Cloud Scheduler triggers Dataform API
+1. Cloud Scheduler triggers AnoFox SQL macros API
 2. **WAIT FOR FEATURE COMPUTATION COMPLETE**
 3. Build `features.daily_ml_matrix` (master join)
 4. Verify data quality
@@ -225,7 +225,7 @@ BigQuery Training Table
 
 ### Problem: How to coordinate schedulers?
 
-**Solution**: Completion Flags in BigQuery
+**Solution**: Completion Flags in DuckDB/MotherDuck
 
 ```sql
 -- Create completion tracking table
@@ -242,7 +242,7 @@ SET completed_at = CURRENT_TIMESTAMP(), status = 'completed'
 WHERE date = CURRENT_DATE() AND source = 'databento_zl';
 ```
 
-**Dataform scheduler checks**:
+**AnoFox SQL macros scheduler checks**:
 ```sql
 -- Wait for all ingestion complete
 SELECT COUNT(*) as pending
@@ -259,18 +259,17 @@ WHERE date = CURRENT_DATE()
 ### Scheduler Architecture:
 
 - ✅ **Separate schedulers** for each data source (parallel)
-- ✅ **Coordination** via completion flags in BigQuery
-- ✅ **Sequential** for Dataform (features → daily_ml_matrix)
+- ✅ **Coordination** via completion flags in DuckDB/MotherDuck
+- ✅ **Sequential** for AnoFox SQL macros (features → daily_ml_matrix)
 - ✅ **Failure handling** with retries and backoff
 
 ### Workflow:
 
 1. **Ingestion** (parallel): All data sources ingest independently
-2. **Staging** (parallel): Dataform transforms each source independently
-3. **Features** (sequential): Dataform computes features after all ingestion complete
-4. **Daily ML Matrix** (sequential): Dataform builds master join after features complete
+2. **Staging** (parallel): AnoFox SQL macros transforms each source independently
+3. **Features** (sequential): AnoFox SQL macros computes features after all ingestion complete
+4. **Daily ML Matrix** (sequential): AnoFox SQL macros builds master join after features complete
 
 ---
 
 **Last Updated**: November 28, 2025
-

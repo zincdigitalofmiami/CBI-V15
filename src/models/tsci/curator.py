@@ -60,7 +60,9 @@ class CuratorAgent:
             if not df.empty:
                 summary.update(df.to_dict(orient="records")[0])
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Failed to compute table summary for %s: %s", table_name, exc)
+            logger.warning(
+                "Failed to compute table summary for %s: %s", table_name, exc
+            )
 
         return summary
 
@@ -124,4 +126,3 @@ class CuratorAgent:
         decision.setdefault("table_name", table_name)
         decision.setdefault("summary", summary)
         return decision
-

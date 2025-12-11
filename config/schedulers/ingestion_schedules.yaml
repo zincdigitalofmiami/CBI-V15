@@ -1,5 +1,10 @@
-# Cloud Scheduler Configuration for Data Ingestion
-# Separate schedulers for each data source (parallel ingestion)
+# ============================================================================
+# CBI-V15 Ingestion Schedule Configuration
+# ============================================================================
+# Runtime: Trigger.dev (cloud) or local cron
+# Database: DuckDB (local) / MotherDuck (cloud)
+# NO Google Cloud Functions, NO Dataform
+# ============================================================================
 
 # ============================================================================
 # MARKET DATA (Databento)
@@ -9,33 +14,19 @@ databento_zl_price:
   name: "databento-zl-price-hourly"
   schedule: "0 * * * *"  # Every hour
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_databento_zl"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/DataBento/Scripts/collect_daily.py"
   payload:
     symbol: "ZL"
     frequency: "1h"
-  retry_config:
-    retry_count: 3
-    max_backoff: "3600s"
 
 databento_other_symbols:
   name: "databento-other-symbols-4hourly"
   schedule: "0 */4 * * *"  # Every 4 hours
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_databento_other"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/DataBento/Scripts/collect_daily.py"
   payload:
     symbols: ["ZS", "ZM", "CL", "HO", "FCPO", "ZC", "HE", "6L", "DX", "HG", "GC"]
     frequency: "4h"
-  retry_config:
-    retry_count: 3
-    max_backoff: "3600s"
 
 # ============================================================================
 # FRED MACRO DATA
@@ -45,16 +36,9 @@ fred_macro_daily:
   name: "fred-macro-daily"
   schedule: "0 18 * * *"  # Daily at 6 PM ET (after market close)
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_fred_macro"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/FRED/Scripts/collect_fred_rates_curve.py"
   payload:
     series_count: 60
-  retry_config:
-    retry_count: 3
-    max_backoff: "1800s"
 
 # ============================================================================
 # NEWS/SENTIMENT BUCKETS (ScrapeCreators)
@@ -64,34 +48,20 @@ scrapecreators_news_buckets:
   name: "scrapecreators-news-buckets-hourly"
   schedule: "0 * * * *"  # Every hour
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_scrapecreators_news_buckets"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/ScrapeCreators/Scripts/collect_news_buckets.py"
   payload:
     buckets: ["biofuel_policy", "china_demand", "tariffs_trade_policy"]
-    segment_at_ingestion: true  # CRITICAL: Segment at ingestion
+    segment_at_ingestion: true
     calculate_sentiment: true
-  retry_config:
-    retry_count: 3
-    max_backoff: "1800s"
 
 scrapecreators_trump:
   name: "scrapecreators-trump-hourly"
   schedule: "0 * * * *"  # Every hour
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_scrapecreators_trump"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py"
   payload:
     source: "truth_social"
     calculate_zl_impact: true
-  retry_config:
-    retry_count: 3
-    max_backoff: "1800s"
 
 # ============================================================================
 # USDA DATA
@@ -99,18 +69,11 @@ scrapecreators_trump:
 
 usda_reports:
   name: "usda-reports-weekly"
-  schedule: "0 10 * * 1"  # Monday at 10 AM ET (after report release)
+  schedule: "0 10 * * 1"  # Monday at 10 AM ET
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_usda_reports"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/USDA/Scripts/ingest_wasde.py"
   payload:
     report_types: ["WASDE", "crop_progress", "export_sales"]
-  retry_config:
-    retry_count: 3
-    max_backoff: "3600s"
 
 # ============================================================================
 # CFTC DATA
@@ -118,19 +81,12 @@ usda_reports:
 
 cftc_cot:
   name: "cftc-cot-weekly"
-  schedule: "0 10 * * 5"  # Friday at 10 AM ET (after COT release)
+  schedule: "0 10 * * 5"  # Friday at 10 AM ET
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_cftc_cot"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/CFTC/Scripts/ingest_cot.py"
   payload:
     extract_managed_money: true
     zl_specific: true
-  retry_config:
-    retry_count: 3
-    max_backoff: "3600s"
 
 # ============================================================================
 # EIA DATA
@@ -138,18 +94,11 @@ cftc_cot:
 
 eia_biofuels:
   name: "eia-biofuels-weekly"
-  schedule: "0 10 * * 3"  # Wednesday at 10 AM ET (after report release)
+  schedule: "0 10 * * 3"  # Wednesday at 10 AM ET
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_eia_biofuels"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/EIA_EPA/Scripts/collect_eia_biofuels.py"
   payload:
     series: ["rin_prices_d4", "rin_prices_d6", "biodiesel_production", "rfs_volumes"]
-  retry_config:
-    retry_count: 3
-    max_backoff: "3600s"
 
 # ============================================================================
 # WEATHER DATA
@@ -159,49 +108,29 @@ weather_noaa:
   name: "weather-noaa-daily"
   schedule: "0 2 * * *"  # Daily at 2 AM ET
   timezone: "America/New_York"
-  target:
-    type: "cloud_function"
-    function: "ingest_weather_noaa"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "trigger/Weather/Scripts/ingest_weather.py"
   payload:
-    sources: ["NOAA", "INMET", "SMN"]
+    sources: ["NOAA"]
     aggregate_by_region: true
-  retry_config:
-    retry_count: 3
-    max_backoff: "1800s"
 
 # ============================================================================
-# DATAFORM FEATURE COMPUTATION
+# FEATURE COMPUTATION (DuckDB SQL Macros)
 # ============================================================================
 
-dataform_features_daily:
-  name: "dataform-features-daily"
+anofox_features_daily:
+  name: "anofox-features-daily"
   schedule: "0 3 * * *"  # Daily at 3 AM ET (after all ingestion complete)
   timezone: "America/New_York"
-  target:
-    type: "dataform_api"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "src/engines/anofox/build_all_features.py"
   payload:
     workflow: "staging_to_features"
-    wait_for_ingestion: true
-  retry_config:
-    retry_count: 2
-    max_backoff: "3600s"
+    verify_data_quality: true
 
-dataform_daily_ml_matrix:
-  name: "dataform-daily-ml-matrix-daily"
+anofox_ml_matrix:
+  name: "anofox-ml-matrix-daily"
   schedule: "0 4 * * *"  # Daily at 4 AM ET (after features computed)
   timezone: "America/New_York"
-  target:
-    type: "dataform_api"
-    project: "cbi-v15"
-    region: "us-central1"
+  script: "src/engines/anofox/build_training.py"
   payload:
     workflow: "build_daily_ml_matrix"
     verify_data_quality: true
-  retry_config:
-    retry_count: 2
-    max_backoff: "3600s"
-

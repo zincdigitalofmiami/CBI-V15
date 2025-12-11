@@ -100,11 +100,10 @@ def check_ingestion_status():
     
     logger.info("\n" + "=" * 60)
     logger.info("📋 Recommendations:")
-    logger.info("  - Run ingestion: python3 src/ingestion/databento/collect_daily.py")
+    logger.info("  - Run ingestion: python3 trigger/DataBento/Scripts/collect_daily.py")
     logger.info("  - Check env vars: MOTHERDUCK_TOKEN, DATABENTO_API_KEY")
     
     conn.close()
 
 if __name__ == "__main__":
     check_ingestion_status()
-

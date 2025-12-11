@@ -220,28 +220,28 @@ The US Oil Solutions spec aligns closely with institutional quant finance best p
 
 ### Recommended Implementation
 
-#### Phase 1: Core Indicators (BigQuery SQL UDFs)
+#### Phase 1: Core Indicators (DuckDB/MotherDuck SQL UDFs)
 - ✅ Distance MAs (EMA 5d, 10d, 21d; SMA 63d, 200d)
 - ✅ Bollinger %B and Bandwidth
 - ✅ PPO (instead of MACD)
 - ✅ Rolling VWAP Distance
 
-#### Phase 2: Advanced Indicators (BigQuery SQL)
+#### Phase 2: Advanced Indicators (DuckDB/MotherDuck SQL)
 - ✅ Garman-Klass Volatility
 - ✅ Parkinson Volatility
 - ✅ Calendar Spreads (F1-F2)
 - ✅ Butterfly Spreads
 
-#### Phase 3: Cross-Asset Features (BigQuery SQL)
+#### Phase 3: Cross-Asset Features (DuckDB/MotherDuck SQL)
 - ✅ BOHO Spread
 - ✅ ZL-BRL Correlation
 - ✅ Terms of Trade
 
-#### Phase 4: Microstructure (BigQuery SQL)
+#### Phase 4: Microstructure (DuckDB/MotherDuck SQL)
 - ✅ Amihud Illiquidity
 - ✅ OI/Volume Ratio
 
-#### Phase 5: Metadata (BigQuery SQL)
+#### Phase 5: Metadata (DuckDB/MotherDuck SQL)
 - ✅ DTE (Days to Expiry)
 - ✅ Roll Dominance
 - ✅ Seasonality (SIN/COS)

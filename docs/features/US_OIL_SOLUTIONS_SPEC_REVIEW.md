@@ -225,7 +225,7 @@
 - Useful for intraday/short-term models
 - Less useful for daily/weekly horizons (our focus)
 
-**BigQuery Feasibility**: ✅ **FEASIBLE**
+**DuckDB/MotherDuck Feasibility**: ✅ **FEASIBLE**
 - Can compute from MBP-10 data
 - Requires tick-level data ingestion
 
@@ -249,7 +249,7 @@
 - Useful for intraday/short-term models
 - Less useful for daily/weekly horizons
 
-**BigQuery Feasibility**: ✅ **FEASIBLE**
+**DuckDB/MotherDuck Feasibility**: ✅ **FEASIBLE**
 - Can compute from MBP-10 data
 - Requires tick-level data ingestion
 
@@ -272,7 +272,7 @@
 - Useful for volatility prediction
 - Less useful for price prediction
 
-**BigQuery Feasibility**: ✅ **FEASIBLE**
+**DuckDB/MotherDuck Feasibility**: ✅ **FEASIBLE**
 - Can compute from MBP-10 data
 - Requires tick-level data ingestion
 

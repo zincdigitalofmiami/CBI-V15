@@ -1,6 +1,6 @@
 # CBI-V15 Best Practices
 
-**Date:** November 28, 2025  
+**Date:** December 9, 2025  
 **Status:** Production Standards
 
 ---
@@ -13,21 +13,21 @@
 3. **ALWAYS AUDIT AFTER WORK** - Run data quality checks after any data modification
 
 ### Cost & Resource Management
-4. **us-central1 ONLY** - ALL BigQuery datasets, GCS buckets, GCP resources MUST be in us-central1
-5. **NO COSTLY RESOURCES WITHOUT APPROVAL** - Do NOT create paid GCP resources without explicit approval (>$5/month)
+4. **NO COSTLY RESOURCES WITHOUT APPROVAL** - Do NOT create paid resources without explicit approval (>$5/month)
 
 ### Research & Validation
-6. **RESEARCH BEST PRACTICES** - ALWAYS research online for best practices before implementing
-7. **RESEARCH QUANT FINANCE** - For modeling features, research quant finance best practices
+5. **RESEARCH BEST PRACTICES** - ALWAYS research online for best practices before implementing
+6. **RESEARCH QUANT FINANCE** - For modeling features, research quant finance best practices
 
 ### Security
-8. **API KEYS** - macOS Keychain (Mac) or Secret Manager (GCP scheduler), NEVER hardcoded
-9. **Configuration** - YAML/JSON files, environment variables, never hardcoded
+7. **API KEYS** - macOS Keychain or `.env` file, NEVER hardcoded
+8. **Configuration** - YAML/JSON files, environment variables, never hardcoded
 
 ### Architecture
-10. **Dataform First** - All ETL transformations in Dataform, version controlled
-11. **Mac Training Only** - All training on Mac M4, no cloud training
-12. **Source Prefixing** - All columns prefixed with source (`databento_`, `fred_`, etc.)
+9. **DuckDB/MotherDuck First** - All ETL in SQL macros, version controlled in `database/macros/`
+10. **Mac Training Only** - All training on Mac M4, no cloud training
+11. **Source Prefixing** - All columns prefixed with source (`databento_`, `fred_`, etc.)
+12. **Close Prices Only** - Do not reference Open/High/Low/Volume for price features
 
 ---
 
@@ -35,14 +35,14 @@
 
 ### Pre-Work Validation
 - Check existing resources before creating/modifying
-- Validate naming conventions (`{asset}_{function}_{scope}_{regime}_{horizon}`)
+- Validate naming conventions (`{source}_{symbol}_{indicator}_{param}_{transform}`)
 - Verify schema compatibility before merging/joining
 
 ### Post-Work Validation
-- Run data quality checks (`scripts/validation/data_quality_checks.py`)
+- Run data quality checks
 - Test queries/scripts before declaring success
-- Validate BigQuery views/tables are accessible
-- Run Dataform compile (`cd dataform && dataform compile`)
+- Run: `python scripts/setup_database.py --both`
+- Run: `bash scripts/system_status.sh`
 
 ### Code Quality
 - Test all code before committing
@@ -73,10 +73,45 @@
 ### Monitoring & Maintenance
 - Monitor data quality (daily automated checks)
 - Clean up resources (temporary files, test data)
-- Review costs (monthly GCP billing audits)
 - Update documentation (when code changes)
 
 ---
 
-**Last Updated**: November 28, 2025
+## Naming Conventions
 
+### Volatility vs Volume (CRITICAL)
+| Concept | Pattern | Examples | NEVER USE |
+|---------|---------|----------|-----------|
+| **Volatility** (price variance) | `volatility_*` | `volatility_zl_21d`, `volatility_bucket_score` | `vol_*` alone |
+| **Volume** (trading activity) | `volume_*` | `volume_zl_21d`, `open_interest_zl` | `vol_*` alone |
+
+### Feature Naming Pattern
+`{source}_{symbol}_{indicator}_{param}_{transform}`
+- ✅ `databento_zl_close`, `volatility_vix_close`, `cftc_zl_managed_money_net_pct`
+- ❌ `vol_zl_21d` (ambiguous), `volat_regime` (inconsistent)
+
+---
+
+## Workflow Checklist
+
+### Before Starting Work
+- [ ] Read `docs/architecture/MASTER_PLAN.md`
+- [ ] Check existing resources (tables, datasets, files)
+- [ ] Research best practices for the task
+- [ ] Verify naming conventions
+
+### During Work
+- [ ] Follow existing patterns in codebase
+- [ ] Use source prefixes for columns
+- [ ] Document complex logic
+- [ ] Test code as you write
+
+### After Work
+- [ ] Run data quality checks
+- [ ] Audit for errors (nulls, duplicates, gaps)
+- [ ] Test queries/scripts
+- [ ] Update documentation
+
+---
+
+**Last Updated**: December 9, 2025

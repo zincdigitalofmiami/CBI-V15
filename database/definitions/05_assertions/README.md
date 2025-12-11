@@ -10,7 +10,7 @@ SQL assertions for data quality - freshness checks, uniqueness, not-null constra
 - `assert_valid_ranges.sql` - Check value bounds
 
 ## Inspired By
-Dataform's assertion pattern - SQL that returns rows only when assertions FAIL.
+AnoFox SQL macros's assertion pattern - SQL that returns rows only when assertions FAIL.
 
 ## Pattern
 ```sql

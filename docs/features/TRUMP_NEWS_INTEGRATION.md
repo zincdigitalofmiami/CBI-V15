@@ -155,7 +155,7 @@ regime_trump_second_term_weight =
 
 ## ✅ Integration Checklist
 
-### Before BigQuery Setup:
+### Before DuckDB/MotherDuck Setup:
 
 - [x] ✅ Enhanced news bucket schema with Trump tags
 - [x] ✅ Created `features.trump_news_features_daily` table
@@ -163,7 +163,7 @@ regime_trump_second_term_weight =
 - [x] ✅ Documented Legislative page integration
 - [x] ✅ Updated regime weight modulation logic
 
-### After BigQuery Setup:
+### After DuckDB/MotherDuck Setup:
 
 - [ ] ⚠️ Test Trump news bucket ingestion
 - [ ] ⚠️ Verify Trump feature calculation
@@ -193,7 +193,7 @@ regime_trump_second_term_weight =
 
 **Status**: ✅ **INTEGRATION COMPLETE** - News buckets fully integrated with Trump/ZL engine
 
-**Recommendation**: ✅ **PROCEED** with BigQuery setup
+**Recommendation**: ✅ **PROCEED** with DuckDB/MotherDuck setup
 
 ---
 

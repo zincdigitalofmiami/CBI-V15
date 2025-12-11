@@ -1,37 +1,22 @@
-# Ingestion (Data Collectors)
+# Ingestion (Redirect)
 
-## Purpose
-Data collectors - one subfolder per data source. Each collector fetches data and writes to MotherDuck `raw.*` tables.
+Canonical ingestion now lives in `trigger/<Source>/Scripts/` (Python runners + Trigger.dev jobs). This folder remains only as a pointer; no active ingestion logic should live here.
 
-## Structure
-```
-ingestion/
-├── databento/       # Market data (ZL, ZS, ZC futures)
-├── eia/             # EIA biofuels data
-├── fred/            # FRED macro data (FX, rates, financial conditions)
-├── scrape_creator/  # News buckets (Trump, tariffs, biofuel policy)
-├── legacy_weather/  # Weather data (to be modernized)
-└── [future]/
-    ├── cftc/        # CFTC COT data
-    ├── ers/         # USDA ERS data
-    ├── gdelt/       # GDELT events
-    └── news/        # ProFarmer, TradingEconomics
-```
+## Canonical Locations
 
-## What Belongs Here
-- `collect_*.py` - Data fetching scripts
-- Source-specific utilities
-- Each subfolder should have `__init__.py` and `README.md`
+| Source | Path |
+|--------|------|
+| DataBento | `trigger/DataBento/Scripts/collect_daily.py` |
+| FRED | `trigger/FRED/Scripts/collect_fred_*` |
+| EIA/EPA | `trigger/EIA_EPA/Scripts/collect_eia_biofuels.py` |
+| ScrapeCreators | `trigger/ScrapeCreators/Scripts/collect_news_buckets.py` |
+| ProFarmer | `trigger/ProFarmer/Scripts/profarmer_all_urls.ts` / `profarmer_anchor.py` |
+| CFTC | `trigger/CFTC/Scripts/ingest_cot.py` |
+| USDA | `trigger/USDA/Scripts/ingest_export_sales.py`, `ingest_wasde.py` |
+| Weather | `trigger/Weather/Scripts/ingest_weather.py` |
+| Cross-source buckets | `trigger/Scripts/collect_all_buckets.py` |
 
-## What Does NOT Belong Here
-- Ingestion configuration (→ `config/ingestion/`)
-- Operational scripts (→ `scripts/ops/`)
-- Data transformations (→ `database/definitions/02_staging/`)
+## Notes
 
-## Naming Convention
-- Folder: `{source_name}/` (lowercase, underscore)
-- Main collector: `collect_{data_type}.py`
-- Example: `fred/collect_fred_fx.py`
-
-## Output
-All collectors write to MotherDuck `raw.*` tables as defined in `database/definitions/01_raw/`
+- Update any schedulers or docs to point to the trigger paths above.
+- Leave this directory free of ingestion logic (only stubs/README files).

@@ -12,9 +12,9 @@
  * Based on: https://trigger.dev/docs/guides/use-cases/data-processing-etl#multi-source-etl-pipeline
  */
 
-import { task, wait } from "@trigger.dev/sdk/v3";
-import { fredSeedHarvest } from "./fred_seed_harvest";
-import { profarmerDailyIngest } from "./profarmer_ingest_job";
+import { task } from "@trigger.dev/sdk/v3";
+import { fredSeedHarvest } from "./FRED/Scripts/fred_seed_harvest";
+import { profarmerDailyIngest } from "./ProFarmer/Scripts/profarmer_ingest_job";
 
 interface ETLResult {
   source: string;
@@ -135,4 +135,3 @@ export const dailyETLSchedule = schedules.task({
     sources: ["fred", "profarmer", "databento", "eia"],
   },
 });
-

@@ -13,7 +13,7 @@ market_data:
     datasets:
       - "GLBX.MDP3"  # CME Globex
       - "XNAS.ITCH"  # Nasdaq
-    symbols: 33  # See DATA_SOURCES_MASTER.md
+    symbols: 38  # See DATA_LINKS_MASTER.md
     auth: "DATABENTO_API_KEY"
     
   polygon:
@@ -30,7 +30,7 @@ economic:
     base_url: "https://api.stlouisfed.org/fred"
     endpoints:
       series: "/series/observations"
-    series_count: 24  # See DATA_SOURCES_MASTER.md
+    series_count: 24  # See DATA_LINKS_MASTER.md
     auth: "FRED_API_KEY"
     
   treasury:
@@ -62,7 +62,7 @@ weather:
     endpoints:
       data: "/data"
       stations: "/stations"
-    regions: 14  # See DATA_SOURCES_MASTER.md
+    regions: 14  # See DATA_LINKS_MASTER.md
     auth: "NOAA_API_TOKEN"
     
   noaa_nws:

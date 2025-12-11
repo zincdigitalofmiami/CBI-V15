@@ -1,0 +1,115 @@
+# Augment Ignore File for CBI-V15
+# Exclude files and directories that should not be indexed by Augment
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Data files (large, binary, not useful for code context)
+Data/
+*.duckdb
+*.db
+*.parquet
+*.csv
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+# Legacy/Archive (deprecated code)
+_archive/
+*.old
+*.bak
+*.backup
+~*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Model artifacts (large binary files)
+models/
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.joblib
+*.model
+
+# Documentation images (not useful for code context)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.ico
+
+# Lock files (generated, not useful for planning)
+package-lock.json
+poetry.lock
+Pipfile.lock
+
+# Dataform (deprecated)
+.dataform/
+dataform/node_modules/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Vercel
+.vercel/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets
+*.key
+*.pem
+*.crt
+*.cer
+
+# Large JSON (data files, not config)
+**/Data/**/*.json
+
+
+

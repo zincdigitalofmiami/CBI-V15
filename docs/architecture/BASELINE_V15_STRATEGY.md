@@ -39,7 +39,7 @@
 
 ### Step 1: Build `daily_ml_matrix` ✅
 
-**File**: `dataform/definitions/03_features/daily_ml_matrix.sqlx`
+**File**: `anofox/definitions/03_features/daily_ml_matrix.sqlx`
 
 **What it does**:
 - Joins all 276 features
@@ -53,10 +53,10 @@
 ### Step 2: Create Train/Val/Test Splits ✅
 
 **Files**:
-- `dataform/definitions/04_training/train_val_test_splits.sqlx`
-- `dataform/definitions/04_training/daily_ml_matrix_train.sqlx`
-- `dataform/definitions/04_training/daily_ml_matrix_val.sqlx`
-- `dataform/definitions/04_training/daily_ml_matrix_test.sqlx`
+- `anofox/definitions/04_training/train_val_test_splits.sqlx`
+- `anofox/definitions/04_training/daily_ml_matrix_train.sqlx`
+- `anofox/definitions/04_training/daily_ml_matrix_val.sqlx`
+- `anofox/definitions/04_training/daily_ml_matrix_test.sqlx`
 
 **Splits**:
 - Train: 2010-01-01 to 2018-12-31
@@ -128,7 +128,7 @@
 ## ✅ Action Plan
 
 ### This Week:
-1. ✅ Build `daily_ml_matrix` in Dataform
+1. ✅ Build `daily_ml_matrix` in AnoFox SQL macros
 2. ✅ Export training data
 3. ✅ Train LightGBM baselines (v15.0)
 4. ✅ Document baseline performance

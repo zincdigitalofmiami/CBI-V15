@@ -46,9 +46,9 @@ CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that
 └──────────────────────┬──────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
-│               Ingestion Layer (src/ingestion/)           │
-│  • databento/   • scrape_creator/   • fred/   • eia/    │
-│  • usda/        • cftc/             • weather/          │
+│      Ingestion Layer (trigger/<Source>/Scripts/)         │
+│  • DataBento   • ScrapeCreators   • FRED   • EIA_EPA    │
+│  • USDA        • CFTC             • Weather/NOAA        │
 └──────────────────────┬───────────────────────────────────┘
                        ↓
 ┌──────────────────────────────────────────────────────────┐
@@ -205,8 +205,8 @@ Open [http://localhost:3000](http://localhost:3000)
 ### Run Ingestion
 
 ```bash
-python src/ingestion/scrape_creator/collect.py
-python src/ingestion/fred/collect_fred_fx.py
+python trigger/ScrapeCreators/Scripts/collect_news_buckets.py
+python trigger/FRED/Scripts/collect_fred_fx.py
 ```
 
 ### Build Features & Training Data

@@ -11,7 +11,7 @@ Operational and setup scripts. These are utilities, NOT the core application cod
 - `setup/` - Initial setup, schema deployment
 
 ## What Does NOT Belong Here
-- Data collectors (→ `src/ingestion/`)
+- Data collectors (→ `trigger/<Source>/Scripts/`)
 - Feature engineering code (→ `src/features/`)
 - Training code (→ `src/training/`)
 
@@ -22,4 +22,3 @@ Examples:
 - `deploy_schema.py`
 - `check_data_availability.py`
 - `test_connections.py`
-

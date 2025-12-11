@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+
+from src.ensemble.qra_ensemble import EnsembleForecast
 
 logger = logging.getLogger(__name__)
 

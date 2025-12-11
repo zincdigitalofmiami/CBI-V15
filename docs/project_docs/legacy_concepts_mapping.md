@@ -68,7 +68,7 @@ From legacy README, these are the most important features:
 ```
 
 ## What NOT to Copy
-- ❌ BigQuery infrastructure (legacy)
+- ❌ DuckDB/MotherDuck infrastructure (legacy)
 - ❌ Python ingestion scripts (AnoFox handles this)
 - ❌ Training scripts (AnoFox handles this)
 

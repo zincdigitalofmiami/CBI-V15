@@ -248,7 +248,7 @@ to recreate the database structure.
     print(f"Finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\n📋 Next steps:")
     print("  1. Recreate database: python scripts/setup_database.py --both")
-    print("  2. Ingest raw data: python src/ingestion/databento/ingest_daily.py")
+    print("  2. Ingest raw data: python trigger/DataBento/Scripts/collect_daily.py")
     print("  3. Build features: python src/engines/anofox/build_all_features.py")
 
 

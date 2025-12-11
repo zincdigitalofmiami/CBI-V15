@@ -173,7 +173,7 @@ SELECT TS_FORECAST(
 ## Next Steps: What to Build First?
 
 1. **Feature Calculator SQL** (single source of truth)
-2. **DuckDB Migration Script** (BigQuery → Local)
+2. **DuckDB Migration Script** (DuckDB/MotherDuck → Local)
 3. **AnoFox Installation Guide**
 4. **Bucket Model Training Scripts**
 

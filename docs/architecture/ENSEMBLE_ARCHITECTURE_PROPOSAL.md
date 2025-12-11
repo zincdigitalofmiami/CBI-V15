@@ -5,7 +5,7 @@ Purpose: outline a realistic, regime-aware ensemble for ZL that fits the current
 ## Ground Truth (Do Not Violate)
 - Target: ZL (soybean oil) is the primary asset; horizons: 1w/1m/3m/6m.
 - Features: Big 8 drivers are pre-computed in the SQL layer (DuckDB/MotherDuck). No ad-hoc one-off SQL outside the managed SQL definitions.
-- Compute: training/inference is Mac-local; no cloud training/Vertex/BQML/AutoML. Storage/feature serving is local DuckDB/MotherDuck (not BigQuery).
+- Compute: training/inference is Mac-local; no cloud training/Vertex/BQML/AutoML. Storage/feature serving is local DuckDB/MotherDuck (not DuckDB/MotherDuck).
 - Data quality: no synthetic/fake data; verify coverage before modeling (RINs, biodiesel, CFTC, Trump sentiment, etc.).
 
 ## Layered Model Plan
@@ -22,7 +22,7 @@ Use bucket-specific feature subsets and quantile objectives. Start with CatBoost
 | Tariff | Trump sentiment, tariff/trade policy signals | TFT optional; otherwise CatBoost + event features | Requires ScrapeCreators/Trump ingest + tariff event flags; no data = no TFT. |
 | Biofuel | RIN D4/D6, biodiesel prod, RFS volumes, BOHO | CatBoost quantile | Verify EIA/RIN coverage and joins; no claims of “fully integrated” until checked. |
 | Energy | CL, HO, RB, NG, CL-ZL correlation, crack/BOHO | CatBoost quantile | Confirm petroleum series ingestion and correlations present. |
-| Volatility | VIX, realized vol, NFCI/STLFSI4, vol regimes | CatBoost quantile; TFT only if non-linear benefit is proven | Ensure realized vol features exist; add vol regime flags via Dataform if missing. |
+| Volatility | VIX, realized vol, NFCI/STLFSI4, vol regimes | CatBoost quantile; TFT only if non-linear benefit is proven | Ensure realized vol features exist; add vol regime flags via AnoFox SQL macros if missing. |
 
 ### Ensemble Layer
 - Baseline: weighted quantile averaging across buckets per horizon (weights learned on validation pinball loss).
@@ -55,8 +55,8 @@ Use bucket-specific feature subsets and quantile objectives. Start with CatBoost
 
 ## Open Questions / To Verify
 - Do we have fresh RIN/biodiesel series and Trump/tariff event flags in the feature tables? If not, ingest before modeling.
-- Are HG, BRL, and curve series gap-free over 2000–present? If not, define backfill rules in Dataform.
-- Do realized-vol features already exist, or do we need a Dataform macro for rolling vol/regime flags?
+- Are HG, BRL, and curve series gap-free over 2000–present? If not, define backfill rules in AnoFox SQL macros.
+- Do realized-vol features already exist, or do we need a AnoFox SQL macros macro for rolling vol/regime flags?
 
 ## What This Removes
 - No claims that biofuels are “fully integrated” without evidence.

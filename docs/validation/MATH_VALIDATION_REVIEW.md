@@ -530,7 +530,7 @@
 
 **All Math & Calculations**: ✅ **INSTITUTIONAL GRADE** - Spot-on, validated, ready for production
 
-**Recommendation**: ✅ **PROCEED** with BigQuery setup
+**Recommendation**: ✅ **PROCEED** with DuckDB/MotherDuck setup
 
 ---
 

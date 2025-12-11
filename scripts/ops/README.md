@@ -10,7 +10,7 @@ Health checks, status monitoring, and connection testing. Run these to verify sy
 - `vegas/` - Vegas-specific operational scripts
 
 ## What Does NOT Belong Here
-- Data collectors (→ `src/ingestion/`)
+- Data collectors (→ `trigger/<Source>/Scripts/`)
 - Setup scripts (→ `scripts/setup/`)
 
 ## Usage
@@ -24,4 +24,3 @@ python scripts/ops/check_data_availability.py
 # Get ingestion status
 python scripts/ops/ingestion_status.py
 ```
-

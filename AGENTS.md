@@ -1,10 +1,9 @@
 # CBI‑V15 Agents Workspace Guide
 
 ## Read First
-- `SYSTEM_STATUS_COMPLETE.md` — comprehensive system reference (schemas, tables, models, data coverage)
-- `.github/copilot-instructions.md` — agent guardrails, conventions, anti‑patterns
+- `docs/architecture/SYSTEM_STATUS_COMPLETE.md` — comprehensive system reference (schemas, tables, models, data coverage)
 - `database/README.md` — 8‑schema layout, SQL macros, feature boundaries
-- `CFTC_COT_INGESTION_COMPLETE.md` — CFTC COT pipeline reference
+- `docs/ingestion/CFTC_COT_INGESTION_COMPLETE.md` — CFTC COT pipeline reference
 
 ## ⛔ HARD STOP RULES (CRITICAL)
 Before creating ANYTHING new, verify these conditions:
@@ -93,8 +92,152 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 
 ## If You Need Context
 - Dashboard lives in `dashboard/` (Vercel). Queries read `forecasts.*` in MotherDuck.
-- Data sources: see `DATA_LINKS_MASTER.md` and `WEB_SCRAPING_TARGETS_MASTER.md`.
+- Data sources: see `DATA_LINKS_MASTER.md` (canonical) and `trigger/WEB_SCRAPING_TARGETS_MASTER.md` (web scraping URLs).
 - Integration details: `README.md`, `docs/project_docs/tsci_anofox_architecture.md`.
 
 ## When Unsure
 - Pause and ask. Point to the exact doc section you need. Never invent data, columns, or paths.
+
+## AI Assistant Behavior (Augment / LLMs)
+
+You are working in the `CBI-V15` repo. Follow these rules strictly:
+
+- Obey instruction precedence: system instructions > `AGENTS.md` > repo architecture/design docs > everything else (examples, web, prior code). If anything conflicts, follow the higher-priority source and ignore the rest.
+- Do not hallucinate:
+  - Never invent schemas, tables, columns, symbols, or file paths.
+  - Never fabricate data, examples, or mock records unless the user explicitly asks for synthetic data.
+  - If something is missing or unclear, stop and ask the user instead of guessing.
+- Respect “no new work before cleanup”:
+  - Do not propose or create new files, new features, or new model families while there are known broken or missing pieces in existing ingestion, feature engineering, or training pipelines.
+  - Prioritize fixing and validating what already exists over adding anything new.
+- Follow feature and naming rules:
+  - Keep feature engineering where the repo’s rules put it (SQL layer for features; Python only for orchestration or glue).
+  - Use the existing naming conventions for volatility vs volume and for feature names; avoid introducing new naming patterns.
+  - Do not repurpose existing feature names to mean something different from their documented intent.
+- Stay within the documented architecture:
+  - Respect the existing storage, ETL, and training stack; do not introduce new databases, clouds, schedulers, or model-serving systems without explicit user direction.
+  - Do not silently switch to different tools or libraries if they conflict with the documented stack.
+- Validation and safety:
+  - Do not declare a pipeline, feature, or model done without also describing how it should be validated (data quality checks, schema checks, basic evaluation metrics) and ensuring those checks fit the existing patterns.
+  - Prefer idempotent, restart-safe changes; avoid designs that require manual cleanup or one-off steps.
+- Code style and scope:
+  - Match the existing code style and structure; extend patterns instead of inventing new frameworks.
+  - Keep changes minimal and localized to the user’s request; do not refactor unrelated parts of the codebase without being asked.
+- When unsure:
+  - Prefer asking targeted clarification questions over making hidden assumptions.
+  - Explicitly call out any trade-offs, risks, or uncertainties instead of hiding them in the implementation.
+
+## AI Assistant Plan Building (Augment Code / Cursor Agent)
+
+When building implementation plans:
+
+1. **Always Read First** (in this order):
+   - `docs/architecture/MASTER_PLAN.md` — V15.1 architecture source of truth
+   - This file (`AGENTS.md`) — current guardrails and conventions
+   - `database/README.md` — 8-schema layout and feature boundaries
+   - `/Users/zincdigital/.cursor/plans/autogluon_hybrid_implementation_c2287cb0.plan.md` — current implementation plan with pending tasks
+
+2. **Check Existing State Before Planning**:
+   - Run `ls -la scripts/` to see available operational scripts
+   - Check `src/ingestion/` for existing data collectors
+   - Review `database/macros/` for existing SQL feature macros
+   - Verify `config/requirements/requirements.txt` has current dependencies
+
+3. **Plan Structure Requirements**:
+   - **Phase 0**: Critical infrastructure + bug fixes (highest priority)
+   - **Phase 1-N**: Incremental feature additions (after Phase 0 complete)
+   - Each task must specify:
+     - Exact file paths (no placeholders)
+     - Specific schema/table names (verify they exist in `database/definitions/`)
+     - Data sources (verify against `DATA_LINKS_MASTER.md`)
+     - Validation steps (how to test it works)
+
+4. **Technology Stack Constraints** (NEVER deviate):
+   - **Database**: DuckDB (local), MotherDuck (cloud) — NO BigQuery, NO Postgres
+   - **ML Framework**: AutoGluon 1.4 (TabularPredictor + TimeSeriesPredictor) — NO custom sklearn pipelines
+   - **Feature Engineering**: SQL macros in `database/macros/` — NO Python feature loops
+   - **Orchestration**: Trigger.dev jobs in `trigger/` — NO Airflow, NO Prefect
+   - **Training**: Mac M4 local CPU — NO cloud training, NO GPUs
+   - **Dashboard**: Next.js/Vercel querying MotherDuck — NO separate API server
+
+5. **Data Source Validation** (Critical):
+   - Only use sources listed in `DATA_LINKS_MASTER.md`
+   - Verify API keys exist in `.env` or macOS Keychain before planning ingestion
+   - Check symbol availability (38 futures symbols documented)
+   - Confirm data frequency (daily, weekly, monthly)
+
+6. **Dependency Chain Planning**:
+   - Phase 0 bugs MUST be fixed before adding new features
+   - Data ingestion MUST work before feature engineering
+   - Features MUST exist before training models
+   - Models MUST train before ensemble
+   - Example: EPA RIN prices → EIA biofuels features → Biofuel bucket specialist → Greedy ensemble
+
+7. **Big 8 Bucket Coverage** (Required):
+   Each plan must explicitly cover all 8 buckets:
+   1. Crush (ZL/ZS/ZM spreads)
+   2. China (HG-ZS correlation, export sales)
+   3. FX (DX, BRL, CNY, MXN)
+   4. Fed (Fed funds, yield curve, NFCI, STLFSI4)
+   5. Tariff (Trump sentiment, Farm Policy News)
+   6. Biofuel (EPA RIN D4/D5/D6, BOHO spread)
+   7. Energy (CL/HO/RB, crack spreads)
+   8. Volatility (VIX, realized vol, stress indices)
+
+8. **Validation Requirements**:
+   Every planned feature/model must include:
+   - How to verify data was ingested (`SELECT COUNT(*) FROM raw.{table}`)
+   - How to test feature engineering (`SELECT * FROM features.{table} LIMIT 5`)
+   - How to validate model output (`python scripts/validation/check_forecasts.py`)
+   - Expected output format (schema, column names, row counts)
+
+9. **File Naming Conventions** (Mandatory):
+   - Ingestion: `src/ingestion/{source}/{action}.py` (e.g., `src/ingestion/epa/collect_rin_prices.py`)
+   - Features: `database/macros/{domain}_features.sql` (e.g., `database/macros/biofuel_features.sql`)
+   - Training: `src/training/autogluon/{model_type}.py` (e.g., `src/training/autogluon/bucket_specialist.py`)
+   - Trigger jobs: `trigger/ingestion/{domain}/{source}_{action}.ts` (e.g., `trigger/ingestion/energy_biofuels/epa_rin_prices.ts`)
+
+10. **Anti-Patterns to Avoid**:
+    - ❌ Creating new markdown files (update existing docs in-place)
+    - ❌ Hardcoding API keys in code (use `.env` or Keychain)
+    - ❌ Building features in Python loops (use SQL macros)
+    - ❌ Training models before data pipeline is working
+    - ❌ Proposing BigQuery/Dataform/GCP resources
+    - ❌ Inventing new symbols not in the 38-symbol list
+    - ❌ Creating placeholders or mock data
+    - ❌ Skipping validation steps
+
+## Summary: How to Build a Proper Plan
+
+```bash
+# Step 1: Read context
+cat docs/architecture/MASTER_PLAN.md
+cat AGENTS.md
+cat /Users/zincdigital/.cursor/plans/autogluon_hybrid_implementation_c2287cb0.plan.md
+
+# Step 2: Verify current state
+ls -la src/ingestion/
+ls -la database/macros/
+cat config/requirements/requirements.txt
+
+# Step 3: Build plan following this structure:
+## Phase 0: Critical Bugs (MUST complete first)
+- [ ] Task 1: Fix {specific bug} in {exact file path}
+      Validation: {how to verify fix}
+
+## Phase 1: Data Ingestion (Dependency: Phase 0 complete)
+- [ ] Task 2: Add {specific data source} to raw.{table_name}
+      Validation: SELECT COUNT(*) FROM raw.{table_name}
+
+## Phase 2: Feature Engineering (Dependency: Phase 1 complete)
+- [ ] Task 3: Create {feature_name} in database/macros/{file}.sql
+      Validation: SELECT * FROM features.{table_name} LIMIT 5
+
+## Phase 3: Model Training (Dependency: Phase 2 complete)
+- [ ] Task 4: Train {bucket_name} specialist using AutoGluon TabularPredictor
+      Validation: python scripts/validation/check_model_artifacts.py
+
+## Phase 4: Ensemble & Monte Carlo (Dependency: Phase 3 complete)
+- [ ] Task 5: Combine predictions with greedy_ensemble.py
+      Validation: SELECT * FROM forecasts.zl_predictions LIMIT 5
+```

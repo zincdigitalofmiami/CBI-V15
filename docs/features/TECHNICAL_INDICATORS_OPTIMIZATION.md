@@ -58,13 +58,13 @@ conda install -c conda-forge ta-lib
 
 ---
 
-### Option 3: BigQuery SQL UDFs (Recommended for Initial Load)
+### Option 3: DuckDB/MotherDuck SQL UDFs (Recommended for Initial Load)
 
 **Pros**:
-- ✅ **Zero compute cost** (runs on BigQuery, uses query budget)
+- ✅ **Zero compute cost** (runs on DuckDB/MotherDuck, uses query budget)
 - ✅ **Vectorized** - processes entire columns at once
-- ✅ **Parallel** - BigQuery parallelizes automatically
-- ✅ **No data transfer** - data stays in BigQuery
+- ✅ **Parallel** - DuckDB/MotherDuck parallelizes automatically
+- ✅ **No data transfer** - data stays in DuckDB/MotherDuck
 - ✅ **Scalable** - handles billions of rows
 
 **Cons**:
@@ -74,11 +74,11 @@ conda install -c conda-forge ta-lib
 
 **Performance**: Processes 15 years in seconds (parallelized)
 
-**Cost**: Uses BigQuery query budget (first 1 TB free, then $5/TB)
+**Cost**: Uses DuckDB/MotherDuck query budget (first 1 TB free, then $5/TB)
 
 **Example**:
 ```sql
--- RSI calculation in BigQuery
+-- RSI calculation in DuckDB/MotherDuck
 CREATE TEMP FUNCTION calculate_rsi(prices ARRAY<FLOAT64>, period INT64)
 RETURNS FLOAT64 AS (
   -- RSI calculation logic
@@ -118,22 +118,22 @@ WHERE symbol = 'ZL'
 
 ## 🎯 Recommended Approach: Hybrid Strategy
 
-### Phase 1: Initial Load (15 Years) - BigQuery SQL UDFs
+### Phase 1: Initial Load (15 Years) - DuckDB/MotherDuck SQL UDFs
 
 **Why**: 
-- Zero compute cost (uses BigQuery query budget)
+- Zero compute cost (uses DuckDB/MotherDuck query budget)
 - Fastest for bulk processing
 - Parallelized automatically
 - No data transfer needed
 
 **Implementation**:
 ```sql
--- Create BigQuery UDFs for common indicators
+-- Create DuckDB/MotherDuck UDFs for common indicators
 -- RSI, MACD, Bollinger Bands, Moving Averages, etc.
 -- Process all 15 years in one query
 ```
 
-**Cost**: Uses BigQuery query budget (~50-100 GB for 15 years = FREE within 1 TB limit)
+**Cost**: Uses DuckDB/MotherDuck query budget (~50-100 GB for 15 years = FREE within 1 TB limit)
 
 **Time**: Minutes (not hours)
 
@@ -180,14 +180,14 @@ WHERE symbol = 'ZL'
 
 | Method | Time | Cost | Notes |
 |--------|------|------|-------|
-| **BigQuery SQL UDFs** | ~2-5 minutes | $0.00 (free tier) | ✅ **BEST** |
+| **DuckDB/MotherDuck SQL UDFs** | ~2-5 minutes | $0.00 (free tier) | ✅ **BEST** |
 | **TA-Lib (Python)** | ~30-45 seconds | Mac M4 (free) | Fast but requires data export |
 | **pandas-ta (Python)** | ~2.5-3.75 minutes | Mac M4 (free) | Slower but easier |
 | **vectorbt** | ~1.25-2 minutes | Mac M4 (free) | Good middle ground |
 
 ### Cost Analysis
 
-**BigQuery SQL Approach**:
+**DuckDB/MotherDuck SQL Approach**:
 - Query: ~50-100 GB for 15 years
 - Cost: $0.00 (within 1 TB free tier) ✅
 - Time: 2-5 minutes
@@ -197,17 +197,17 @@ WHERE symbol = 'ZL'
 - Export: ~1 GB Parquet
 - Compute: Mac M4 (free)
 - Time: 30 seconds - 4 minutes
-- Upload: ~1 GB back to BigQuery
+- Upload: ~1 GB back to DuckDB/MotherDuck
 - **Total**: **$0.00, 1-5 minutes** (but slower)
 
 ---
 
 ## 🚀 Recommended Implementation
 
-### Step 1: Create BigQuery UDFs for Common Indicators
+### Step 1: Create DuckDB/MotherDuck UDFs for Common Indicators
 
 ```sql
--- dataform/includes/technical_indicators_udf.sqlx
+-- anofox/includes/technical_indicators_udf.sqlx
 
 -- RSI
 CREATE TEMP FUNCTION calculate_rsi(prices ARRAY<FLOAT64>, period INT64)
@@ -237,10 +237,10 @@ RETURNS STRUCT<upper FLOAT64, middle FLOAT64, lower FLOAT64> AS (
 );
 ```
 
-### Step 2: Initial Load Script (BigQuery)
+### Step 2: Initial Load Script (DuckDB/MotherDuck)
 
 ```sql
--- dataform/definitions/03_features/technical_indicators_initial_load.sqlx
+-- anofox/definitions/03_features/technical_indicators_initial_load.sqlx
 
 config {
   type: "table",
@@ -314,11 +314,11 @@ WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
 
 import pandas as pd
 import pandas_ta as ta
-from google.cloud import bigquery
+from google.cloud import duckdb
 
 def calculate_indicators_incremental(symbol: str, start_date: str):
     """Calculate indicators for new data only"""
-    client = bigquery.Client()
+    client = duckdb.Client()
     
     # Get new data only
     query = f"""
@@ -338,7 +338,7 @@ def calculate_indicators_incremental(symbol: str, start_date: str):
     df.ta.sma(length=20, append=True)
     df.ta.atr(length=14, append=True)
     
-    # Upload to BigQuery
+    # Upload to DuckDB/MotherDuck
     df.to_gbq('features.technical_indicators_daily', 
               project_id='cbi-v15', 
               if_exists='append')
@@ -348,7 +348,7 @@ def calculate_indicators_incremental(symbol: str, start_date: str):
 
 ## 💰 Cost Comparison
 
-### BigQuery SQL Approach (Recommended)
+### DuckDB/MotherDuck SQL Approach (Recommended)
 - **Initial Load**: ~50-100 GB query = **$0.00** (free tier)
 - **Time**: 2-5 minutes
 - **Incremental**: ~1 GB/day = **$0.00** (free tier)
@@ -360,22 +360,22 @@ def calculate_indicators_incremental(symbol: str, start_date: str):
 - **Incremental**: ~0.1 GB/day = **$0.00**
 - **Total Monthly**: **$0.00** ✅
 
-**Both are free, but BigQuery is faster and more scalable!**
+**Both are free, but DuckDB/MotherDuck is faster and more scalable!**
 
 ---
 
 ## 🎯 Final Recommendation
 
-### For Initial 15-Year Load: **BigQuery SQL UDFs** ✅
+### For Initial 15-Year Load: **DuckDB/MotherDuck SQL UDFs** ✅
 
 **Why**:
 1. ✅ Zero compute cost (uses query budget, within free tier)
 2. ✅ Fastest (parallelized, vectorized)
-3. ✅ No data transfer (stays in BigQuery)
+3. ✅ No data transfer (stays in DuckDB/MotherDuck)
 4. ✅ Scalable (handles billions of rows)
 
 **Implementation**:
-- Create BigQuery UDFs for common indicators
+- Create DuckDB/MotherDuck UDFs for common indicators
 - Process all 15 years in one query
 - Store results in `features.technical_indicators_15y`
 
@@ -390,13 +390,13 @@ def calculate_indicators_incremental(symbol: str, start_date: str):
 **Implementation**:
 - Use pandas-ta for daily calculations
 - Only process new data
-- Append to BigQuery table
+- Append to DuckDB/MotherDuck table
 
 ---
 
 ## 📋 Implementation Checklist
 
-- [ ] Create BigQuery UDFs for common indicators (RSI, MACD, Bollinger, MAs, ATR)
+- [ ] Create DuckDB/MotherDuck UDFs for common indicators (RSI, MACD, Bollinger, MAs, ATR)
 - [ ] Create initial load script (process 15 years)
 - [ ] Test on single symbol first
 - [ ] Run for all symbols
@@ -407,13 +407,13 @@ def calculate_indicators_incremental(symbol: str, start_date: str):
 
 ## ✅ Summary
 
-**Best Approach**: **BigQuery SQL UDFs for initial load** + **pandas-ta for incremental**
+**Best Approach**: **DuckDB/MotherDuck SQL UDFs for initial load** + **pandas-ta for incremental**
 
 **Cost**: **$0.00** (all within free tiers)
 
 **Performance**: **2-5 minutes for 15 years** (vs hours with Python loops)
 
-**Scalability**: **Handles billions of rows** (BigQuery parallelization)
+**Scalability**: **Handles billions of rows** (DuckDB/MotherDuck parallelization)
 
 ---
 

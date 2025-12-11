@@ -1,7 +1,6 @@
 # 🔗 CBI-V15 Data Links & API Endpoints - Master List
 
-**Last Updated:** December 7, 2024
-
+**Last Updated:** December 10, 2025
 ---
 
 ## 🔑 API Keys & Credentials Required
@@ -104,9 +103,13 @@ ZB  # 30-Year Treasury Bond
 - **ZL (Primary):** Every hour
 - **All others:** Every 4 hours
 
-### Script
+### Scripts
 ```bash
-python src/ingestion/databento/collect_daily.py
+# Python script (legacy)
+python trigger/DataBento/Scripts/collect_daily.py
+
+# Trigger.dev job (canonical)
+trigger/DataBento/Scripts/databento_ingest_job.ts
 ```
 
 ---
@@ -172,37 +175,68 @@ DTWEXEMEGS  # Dollar Index (Emerging Markets)
 ### Rate Limits
 - 120 requests per minute
 
+### Target Table
+`raw.fred_economic` (single table, not split into multiple tables)
+
+**Note:** SQL macros reference `raw.fred_economic` directly. Plan originally proposed splitting into 3 tables (`raw.fred_rates_spreads`, `raw.fred_financial_conditions`, `raw.fred_real_economy`), but actual implementation uses single table.
+
+### Trigger Jobs
+- `trigger/FRED/Scripts/fred_seed_harvest.ts` → `raw.fred_economic` ✅ **CREATED**
+
+**Status:** ✅ **Active** - Single job writes to `raw.fred_economic` table
+
 ### Ingestion Schedule
 - Daily at 1 AM UTC
 
 ### Scripts
 ```bash
-python src/ingestion/fred/collect_fred_fx.py
-python src/ingestion/fred/collect_fred_rates_curve.py
-python src/ingestion/fred/collect_fred_financial_conditions.py
+# Python scripts (legacy)
+python trigger/FRED/Scripts/collect_fred_fx.py
+python trigger/FRED/Scripts/collect_fred_rates_curve.py
+python trigger/FRED/Scripts/collect_fred_financial_conditions.py
+
+# Trigger.dev job (canonical)
+trigger/FRED/Scripts/fred_seed_harvest.ts
 ```
 
 ---
 
-## 🛢️ 3. Biofuels & Energy (EIA)
+## 🛢️ 3. Biofuels & Energy
 
-### API Endpoint
+### 3.1 EPA RIN Prices (CRITICAL - FREE)
+
+**Source:** EPA EMTS (Environmental Management Tracking System)
+
+**URLs:**
+- **Primary:** https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information
+- **Public Data:** https://www.epa.gov/fuels-registration-reporting-and-compliance-help/public-data-renewable-fuel-standard
+- **Backup:** https://growthenergy.org/data-set-category/rin-prices/
+
+**Data:** Weekly volume-weighted average RIN prices (D3, D4, D5, D6)
+
+**Coverage:** July 2010 - Present
+
+**Target Table:** `raw.epa_rin_prices` (CRITICAL - referenced in SQL macros)
+
+**Trigger Job:** `trigger/EIA_EPA/Scripts/epa_rin_prices.ts` ⚠️ **Needs creation**
+
+**Frequency:** Weekly (updated monthly by EPA)
+
+**Status:** ✅ **Table definition exists** - `database/definitions/01_raw/epa_rin_prices.sql` ✅ **CREATED**
+
+### 3.2 EIA (Energy Information Administration)
+
+**API Endpoint:**
 ```
 https://api.eia.gov/v2/
 ```
 
-### Documentation
+**Documentation:**
 - **Main:** https://www.eia.gov/opendata/
 - **API Guide:** https://www.eia.gov/opendata/documentation.php
 - **Register:** https://www.eia.gov/opendata/register.php
 
-### Key Series (6 indicators)
-
-#### RIN Prices
-```
-RIN_D4      # Biomass Diesel RINs
-RIN_D6      # Ethanol RINs
-```
+**Key Series (6 indicators):**
 
 #### Biofuel Production
 ```
@@ -216,15 +250,19 @@ RFS_VOLUMES             # Renewable Volume Obligations
 ULSD_WHOLESALE_MIDWEST  # Ultra-low sulfur diesel prices
 ```
 
-### Rate Limits
+**Rate Limits:**
 - No official limit (be respectful)
 
-### Ingestion Schedule
+**Ingestion Schedule:**
 - Daily at 1 AM UTC
 
-### Script
+**Scripts:**
 ```bash
-python src/ingestion/eia/collect_eia_biofuels.py
+# Python script (legacy)
+python trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
+
+# Trigger.dev job (canonical)
+trigger/EIA_EPA/Scripts/eia_procurement_ingest.ts ✅ **CREATED**
 ```
 
 ---
@@ -273,11 +311,16 @@ general_market      # General commodity news
 
 ### Scripts
 ```bash
-python src/ingestion/scrape_creator/collect.py
-python src/ingestion/scrape_creator/buckets/collect_biofuel_policy.py
-python src/ingestion/scrape_creator/buckets/collect_china_demand.py
-python src/ingestion/scrape_creator/buckets/collect_tariffs_trade_policy.py
-python src/ingestion/scrape_creator/buckets/collect_trump_truth_social.py
+# Python scripts (legacy)
+python trigger/ScrapeCreators/Scripts/collect_news_buckets.py
+python trigger/ScrapeCreators/Scripts/buckets/collect_biofuel_policy.py
+python trigger/ScrapeCreators/Scripts/buckets/collect_china_demand.py
+python trigger/ScrapeCreators/Scripts/buckets/collect_tariffs_trade_policy.py
+python trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py
+
+# Trigger.dev jobs (canonical)
+trigger/ScrapeCreators/Scripts/intelligent_news_pipeline.ts ✅ **CREATED**
+trigger/ScrapeCreators/Scripts/news_to_signals_openai_agent.ts ✅ **CREATED**
 ```
 
 ---
@@ -330,12 +373,20 @@ Corn - Good/Excellent Ratings
 ### Status
 ⚠️ **Pending:** Ingestion pipeline not yet built
 
-### Planned Scripts
+### Trigger Jobs
+- `trigger/USDA/Scripts/usda_fas_exports.ts` → `raw.usda_export_sales` ⚠️ **Needs creation**
+- `trigger/USDA/Scripts/usda_wasde.ts` → `raw.usda_wasde` ⚠️ **Needs creation**
+- `trigger/USDA/Scripts/usda_nass_quickstats.ts` → `raw.usda_nass` ⚠️ **Needs creation**
+
+### Scripts
 ```bash
-python src/ingestion/usda/collect_wasde.py        # Monthly WASDE reports
-python src/ingestion/usda/collect_export_sales.py # Weekly export data
-python src/ingestion/usda/collect_crop_progress.py # Weekly crop status
+# Python scripts (legacy)
+python trigger/USDA/Scripts/ingest_wasde.py        # Monthly WASDE reports
+python trigger/USDA/Scripts/ingest_export_sales.py # Weekly export data
+python trigger/USDA/Scripts/usda_nass_quickstats.py # Weekly crop status
 ```
+
+**Status:** ⚠️ **Jobs need creation** - Remove mock data from existing scripts first
 
 ---
 
@@ -393,13 +444,17 @@ Central Plains (KS, NE)
 - Growing degree days
 
 ### Status
-⚠️ **Partial:** Legacy weather scripts in `src/ingestion/legacy_weather/`
+⚠️ **Partial:** Legacy weather scripts existed in `src/ingestion/legacy_weather/`; canonical NOAA ingestion is now `trigger/Weather/Scripts/ingest_weather.py`.
 
-### Planned Scripts
+### Scripts
 ```bash
-python src/ingestion/weather/collect_noaa_ghcnd.py  # Station daily data
-python src/ingestion/weather/collect_noaa_gfs.py    # Forecast grids
-python src/ingestion/weather/collect_inmet_smn.py   # Brazil/Argentina
+# Python scripts (legacy)
+python trigger/Weather/Scripts/ingest_weather.py    # NOAA weather data
+
+# Trigger.dev jobs (needed)
+trigger/Weather/Scripts/noaa_weather.ts ⚠️ **Needs creation**
+trigger/Weather/Scripts/inmet_brazil.ts ⚠️ **Needs creation**
+trigger/Weather/Scripts/smn_argentina.ts ⚠️ **Needs creation**
 ```
 
 ---
@@ -436,12 +491,21 @@ Change from Prior Week
 - **Weekly:** Every Tuesday at 3:30 PM ET
 - **Data as of:** Prior Tuesday close
 
-### Status
-⚠️ **Pending:** Ingestion pipeline not yet built
+### Target Tables
+- `raw.cftc_cot_disaggregated` (used by SQL macros)
+- `raw.cftc_cot_tff` (Traders in Financial Futures)
 
-### Planned Script
+### Trigger Job
+`trigger/CFTC/Scripts/cftc_cot_reports.ts` ⚠️ **Needs creation**
+
+**Frequency:** Weekly (Friday after report release)
+
+**Status:** ⚠️ **Job needs creation** - Python script exists at `trigger/CFTC/Scripts/ingest_cot.py`
+
+### Scripts
 ```bash
-python src/ingestion/cftc/collect_cot.py
+# Python script (legacy)
+python trigger/CFTC/Scripts/ingest_cot.py
 ```
 
 ---
@@ -474,9 +538,13 @@ Attendance (estimated)
 ### Ingestion Schedule
 - Daily at 3 AM UTC
 
-### Script
+### Scripts
 ```bash
-python scripts/ops/vegas/collect_vegas_events.py
+# Python script (legacy)
+python trigger/Vegas/Scripts/collect_vegas_intel.py
+
+# Trigger.dev job (canonical)
+trigger/Vegas/Scripts/vegas_intel_job.ts ✅ **CREATED**
 ```
 
 ---
@@ -517,7 +585,7 @@ tsci        -- TSci agent jobs/runs
 
 ### Login URL
 ```
-https://www.dtnpf.com/agriculture/web/ag/home
+https://www.profarmer.com
 ```
 
 ### Credentials
@@ -526,25 +594,119 @@ PROFARMER_USERNAME="chris@usoilsolutions.com"
 PROFARMER_PASSWORD="*Usoil12025"
 ```
 
-### Coverage
-- Weather forecasts (Brazil, Argentina, US Corn Belt)
-- Basis prices (local elevator bids)
-- Barge rates (river logistics)
-- Crop conditions (yield estimates)
-- Market commentary
+### Coverage (22+ URLs - Comprehensive)
+
+**Daily Editions:**
+- First Thing Today
+- Ahead of the Open
+- After the Bell
+
+**News Sections:**
+- Agriculture News
+- Market News
+- Policy News
+- Weather News
+
+**Newsletters:**
+- Weekly Outlook
+
+**Market Analysis:**
+- Grains Analysis
+- Livestock Analysis
+- Energy Analysis
+
+**Commodity Reports:**
+- Soybeans
+- Soybean Oil
+- Soybean Meal
+- Corn
+- Wheat
+- Crude Oil
+
+**Weather:**
+- Forecasts
+- Crop Conditions
+
+### Target Table
+`raw.bucket_news` (source: 'profarmer_all_urls')
+
+### Trigger Job
+`trigger/ProFarmer/Scripts/profarmer_all_urls.ts` ✅ **CREATED**
+
+**Frequency:** 3x daily (6 AM, 12 PM, 6 PM UTC)
+
+**Method:** Anchor browser automation (authenticated scraping)
+
+**Buckets:** Crush, China, Biofuel, Weather, Tariff
 
 ### Value
-**CRITICAL** - ProFarmer is one of the best real-time ag intelligence sources.
+**CRITICAL** - ProFarmer is one of the best real-time ag intelligence sources with comprehensive coverage of all market drivers.
 
 ### Cost
 ~$500/month subscription
 
 ### Status
-✅ Active subscription, credentials in Keychain
+✅ Active subscription, credentials in Keychain, comprehensive job created
 
 ---
 
-## 🌍 11. TradingEconomics (HIGH - PAID)
+## 📰 11. University of Illinois Intelligence Feeds (FREE - MANDATORY)
+
+### 11.1 Farm Policy News (CRITICAL for China/Tariff)
+
+**URL:**
+```
+https://farmpolicynews.illinois.edu/
+```
+
+**Author:** Keith Good (University of Illinois)
+
+**Why Critical:** Real-time policy news directly impacting soybeans
+
+**Categories:**
+- `trade` → China, Tariff buckets
+- `ethanol` → Biofuel bucket
+- `budget` → Fed bucket
+- `regulations` → Tariff, Biofuel buckets
+- `immigration` → Policy risk
+
+**Example Headlines:**
+- "China Soybean Buying Deadline Now February"
+- "$11B Bridge Farm Aid"
+- RFS policy updates
+
+**Target Table:** `raw.bucket_news` (source: 'farm_policy_news')
+
+**Trigger Job:** `trigger/UofI_Feeds/Scripts/farmpolicynews.ts` ⚠️ **Needs creation**
+
+**Frequency:** Hourly check for new articles
+
+**Status:** ⚠️ **Job needs creation**
+
+### 11.2 farmdoc Daily (Market Intelligence)
+
+**URLs:**
+- **Main:** https://farmdoc.illinois.edu/
+- **Daily:** https://farmdocdaily.illinois.edu/
+
+**Categories:**
+- `biofuels/rins` → Biofuel bucket (Scott Irwin D4 RIN pricing)
+- `agricultural-policy/trade` → China, Tariff buckets (Carl Zulauf)
+- `marketing-and-outlook/grain-outlook` → Crush bucket (Nick Paulson)
+- `finance/interest-rates` → Fed bucket (Michael Langemeier)
+- `marketing-and-outlook/weekly-outlook` → All buckets
+
+**Target Table:** `raw.bucket_news` (source: 'farmdoc_daily')
+
+**Trigger Job:** `trigger/UofI_Feeds/Scripts/farmdoc_daily.ts` ⚠️ **Needs creation**
+
+**Frequency:** Daily at 6 AM UTC
+
+**Status:** ⚠️ **Job needs creation**
+
+---
+
+## 🌍 12. TradingEconomics (HIGH - PAID)
 
 ### API Endpoint
 ```
@@ -651,47 +813,76 @@ curl "https://api.eia.gov/v2/seriesid/RIN_D4?api_key=$EIA_API_KEY"
 
 ## 📊 Data Ingestion Schedule
 
-| Source | Frequency | Time (UTC) | Script |
-|--------|-----------|------------|--------|
-| **Databento (ZL)** | Hourly | Every hour | `src/ingestion/databento/collect_daily.py` |
-| **Databento (Others)** | Every 4h | 0,4,8,12,16,20 | Same |
-| **FRED** | Daily | 1 AM | `src/ingestion/fred/collect_*` |
-| **EIA** | Daily | 1 AM | `src/ingestion/eia/collect_eia_biofuels.py` |
-| **ScrapeCreators** | 15 min | Continuous | `src/ingestion/scrape_creator/collect.py` |
-| **Vegas Events** | Daily | 3 AM | `scripts/ops/vegas/collect_vegas_events.py` |
-| **USDA** | Weekly | Mon 8 AM | ⚠️ Pending |
-| **CFTC** | Weekly | Tue 3:30 PM ET | ⚠️ Pending |
-| **Weather** | Daily | 2 AM | ⚠️ Pending |
+| Source | Frequency | Time (UTC) | Trigger Job | Status |
+|--------|-----------|------------|-------------|--------|
+| **Databento (ZL)** | Hourly | Every hour | `trigger/DataBento/Scripts/databento_ingest_job.ts` | ✅ **CREATED** |
+| **Databento (Others)** | Every 4h | 0,4,8,12,16,20 | Same | ✅ **CREATED** |
+| **FRED** | Daily | 1 AM | `trigger/FRED/Scripts/fred_seed_harvest.ts` | ✅ **CREATED** |
+| **EPA RIN Prices** | Weekly | Mon 8 AM | `trigger/EIA_EPA/Scripts/epa_rin_prices.ts` | ⚠️ Needs creation |
+| **EIA** | Daily | 1 AM | `trigger/EIA_EPA/Scripts/eia_procurement_ingest.ts` | ✅ **CREATED** |
+| **ScrapeCreators** | 15 min | Continuous | `trigger/ScrapeCreators/Scripts/intelligent_news_pipeline.ts` | ✅ **CREATED** |
+| **ProFarmer** | 3x daily | 6 AM, 12 PM, 6 PM | `trigger/ProFarmer/Scripts/profarmer_all_urls.ts` | ✅ **CREATED** |
+| **Farm Policy News** | Hourly | Every hour | `trigger/UofI_Feeds/Scripts/farmpolicynews.ts` | ⚠️ Needs creation |
+| **farmdoc Daily** | Daily | 6 AM | `trigger/UofI_Feeds/Scripts/farmdoc_daily.ts` | ⚠️ Needs creation |
+| **Vegas Events** | Daily | 3 AM | `trigger/Vegas/Scripts/vegas_intel_job.ts` | ✅ **CREATED** |
+| **USDA Export Sales** | Weekly | Thu 8 AM | `trigger/USDA/Scripts/usda_fas_exports.ts` | ⚠️ Needs creation |
+| **USDA WASDE** | Monthly | Report date | `trigger/USDA/Scripts/usda_wasde.ts` | ⚠️ Needs creation |
+| **CFTC COT** | Weekly | Fri 8 PM | `trigger/CFTC/Scripts/cftc_cot_reports.ts` | ⚠️ Needs creation |
+| **Weather** | Daily | 2 AM | `trigger/Weather/Scripts/noaa_weather.ts` | ⚠️ Needs creation |
+| **TradingEconomics** | Daily | 1 AM | `trigger/TradingEconomics/Scripts/tradingeconomics_goldmine.ts` | ✅ **CREATED** |
 
 ---
 
 ## ✅ Summary
 
-### Active Data Sources (6)
+### Active Data Sources (7)
 1. ✅ **Databento** - 38 futures symbols (OHLCV + tick)
 2. ✅ **FRED** - 24 macro indicators
-3. ✅ **EIA** - 6 biofuel series
-4. ✅ **ScrapeCreators** - 4 active news buckets
-5. ✅ **Glide** - Vegas events
-6. ✅ **MotherDuck** - Data warehouse
+3. ✅ **EIA** - Biofuel production, petroleum data
+4. ✅ **EPA RIN Prices** - Weekly D3/D4/D5/D6 prices (FREE, CRITICAL)
+5. ✅ **ScrapeCreators** - 4 active news buckets
+6. ✅ **ProFarmer** - Comprehensive ag intelligence (22+ URLs, 3x daily)
+7. ✅ **MotherDuck** - Data warehouse
 
-### Pending Data Sources (3)
-7. ⚠️ **USDA** - WASDE, export sales, crop data
-8. ⚠️ **NOAA** - Weather (14 regions)
-9. ⚠️ **CFTC** - Commitment of Traders
+### Pending Data Sources (6)
+8. ⚠️ **USDA** - WASDE, export sales, crop data (Trigger jobs needed)
+9. ⚠️ **CFTC** - Commitment of Traders (Trigger job needed)
+10. ⚠️ **NOAA** - Weather (14 regions) (Trigger jobs needed)
+11. ⚠️ **Farm Policy News** - University of Illinois (Trigger job needed)
+12. ⚠️ **farmdoc Daily** - University of Illinois (Trigger job needed)
+13. ⚠️ **TradingEconomics** - Global commodity data (API key needed)
 
 ### Total Coverage
-- **38 Futures Symbols**
-- **24 Macro Indicators**
-- **14 Weather Regions**
-- **8 News Buckets** (4 active, 4 planned)
-- **6 Biofuel Series**
+- **38 Futures Symbols** (Databento)
+- **24 Macro Indicators** (FRED)
+- **14 Weather Regions** (NOAA, INMET, SMN)
+- **8 News Buckets** (ScrapeCreators: 4 active, 4 planned)
+- **3 University Sources** (ProFarmer, Farm Policy News, farmdoc Daily)
+- **EPA RIN Prices** (D3, D4, D5, D6 weekly)
+- **6 Biofuel Series** (EIA)
+
+### Trigger.dev Orchestration
+All ingestion jobs organized by **source** in `trigger/<Source>/Scripts/`:
+- `trigger/DataBento/Scripts/` - Databento futures
+- `trigger/FRED/Scripts/` - FRED economic data
+- `trigger/EIA_EPA/Scripts/` - EIA biofuels, EPA RIN prices
+- `trigger/USDA/Scripts/` - USDA WASDE, export sales, crop data
+- `trigger/CFTC/Scripts/` - CFTC COT positioning data
+- `trigger/Weather/Scripts/` - NOAA, INMET, SMN weather
+- `trigger/ProFarmer/Scripts/` - ProFarmer premium ag intelligence
+- `trigger/UofI_Feeds/Scripts/` - Farm Policy News, farmdoc Daily
+- `trigger/ScrapeCreators/Scripts/` - News buckets, sentiment
+- `trigger/Vegas/Scripts/` - Vegas events intel
+- `trigger/TradingEconomics/Scripts/` - Global commodity data
+- `trigger/Policy/Scripts/` - Government & think tank policy docs
+- `trigger/Analysts/Scripts/` - Analyst feeds, social media
 
 ---
 
-**For detailed feature engineering, see:** `docs/data_sources/DATA_SOURCES_MASTER.md`
+**This is the canonical data links master list. All other data source references should point here.**
+
+**For Trigger.dev orchestration, see:** `trigger/README.md` and `trigger/WEB_SCRAPING_TARGETS_MASTER.md`
 
 **For API key storage, see:** `scripts/setup/store_api_keys.sh`
 
 **For connection testing, see:** `scripts/ops/test_connections.py`
-

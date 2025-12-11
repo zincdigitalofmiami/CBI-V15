@@ -6,7 +6,7 @@ This directory contains all SQL schema definitions, macros, and views for the CB
 
 ```text
 database/
-├── definitions/        # DDL files (Dataform-style organization)
+├── definitions/        # DDL files (AnoFox SQL macros-style organization)
 │   ├── 00_init/       # Create schemas (raw, staging, features, etc.)
 │   ├── 01_raw/        # Raw data tables (databento, fred, eia, scrapecreators, cftc, usda, weather)
 │   ├── 02_staging/    # Staging tables (market, crush, china, news)

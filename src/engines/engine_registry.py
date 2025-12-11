@@ -10,6 +10,9 @@ Supports model registration for TSci to orchestrate:
 """
 
 from typing import Dict, List, Optional
+
+import pandas as pd
+
 from .base_engine import BaseEngine
 import logging
 

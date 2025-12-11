@@ -73,10 +73,10 @@ echo ""
 if [ "$SKIP_COT" = false ]; then
     echo -e "${YELLOW}Step 3: Ingesting CFTC COT data...${NC}"
     echo -e "${BLUE}This will download weekly COT reports (2020-present)${NC}"
-    echo -e "${BLUE}For full backfill (2006-present), run: python src/ingestion/cftc/ingest_cot.py --backfill${NC}"
+    echo -e "${BLUE}For full backfill (2006-present), run: python trigger/CFTC/Scripts/ingest_cot.py --backfill${NC}"
     echo ""
 
-    python src/ingestion/cftc/ingest_cot.py --start-year 2020
+    python trigger/CFTC/Scripts/ingest_cot.py --start-year 2020
 
     if [ $? -ne 0 ]; then
         echo -e "${RED}❌ CFTC COT ingestion failed${NC}"
@@ -152,9 +152,8 @@ echo -e "  ✅ Technical indicators (33 symbols)"
 echo -e "  ✅ Big 8 bucket features (with COT)"
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
-echo -e "  1. Ingest market data: python src/ingestion/databento/ingest_daily.py"
-echo -e "  2. Ingest FRED data: python src/ingestion/fred/ingest_macro.py"
-echo -e "  3. Ingest EIA data: python src/ingestion/eia/ingest_biofuels.py"
-echo -e "  4. Run full COT backfill: python src/ingestion/cftc/ingest_cot.py --backfill"
+echo -e "  1. Ingest market data: python trigger/DataBento/Scripts/collect_daily.py"
+echo -e "  2. Ingest FRED data: python trigger/FRED/Scripts/collect_fred_rates_curve.py"
+echo -e "  3. Ingest EIA data: python trigger/EIA_EPA/Scripts/collect_eia_biofuels.py"
+echo -e "  4. Run full COT backfill: python trigger/CFTC/Scripts/ingest_cot.py --backfill"
 echo ""
-

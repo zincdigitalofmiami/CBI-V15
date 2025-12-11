@@ -28,7 +28,7 @@ The US Oil Solutions spec aligns perfectly with:
 4. ✅ PPO: `ppo_12_26` (instead of MACD)
 5. ✅ VWAP Distance: `dist_vwap_21d`
 
-**Implementation**: `dataform/definitions/03_features/technical_indicators_us_oil_solutions.sqlx`
+**Implementation**: `anofox/definitions/03_features/technical_indicators_us_oil_solutions.sqlx`
 
 **Cost**: ~50 GB query = **$0.00** (within free tier)
 
@@ -43,7 +43,7 @@ The US Oil Solutions spec aligns perfectly with:
 7. ✅ Parkinson Volatility: `vol_parkinson_annualized`
 8. ✅ Standard Volatility: `vol_21d`
 
-**Implementation**: BigQuery SQL UDFs
+**Implementation**: DuckDB/MotherDuck SQL UDFs
 
 **Cost**: ~10 GB additional = **$0.00** (within free tier)
 
@@ -56,7 +56,7 @@ The US Oil Solutions spec aligns perfectly with:
 10. ✅ ZL-BRL Correlation: `corr_zl_brl_60d`
 11. ✅ Terms of Trade: `terms_of_trade_zl_brl`
 
-**Implementation**: BigQuery SQL joins
+**Implementation**: DuckDB/MotherDuck SQL joins
 
 **Cost**: ~20 GB additional = **$0.00** (within free tier)
 
@@ -68,7 +68,7 @@ The US Oil Solutions spec aligns perfectly with:
 12. ✅ Amihud Illiquidity: `amihud_illiquidity`
 13. ✅ OI/Volume Ratio: `oi_volume_ratio`
 
-**Implementation**: BigQuery SQL
+**Implementation**: DuckDB/MotherDuck SQL
 
 **Cost**: ~5 GB additional = **$0.00** (within free tier)
 
@@ -81,7 +81,7 @@ The US Oil Solutions spec aligns perfectly with:
 15. ⏳ DTE (Days to Expiry) - Requires contract metadata
 16. ⏳ Roll Dominance - Requires front/second month data
 
-**Implementation**: BigQuery SQL (DTE/Roll require contract data)
+**Implementation**: DuckDB/MotherDuck SQL (DTE/Roll require contract data)
 
 **Cost**: ~5 GB additional = **$0.00** (within free tier)
 
@@ -124,8 +124,8 @@ The US Oil Solutions spec aligns perfectly with:
 ## ✅ Implementation Status
 
 ### Created Files
-1. ✅ `dataform/includes/us_oil_solutions_indicators.sqlx` - UDFs
-2. ✅ `dataform/definitions/03_features/technical_indicators_us_oil_solutions.sqlx` - Main table
+1. ✅ `anofox/includes/us_oil_solutions_indicators.sqlx` - UDFs
+2. ✅ `anofox/definitions/03_features/technical_indicators_us_oil_solutions.sqlx` - Main table
 3. ✅ `docs/features/US_OIL_SOLUTIONS_INDICATOR_REVIEW.md` - Industry validation
 4. ✅ `docs/features/INDICATOR_IMPLEMENTATION_PLAN.md` - This file
 
@@ -157,7 +157,7 @@ The US Oil Solutions spec aligns perfectly with:
 
 **Industry Validation**: ✅ **PASSED** (GS/JPM/Vanguard aligned)
 
-**Implementation**: ✅ **READY** (BigQuery SQL UDFs created)
+**Implementation**: ✅ **READY** (DuckDB/MotherDuck SQL UDFs created)
 
 **Cost**: ✅ **$0.00** (within free tier)
 

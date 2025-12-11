@@ -1,100 +1,124 @@
 #!/bin/bash
 # Comprehensive system status check for CBI-V15
+# DuckDB/MotherDuck architecture (NO BigQuery, NO Dataform)
 
 set -e
 
-PROJECT_ID="cbi-v15"
-REGION="us-central1"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "╔════════════════════════════════════════════════╗"
 echo "║     CBI-V15 System Status Check                ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
 
-# GCP Project
-echo "1️⃣  GCP Project:"
-if gcloud projects describe "$PROJECT_ID" &> /dev/null; then
-    BILLING=$(gcloud billing projects describe "$PROJECT_ID" --format="get(billingAccountName)" 2>/dev/null || echo "Not linked")
-    echo "   ✅ Project: $PROJECT_ID"
-    echo "   ✅ Billing: ${BILLING:-Not linked}"
+# MotherDuck Connection
+echo "1️⃣  MotherDuck Connection:"
+if [ -n "$MOTHERDUCK_TOKEN" ]; then
+    echo "   ✅ MOTHERDUCK_TOKEN set"
+    # Test connection
+    if python3 -c "import duckdb; duckdb.connect('md:cbi_v15?motherduck_token=$MOTHERDUCK_TOKEN').execute('SELECT 1')" 2>/dev/null; then
+        echo "   ✅ Connection successful"
+    else
+        echo "   ⚠️  Connection failed (check token)"
+    fi
 else
-    echo "   ❌ Project not found"
+    echo "   ⚠️  MOTHERDUCK_TOKEN not set"
 fi
 
-# BigQuery Datasets
+# Local DuckDB
 echo ""
-echo "2️⃣  BigQuery Datasets:"
-DATASETS=("raw" "staging" "features" "training" "forecasts" "api" "reference" "ops")
-for dataset in "${DATASETS[@]}"; do
-    if bq show "${PROJECT_ID}:${dataset}" &> /dev/null; then
-        echo "   ✅ $dataset"
-    else
-        echo "   ❌ $dataset (missing)"
-    fi
-done
-
-# BigQuery Tables
-echo ""
-echo "3️⃣  BigQuery Tables:"
-TABLE_COUNT=$(bq ls -d "${PROJECT_ID}:raw" --format=json 2>/dev/null | jq length 2>/dev/null || echo "0")
-echo "   📊 Raw tables: $TABLE_COUNT"
-REF_DATA=$(bq query --project_id="$PROJECT_ID" --use_legacy_sql=false --format=csv "SELECT COUNT(*) FROM \`${PROJECT_ID}.reference.regime_calendar\`" 2>/dev/null | tail -1 || echo "0")
-echo "   📊 Reference data: $REF_DATA rows"
-
-# Dataform
-echo ""
-echo "4️⃣  Dataform:"
-if [ -f "dataform/dataform.json" ]; then
-    echo "   ✅ Configuration exists"
-    SQL_COUNT=$(find dataform/definitions -name "*.sqlx" 2>/dev/null | wc -l | tr -d ' ')
-    echo "   📊 SQL files: $SQL_COUNT"
+echo "2️⃣  Local DuckDB:"
+LOCAL_DB="$PROJECT_ROOT/Data/duckdb/local.duckdb"
+if [ -f "$LOCAL_DB" ]; then
+    SIZE=$(du -h "$LOCAL_DB" | cut -f1)
+    echo "   ✅ Local database exists ($SIZE)"
 else
-    echo "   ⚠️  Configuration not found"
+    echo "   ⚠️  Local database not found"
+    echo "   📋 Run: python scripts/setup/execute_local_duckdb_schema.py"
+fi
+
+# SQL Macros (AnoFox)
+echo ""
+echo "3️⃣  SQL Macros (AnoFox):"
+if [ -d "$PROJECT_ROOT/database/macros" ]; then
+    SQL_COUNT=$(find "$PROJECT_ROOT/database/macros" -name "*.sql" 2>/dev/null | wc -l | tr -d ' ')
+    LINES=$(find "$PROJECT_ROOT/database/macros" -name "*.sql" -exec cat {} \; 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ Macros directory exists"
+    echo "   📊 SQL files: $SQL_COUNT"
+    echo "   📊 Total lines: $LINES"
+else
+    echo "   ❌ Macros directory not found"
+fi
+
+# Database Definitions
+echo ""
+echo "4️⃣  Database Definitions:"
+if [ -d "$PROJECT_ROOT/database/definitions" ]; then
+    DEF_COUNT=$(find "$PROJECT_ROOT/database/definitions" -name "*.sql" 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ Definitions directory exists"
+    echo "   📊 SQL definition files: $DEF_COUNT"
+else
+    echo "   ⚠️  Definitions directory not found"
 fi
 
 # API Keys
 echo ""
-echo "5️⃣  API Keys:"
-if security find-generic-password -s "DATABENTO_API_KEY" &> /dev/null; then
-    echo "   ✅ Databento key (Keychain)"
-else
-    echo "   ⚠️  Databento key (not stored)"
-fi
-
-if security find-generic-password -s "SCRAPECREATORS_API_KEY" &> /dev/null; then
-    echo "   ✅ ScrapeCreators key (Keychain)"
-else
-    echo "   ⚠️  ScrapeCreators key (not stored)"
-fi
-
-if security find-generic-password -s "OPENAI_API_KEY" &> /dev/null; then
-    echo "   ✅ OpenAI key (Keychain)"
-else
-    echo "   ⚠️  OpenAI key (not stored)"
-fi
-
-# GitHub Connection
-echo ""
-echo "6️⃣  GitHub Connection:"
-if [ -f ~/.ssh/dataform_github_ed25519.pub ]; then
-    echo "   ✅ SSH key generated"
-    if gcloud secrets describe dataform-github-ssh-key --project="$PROJECT_ID" &> /dev/null; then
-        echo "   ✅ Secret stored in Secret Manager"
+echo "5️⃣  API Keys (Keychain):"
+KEYS=("DATABENTO_API_KEY" "SCRAPECREATORS_API_KEY" "OPENAI_API_KEY" "MOTHERDUCK_TOKEN" "FRED_API_KEY" "EIA_API_KEY")
+for key in "${KEYS[@]}"; do
+    if security find-generic-password -s "$key" &> /dev/null; then
+        echo "   ✅ $key"
     else
-        echo "   ⚠️  Secret not in Secret Manager"
+        echo "   ⚠️  $key (not in Keychain)"
+    fi
+done
+
+# Ingestion Scripts
+echo ""
+echo "6️⃣  Ingestion Scripts:"
+if [ -d "$PROJECT_ROOT/trigger" ]; then
+    INGEST_PY_COUNT=$(find "$PROJECT_ROOT/trigger" -path "*/Scripts/*.py" 2>/dev/null | wc -l | tr -d ' ')
+    INGEST_TS_COUNT=$(find "$PROJECT_ROOT/trigger" -path "*/Scripts/*.ts" 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ trigger/ source folders exist"
+    echo "   📊 Python scripts: $INGEST_PY_COUNT"
+    echo "   📊 TypeScript jobs: $INGEST_TS_COUNT"
+else
+    echo "   ⚠️  trigger/ not found"
+fi
+
+# Training Scripts
+echo ""
+echo "7️⃣  Training Scripts:"
+if [ -d "$PROJECT_ROOT/src/training" ]; then
+    TRAIN_COUNT=$(find "$PROJECT_ROOT/src/training" -name "*.py" -not -name "__init__.py" 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ Training directory exists"
+    echo "   📊 Python scripts: $TRAIN_COUNT"
+else
+    echo "   ⚠️  Training directory not found"
+fi
+
+# Trigger.dev Jobs
+echo ""
+echo "8️⃣  Trigger.dev Jobs:"
+if [ -d "$PROJECT_ROOT/trigger" ]; then
+    TRIGGER_COUNT=$(find "$PROJECT_ROOT/trigger" -name "*.ts" 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ Trigger directory exists"
+    echo "   📊 TypeScript jobs: $TRIGGER_COUNT"
+else
+    echo "   ⚠️  Trigger directory not found"
+fi
+
+# Dashboard
+echo ""
+echo "9️⃣  Dashboard:"
+if [ -d "$PROJECT_ROOT/dashboard" ]; then
+    if [ -f "$PROJECT_ROOT/dashboard/package.json" ]; then
+        echo "   ✅ Next.js dashboard exists"
+    else
+        echo "   ⚠️  Dashboard directory exists but no package.json"
     fi
 else
-    echo "   ⚠️  SSH key not generated"
-fi
-
-# Data Status
-echo ""
-echo "7️⃣  Data Status:"
-RAW_DATA=$(bq query --project_id="$PROJECT_ID" --use_legacy_sql=false --format=csv "SELECT COUNT(*) FROM \`${PROJECT_ID}.raw.databento_futures_ohlcv_1d\`" 2>/dev/null | tail -1 || echo "0")
-if [ "$RAW_DATA" -gt 0 ]; then
-    echo "   ✅ Raw data: $RAW_DATA rows"
-else
-    echo "   ⚠️  Raw data: Empty (ready for ingestion)"
+    echo "   ⚠️  Dashboard not found"
 fi
 
 # Summary
@@ -103,13 +127,10 @@ echo "╔═══════════════════════�
 echo "║  Summary                                       ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
-echo "✅ Infrastructure: Complete"
-echo "✅ Dataform: Ready"
-echo "⚠️  API Keys: Need to be stored"
-echo "⚠️  Data: Ready for ingestion"
+echo "Architecture: DuckDB/MotherDuck (NO BigQuery, NO Dataform)"
 echo ""
 echo "📋 Next Steps:"
-echo "   1. Add SSH key to GitHub (if not done)"
-echo "   2. Connect Dataform in UI"
-echo "   3. Store API keys: ./scripts/setup/store_api_keys.sh"
-echo "   4. Begin data ingestion"
+echo "   1. Ensure MOTHERDUCK_TOKEN is set in .env"
+echo "   2. Run: python scripts/setup/execute_local_duckdb_schema.py"
+echo "   3. Run: python scripts/setup/deploy_schema_to_motherduck.py"
+echo "   4. Begin data ingestion with: python trigger/DataBento/Scripts/collect_daily.py"
