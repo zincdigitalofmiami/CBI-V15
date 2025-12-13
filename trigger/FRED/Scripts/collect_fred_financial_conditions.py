@@ -29,7 +29,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 PARQUET_DIR = Path("/Volumes/Satechi Hub/CBI-V15/data/raw/fred")
 
 FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"

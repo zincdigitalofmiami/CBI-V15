@@ -3,11 +3,14 @@
 
 CREATE TABLE IF NOT EXISTS raw.scrapecreators_news_buckets (
     article_id VARCHAR PRIMARY KEY,
-    published_date DATE NOT NULL,
+    date DATE NOT NULL,  -- Publication date (macros use this)
     bucket VARCHAR NOT NULL,  -- 'biofuel_policy', 'china_demand', 'tariffs_trade_policy', etc.
     headline TEXT,
     content TEXT,
     sentiment_score DECIMAL(5, 4),
+    zl_sentiment VARCHAR,  -- 'BULLISH_ZL', 'BEARISH_ZL', 'NEUTRAL' (macro uses this)
+    is_trump_related BOOLEAN DEFAULT FALSE,  -- For tariff bucket filtering
+    policy_axis VARCHAR,  -- 'TRADE_CHINA', 'TRADE_TARIFFS', etc.
     source_name VARCHAR,
     source VARCHAR DEFAULT 'scrapecreators',
     ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
