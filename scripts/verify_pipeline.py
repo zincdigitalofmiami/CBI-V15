@@ -1,19 +1,24 @@
+"""
+Pipeline verification script (TSci-free).
+
+Checks that:
+- AnofoxBridge can connect to DuckDB/MotherDuck.
+- Core feature matrix exists and is readable.
+"""
+
 import sys
-import os
 from pathlib import Path
 
-# Add src to path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from src.anofox.anofox_bridge import AnofoxBridge
-from src.tsci.curator import CuratorAgent
-from src.tsci.planner import create_job
+from src.engines.anofox.anofox_bridge import AnofoxBridge  # type: ignore
 
 
-def verify():
+def verify() -> None:
+    """Verify core pipeline connectivity without TSci dependencies."""
     print("Verifying Pipeline...")
 
-    # 1. Initialize Bridge (Local)
+    # 1. Initialize Bridge (Local or MotherDuck)
     bridge = AnofoxBridge()
     print("✅ Bridge Initialized")
 
@@ -23,16 +28,11 @@ def verify():
             "SELECT * FROM features.daily_ml_matrix_zl_v15 LIMIT 5"
         ).df()
         print(f"✅ Read {len(df)} rows from features matrix")
-    except Exception as e:
-        print(f"❌ Failed to read features: {e}")
+    except Exception as exc:
+        print(f"❌ Failed to read features: {exc}")
         return
 
-    # 3. Simulate TSci Agent
-    curator = CuratorAgent(bridge)
-    quality = curator.analyze_data_quality("features.daily_ml_matrix_zl_v15")
-    print(f"✅ Curator Analysis: {quality}")
-
-    print("Pipeline Verification Complete.")
+    print("✅ Pipeline Verification Complete.")
 
 
 if __name__ == "__main__":

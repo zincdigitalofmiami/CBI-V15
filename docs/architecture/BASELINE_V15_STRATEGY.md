@@ -1,7 +1,7 @@
-# Baseline v15.0 Strategy - Proceed NOW
+# Baseline v15.0 Strategy - Proceed NOW (Historical)
 
 **Date**: November 28, 2025  
-**Status**: ✅ **READY TO EXECUTE**
+**Status**: ✅ **READY TO EXECUTE** (for **legacy LightGBM baselines only**; superseded by V15.1 AutoGluon plan)
 
 ---
 
@@ -35,7 +35,7 @@
 
 ---
 
-## 📊 Implementation Steps
+## 📊 Implementation Steps (Legacy Baseline Pipeline)
 
 ### Step 1: Build `daily_ml_matrix` ✅
 
@@ -79,16 +79,10 @@
 
 ---
 
-### Step 4: Train LightGBM Baselines ✅
+### Step 4: Train LightGBM Baselines ✅ (Legacy)
 
-**Script**: `src/training/baselines/lightgbm_zl.py`
-
-**What it does**:
-- Trains one model per horizon (1w, 1m, 3m, 6m)
-- Evaluates on train/val/test splits
-- Saves models and predictions
-
-**Status**: ✅ **READY**
+**Script**: `src/training/baselines/lightgbm_zl.py`  
+**Note:** This is a **v15.0 LightGBM-only baseline**. In V15.1, the canonical modeling stack uses AutoGluon (Tabular + TimeSeries) as described in `docs/architecture/MASTER_PLAN.md`. Use this step only for comparison/benchmarking, not as the primary training pipeline.
 
 ---
 
@@ -159,4 +153,3 @@
 ---
 
 **Last Updated**: November 28, 2025
-

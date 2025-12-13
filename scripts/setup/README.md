@@ -15,7 +15,7 @@ Initial project setup and schema deployment scripts.
 ## Key Scripts
 
 ### execute_motherduck_schema.py
-Deploys all SQL from `database/definitions/` to MotherDuck in order:
+Deploys all SQL from `database/models/` to MotherDuck in order:
 1. 00_init → Create schemas
 2. 01_raw → Raw tables
 3. 02_staging → Staging tables

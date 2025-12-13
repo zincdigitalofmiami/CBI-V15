@@ -18,7 +18,8 @@ from datetime import datetime
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATABASE_DIR = ROOT_DIR / "database"
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MODELS_DIR = DATABASE_DIR / "models"
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 
 def get_motherduck_connection():
@@ -57,23 +58,28 @@ def execute_sql_file(con: duckdb.DuckDBPyConnection, file_path: Path, descriptio
 def setup_schemas(con: duckdb.DuckDBPyConnection):
     """Create all schemas"""
     print("\n📦 Creating schemas...")
-    schema_file = DATABASE_DIR / "definitions" / "00_init" / "00_schemas.sql"
+    schema_file = MODELS_DIR / "00_init" / "00_schemas.sql"
     return execute_sql_file(con, schema_file, "Creating 8 schemas")
 
 
 def setup_raw_tables(con: duckdb.DuckDBPyConnection):
     """Create raw data tables"""
     print("\n📥 Creating raw tables...")
-    raw_dir = DATABASE_DIR / "definitions" / "01_raw"
+    raw_dir = MODELS_DIR / "01_raw"
 
     files = [
+        "bucket_news.sql",
         "databento_daily.sql",
-        "fred_macro.sql",
+        "databento_futures.sql",
         "eia_biofuels.sql",
         "epa_rin_prices.sql",
         "scrapecreators_buckets.sql",
         "cftc_cot.sql",  # CFTC COT tables
+        "fred_observations.sql",
+        "fred_series_metadata.sql",
         "noaa_weather.sql",  # Weather data
+        "ops_training_logs.sql",
+        "tradingeconomics_commodities.sql",
         "usda_data.sql",  # USDA WASDE, export sales, crop progress
     ]
 
@@ -91,7 +97,7 @@ def setup_raw_tables(con: duckdb.DuckDBPyConnection):
 def setup_staging_tables(con: duckdb.DuckDBPyConnection):
     """Create staging tables"""
     print("\n🔄 Creating staging tables...")
-    staging_dir = DATABASE_DIR / "definitions" / "02_staging"
+    staging_dir = MODELS_DIR / "02_staging"
 
     files = [
         "market_daily.sql",
@@ -112,11 +118,16 @@ def setup_staging_tables(con: duckdb.DuckDBPyConnection):
 
 
 def setup_feature_tables(con: duckdb.DuckDBPyConnection):
-    """Create feature tables"""
-    print("\n📊 Creating feature tables...")
-    features_dir = DATABASE_DIR / "definitions" / "03_features"
+    """Create feature tables and views"""
+    print("\n📊 Creating feature tables and views...")
+    features_dir = MODELS_DIR / "03_features"
 
-    files = ["technical_indicators_all_symbols.sql", "daily_ml_matrix.sql"]
+    files = [
+        "core_macro_fx.sql",  # Core macro/FX view (CRITICAL - base for all buckets)
+        "technical_indicators_all_symbols.sql",
+        "news_signals.sql",
+        "daily_ml_matrix.sql"
+    ]
 
     success = True
     for file in files:
@@ -132,14 +143,42 @@ def setup_feature_tables(con: duckdb.DuckDBPyConnection):
 def setup_training_tables(con: duckdb.DuckDBPyConnection):
     """Create training tables"""
     print("\n🎯 Creating training tables...")
-    training_dir = DATABASE_DIR / "definitions" / "04_training"
+    training_dir = MODELS_DIR / "04_training"
 
-    file_path = training_dir / "daily_ml_matrix.sql"
-    if file_path.exists():
-        return execute_sql_file(con, file_path, "Creating training tables")
-    else:
-        print(f"  ⚠️  daily_ml_matrix.sql not found, skipping")
-        return False
+    files = [
+        "daily_ml_matrix.sql",
+        "bucket_predictions.sql",
+    ]
+
+    success = True
+    for file in files:
+        file_path = training_dir / file
+        if file_path.exists():
+            success &= execute_sql_file(con, file_path, f"Creating {file}")
+        else:
+            print(f"  ⚠️  {file} not found, skipping")
+
+    return success
+
+
+def setup_forecasts_tables(con: duckdb.DuckDBPyConnection):
+    """Create forecasts tables"""
+    print("\n📈 Creating forecasts tables...")
+    forecasts_dir = MODELS_DIR / "07_forecasts"
+
+    files = [
+        "zl_predictions.sql",
+    ]
+
+    success = True
+    for file in files:
+        file_path = forecasts_dir / file
+        if file_path.exists():
+            success &= execute_sql_file(con, file_path, f"Creating {file}")
+        else:
+            print(f"  ⚠️  {file} not found, skipping")
+
+    return success
 
 
 def load_macros(con: duckdb.DuckDBPyConnection):
@@ -310,11 +349,15 @@ Examples:
             if not setup_training_tables(con):
                 print(f"⚠️  Training tables failed in {target_name}")
 
-            # Step 6: Load macros
+            # Step 6: Create forecasts tables
+            if not setup_forecasts_tables(con):
+                print(f"⚠️  Some forecasts tables failed in {target_name}")
+
+            # Step 7: Load macros
             if not load_macros(con):
                 print(f"⚠️  Some macros failed to load in {target_name}")
 
-            # Step 7: Verify setup
+            # Step 8: Verify setup
             verify_setup(con)
 
             print(f"\n✅ {target_name} setup complete!")

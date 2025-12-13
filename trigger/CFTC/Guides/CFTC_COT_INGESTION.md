@@ -32,7 +32,7 @@ python trigger/CFTC/Scripts/ingest_cot.py --backfill
 ---
 
 ### **2. Database Tables**
-**File:** `database/definitions/01_raw/cftc_cot.sql`
+**File:** `database/models/01_raw/cftc_cot.sql`
 
 **Tables created:**
 

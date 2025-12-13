@@ -39,7 +39,6 @@ def run():
         "05_forecasts",
         "06_reference",
         "07_ops",
-        "08_tsci",
     ]
 
     for layer in layers:

@@ -1,5 +1,7 @@
 # config / System Configuration
 
+> Fast-moving workspace: check `docs/architecture/MASTER_PLAN.md`, `DATA_LINKS_MASTER.md`, and the active master plan `.cursor/plans/ALL_PHASES_INDEX.md` before editing configs. Keep configs YAML/JSON only, no secrets, no code; avoid duplicates.
+
 ## Purpose
 Configuration files for all system components. **YAML/JSON only, no code.**
 
@@ -85,5 +87,4 @@ api_key: "db-8uKak7BPpJejVjqxtJ4xnh9sGWYHE"
 ## Related Files
 - `.env` - Actual secret values (gitignored)
 - `config/env-templates/` - Template `.env` files for setup
-
 

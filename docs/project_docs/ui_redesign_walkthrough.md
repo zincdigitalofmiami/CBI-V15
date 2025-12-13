@@ -84,11 +84,10 @@
 With UI complete, you can now:
 1. Deploy to Vercel for live preview
 2. Begin backend data integration (MotherDuck, Databento)
-3. Proceed with AnoFox integration plan
+3. Proceed with the master implementation plan (Phase 1+)
 4. Create TradingView-style gauge components
 
 ---
 
-**Note**: All AnoFox integration planning documents remain valid:
-- [anofox_architecture.md](file:///Users/zincdigital/.gemini/antigravity/brain/b453f988-0a22-4b10-959e-4d25facdd6b7/anofox_architecture.md)
-- [anofox_integration_plan.md](file:///Users/zincdigital/.gemini/antigravity/brain/b453f988-0a22-4b10-959e-4d25facdd6b7/anofox_integration_plan.md)
+**Note**: Prior AnoFox integration planning docs are archived; follow the current master plan:
+- `.cursor/plans/ALL_PHASES_INDEX.md`

@@ -1,4 +1,12 @@
-# 🧠 Meta-Learning Framework - AutoML for Each Bucket
+# 🧠 Meta-Learning Framework - AutoML for Each Bucket (Historical Concept)
+
+> **Important:** This document captures a **pre-V15.1** idea for building a custom AutoML system (CatBoost/TFT/Prophet/etc.) for each bucket.  
+> The **actual V15.1 implementation** uses:
+> - AutoGluon `TabularPredictor` for all Big 8 bucket specialists
+> - AutoGluon `TimeSeriesPredictor` for core ZL
+> - AutoGluon stacking + `WeightedEnsemble_L2` as the meta-model
+>
+> Do **not** create new `src/training/automl/`, `src/ensemble/`, or bespoke tournament frameworks based on this file. Treat the model/ensemble lists here as conceptual background only; implementation must follow `docs/architecture/MASTER_PLAN.md` and `AGENTS.md`.
 
 ## 🎯 The Problem
 
@@ -349,4 +357,3 @@ python src/ops/full_retournament.py   # Monthly
 - Adaptive to regime shifts
 
 **Want me to build the AutoML framework?**
-

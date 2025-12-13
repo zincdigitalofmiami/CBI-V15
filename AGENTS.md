@@ -1,6 +1,27 @@
 # CBI‑V15 Agents Workspace Guide
 
+## AI AGENT MASTER GUIDELINES (CBI-V15)
+**Path:** `/Volumes/Satechi Hub/CBI-V15/AI_GUIDELINES.md`
+
+Read in this order before any task:
+1. `docs/architecture/MASTER_PLAN.md`
+2. `AGENTS.md`
+3. `database/README.md`
+4. `AI_GUIDELINES.md`
+5. Active plan in `.cursor/plans/*.plan.md`
+
+Operating protocol:
+- Verify paths/APIs before use; no unconfirmed imports.
+- Prevent leakage/look-ahead; use train-only stats; set `random_state/seed`.
+- Follow naming rules (`volatility_*` vs `volume_*`; never `vol_*`).
+- Run sanity checks (shapes, tests/linters) and remove temp debug.
+
+Workspace hygiene:
+- Keep Augment configs in `augment/`; no data/code/docs there.
+- Avoid root clutter; update existing docs; sync plan changes in `.cursor/plans/`.
+
 ## Read First
+- `docs/architecture/MASTER_PLAN.md` — V15.1 AutoGluon hybrid architecture (UPDATED Dec 9, 2025)
 - `docs/architecture/SYSTEM_STATUS_COMPLETE.md` — comprehensive system reference (schemas, tables, models, data coverage)
 - `database/README.md` — 8‑schema layout, SQL macros, feature boundaries
 - `docs/ingestion/CFTC_COT_INGESTION_COMPLETE.md` — CFTC COT pipeline reference
@@ -23,6 +44,7 @@ Before creating ANYTHING new, verify these conditions:
    - Update existing docs in place
    - If you need to document something, add it to an existing file
    - Delete temporary notes after use; do not accumulate markdown sprawl
+   - Keep explorer clean: stash config/ignore files in their homes (`.cursor/*`, `.kilocode/*`, `augment/*`); no stray files at repo root
 
 4. **BEFORE ANY CHANGE**, verify current state:
    - What exists? (read the file/table/schema first)
@@ -67,7 +89,7 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 - ❌ `vol_zl_21d` (ambiguous), `volat_regime` (inconsistent)
 
 ## Workspace Defaults
-- Structure: SQL → `database/definitions/`, Python → `src/`, ops → `scripts/`, configs → `config/`, docs → `docs/`.
+- Structure: SQL → `database/models/`, Python → `src/`, ops → `scripts/`, configs → `config/`, docs → `docs/`.
 - Before calling work done, run:
   - `python scripts/setup_database.py --both`
   - `bash scripts/system_status.sh`
@@ -83,17 +105,20 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 - Update adjacent docs when behavior changes (explain why, not just what).
 
 ## What Goes Where
-- `src/ingestion/` — collectors (Databento, EIA, USDA, CFTC, FRED)
+- `trigger/<Source>/Scripts/` — data collection (Databento, EIA, EPA, USDA, CFTC, FRED, UofI_Feeds)
+- `src/training/autogluon/` — AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
 - `src/features/` — Python wrappers around AnoFox SQL macros
-- `src/training/` — orchestration of L1–L4 model stack
-- `database/definitions/` — schemas, feature tables, assertions
+- `src/training/` — training orchestration (bucket specialists + main predictor)
+- `database/models/` — schemas, feature tables, assertions
 - `database/macros/` — reusable SQL feature macros (Big 8, technicals, spreads)
-- `scripts/` — ops utilities (setup, status, deploy); not core logic
+- `scripts/` — ops utilities (setup, status, deploy, sync); not core logic
+- `data/duckdb/` — local DuckDB mirror (training landing pad)
+- `data/models/` — AutoGluon model artifacts
 
 ## If You Need Context
 - Dashboard lives in `dashboard/` (Vercel). Queries read `forecasts.*` in MotherDuck.
 - Data sources: see `DATA_LINKS_MASTER.md` (canonical) and `trigger/WEB_SCRAPING_TARGETS_MASTER.md` (web scraping URLs).
-- Integration details: `README.md`, `docs/project_docs/tsci_anofox_architecture.md`.
+- Integration details: `README.md`, `docs/architecture/MASTER_PLAN.md`.
 
 ## When Unsure
 - Pause and ask. Point to the exact doc section you need. Never invent data, columns, or paths.
@@ -135,7 +160,7 @@ When building implementation plans:
    - `docs/architecture/MASTER_PLAN.md` — V15.1 architecture source of truth
    - This file (`AGENTS.md`) — current guardrails and conventions
    - `database/README.md` — 8-schema layout and feature boundaries
-   - `/Users/zincdigital/.cursor/plans/autogluon_hybrid_implementation_c2287cb0.plan.md` — current implementation plan with pending tasks
+   - `.cursor/plans/ALL_PHASES_INDEX.md` — active master implementation plan (Phases 0–5)
 
 2. **Check Existing State Before Planning**:
    - Run `ls -la scripts/` to see available operational scripts
@@ -148,16 +173,19 @@ When building implementation plans:
    - **Phase 1-N**: Incremental feature additions (after Phase 0 complete)
    - Each task must specify:
      - Exact file paths (no placeholders)
-     - Specific schema/table names (verify they exist in `database/definitions/`)
+     - Specific schema/table names (verify they exist in `database/models/`)
      - Data sources (verify against `DATA_LINKS_MASTER.md`)
      - Validation steps (how to test it works)
 
 4. **Technology Stack Constraints** (NEVER deviate):
-   - **Database**: DuckDB (local), MotherDuck (cloud) — NO BigQuery, NO Postgres
-   - **ML Framework**: AutoGluon 1.4 (TabularPredictor + TimeSeriesPredictor) — NO custom sklearn pipelines
-   - **Feature Engineering**: SQL macros in `database/macros/` — NO Python feature loops
-   - **Orchestration**: Trigger.dev jobs in `trigger/` — NO Airflow, NO Prefect
-   - **Training**: Mac M4 local CPU — NO cloud training, NO GPUs
+   - **Database**: DuckDB (local mirror), MotherDuck (cloud source of truth) — NO BigQuery, NO Postgres
+   - **ML Framework**: AutoGluon 1.4 (TabularPredictor + TimeSeriesPredictor hybrid) — NO custom sklearn pipelines
+     - TabularPredictor: `presets='extreme_quality'` for bucket specialists (Mitra, TabPFNv2, TabICL, TabM + tree models)
+     - TimeSeriesPredictor: Chronos-Bolt zero-shot baseline (CPU-compatible on Mac M4)
+     - Problem type: `quantile` for P10/P50/P90 (probabilistic forecasts)
+   - **Feature Engineering**: SQL macros in `database/macros/` (AnoFox) — NO Python feature loops
+   - **Orchestration**: Trigger.dev jobs in `trigger/<Source>/Scripts/` — NO Airflow, NO Prefect
+   - **Training**: Mac M4 local CPU (reads from local DuckDB mirror) — NO cloud training, NO GPUs
    - **Dashboard**: Next.js/Vercel querying MotherDuck — NO separate API server
 
 5. **Data Source Validation** (Critical):
@@ -174,15 +202,24 @@ When building implementation plans:
    - Example: EPA RIN prices → EIA biofuels features → Biofuel bucket specialist → Greedy ensemble
 
 7. **Big 8 Bucket Coverage** (Required):
-   Each plan must explicitly cover all 8 buckets:
-   1. Crush (ZL/ZS/ZM spreads)
-   2. China (HG-ZS correlation, export sales)
-   3. FX (DX, BRL, CNY, MXN)
-   4. Fed (Fed funds, yield curve, NFCI, STLFSI4)
-   5. Tariff (Trump sentiment, Farm Policy News)
-   6. Biofuel (EPA RIN D4/D5/D6, BOHO spread)
-   7. Energy (CL/HO/RB, crack spreads)
-   8. Volatility (VIX, realized vol, stress indices)
+   Each plan must explicitly cover all 8 buckets with their data sources:
+   1. **Crush**: Databento (ZL/ZS/ZM), NOPA, farmdoc Grain Outlook
+   2. **China**: **Farm Policy News: Trade** (MANDATORY), USDA FAS Export Sales, farmdoc Trade Policy
+   3. **FX**: FRED FX series, Databento (6L/DX)
+   4. **Fed**: FRED rates/curve, Farm Policy News: Budget, farmdoc: Interest Rates
+   5. **Tariff**: **Farm Policy News: Trade** (MANDATORY), ScrapeCreators Trump, farmdoc Gardner Policy
+   6. **Biofuel**: **EPA RIN Prices (D3/D4/D5/D6)** (FREE, weekly), EIA, farmdoc RINs (Scott Irwin)
+   7. **Energy**: EIA petroleum, Databento (CL/HO/RB)
+   8. **Volatility**: FRED VIXCLS, Databento VIX, STLFSI4
+
+8a. **Big 8 Bucket Modeling Rules** (Enforced for all plans):
+   - Big 8 buckets are: Crush, China, FX, Fed, Tariff, Biofuel, Energy, Volatility
+   - Features for buckets are derived from SQL macros only (`database/macros/`), not Python loops
+   - Use AutoGluon `TabularPredictor` for all Big 8 bucket specialists
+   - Use AutoGluon `TimeSeriesPredictor` for core ZL forecasting
+   - Meta model fuses Big 8 + core ZL outputs
+   - Ensemble layer smooths predictions into final forecasts
+   - Monte Carlo simulation produces probabilistic scenarios (VaR/CVaR), not raw forecasts
 
 8. **Validation Requirements**:
    Every planned feature/model must include:
@@ -213,7 +250,7 @@ When building implementation plans:
 # Step 1: Read context
 cat docs/architecture/MASTER_PLAN.md
 cat AGENTS.md
-cat /Users/zincdigital/.cursor/plans/autogluon_hybrid_implementation_c2287cb0.plan.md
+cat .cursor/plans/ALL_PHASES_INDEX.md
 
 # Step 2: Verify current state
 ls -la src/ingestion/
@@ -240,4 +277,29 @@ cat config/requirements/requirements.txt
 ## Phase 4: Ensemble & Monte Carlo (Dependency: Phase 3 complete)
 - [ ] Task 5: Combine predictions with greedy_ensemble.py
       Validation: SELECT * FROM forecasts.zl_predictions LIMIT 5
+```
+
+## CBI-V15 Engineering Agent Startup Prompt (Codex/Cursor)
+
+Use this developer prompt for Codex/Cursor sessions when starting a new task or major change:
+
+```text
+You are the CBI-V15 Engineering Agent.
+
+Follow the system rules and Cursor rules.json.
+
+Task:
+I want you to operate strictly within the CBI-V15 architecture.
+Before making any changes:
+1. Validate context.
+2. If any file or directory is missing, ask me for it.
+3. Explain your plan BEFORE writing code.
+4. Produce minimal, surgical diffs.
+
+Never hallucinate imports, modules, directories, dependencies, or data sources.
+Never reintroduce BigQuery or v14 patterns.
+Never write code outside the defined directories.
+Keep everything aligned with the V15.1 training engine: Big 8 Tabular → Core TS → Meta → Ensemble → Monte Carlo.
+
+When ready, ask: "Show me the files involved in this operation."
 ```

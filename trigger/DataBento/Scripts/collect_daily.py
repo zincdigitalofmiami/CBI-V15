@@ -92,7 +92,7 @@ def get_databento_client():
             api_key = os.getenv("DATABENTO_API_KEY")
         if not api_key:
             raise ValueError("DATABENTO_API_KEY not found in Keychain or environment")
-        client = db.Historical(api_key=api_key)
+        client = db.Historical(key=api_key)
         return client
     except ImportError:
         logger.error(
@@ -116,7 +116,7 @@ def collect_daily_data(
         end_date: End date (YYYY-MM-DD), defaults to today
 
     Returns:
-        DataFrame with columns: date, symbol, open, high, low, close, volume, open_interest
+        DataFrame with columns: as_of_date, symbol, open, high, low, close, volume, open_interest
     """
     if end_date is None:
         end_date = datetime.now().strftime("%Y-%m-%d")
@@ -193,7 +193,7 @@ def main(use_motherduck: bool = True):
     try:
         result = con.execute(
             """
-            SELECT MAX(date) as last_date
+            SELECT MAX(as_of_date) as last_date
             FROM raw.databento_ohlcv_daily
             WHERE symbol = 'ZL'
         """

@@ -15,7 +15,7 @@ con.execute('CREATE TABLE raw.databento_ohlcv_daily (as_of_date DATE, symbol TEX
 con.execute('CREATE TABLE raw.cftc_cot_disaggregated (report_date DATE, symbol TEXT, managed_money_net_pct_oi DOUBLE, prod_merc_net_pct_oi DOUBLE)')
 con.execute('CREATE TABLE raw.eia_biofuels (date DATE, series_id TEXT, value DOUBLE)')
 con.execute('CREATE TABLE raw.epa_rin_prices (date DATE, series_id TEXT, value DOUBLE)')
-con.execute('CREATE TABLE raw.fred_observations (date DATE, series_id TEXT, value DOUBLE)')
+con.execute('CREATE TABLE raw.fred_economic (date DATE, series_id TEXT, value DOUBLE)')
 con.execute('CREATE TABLE raw.scrapecreators_news_buckets (date DATE, zl_sentiment TEXT, is_trump_related BOOLEAN, policy_axis TEXT)')
 
 # Load big8 macro
@@ -28,4 +28,3 @@ with open(macro_file) as f:
     except Exception as e:
         print(f'FAILED: {e}')
         raise
-

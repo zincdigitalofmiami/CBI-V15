@@ -104,7 +104,7 @@ database/macros/
 ├── big8_bucket_features.sql              # Big 8 bucket aggregation
 └── master_feature_matrix.sql             # Final feature matrix builder
 
-database/definitions/03_features/
+database/models/03_features/
 ├── daily_ml_matrix.sql                   # Main feature table (276+ columns)
 └── technical_indicators_all_symbols.sql  # Supporting tables
 

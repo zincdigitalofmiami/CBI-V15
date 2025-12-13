@@ -1,54 +1,151 @@
 # Database
 
-This directory contains all SQL schema definitions, macros, and views for the CBI-V15 system.
+> V15.1 Database Schema for MotherDuck + Local DuckDB
+> 
+> **Read first:** `docs/architecture/MASTER_PLAN.md`, `AGENTS.md`, active plan in `.cursor/plans/`
+
+All SQL schema definitions, macros, seeds, and tests for CBI-V15 (DuckDB/MotherDuck).
 
 ## Structure
 
 ```text
 database/
-├── definitions/        # DDL files (AnoFox SQL macros-style organization)
-│   ├── 00_init/       # Create schemas (raw, staging, features, etc.)
-│   ├── 01_raw/        # Raw data tables (databento, fred, eia, scrapecreators, cftc, usda, weather)
-│   ├── 02_staging/    # Staging tables (market, crush, china, news)
-│   ├── 03_features/   # Feature tables (technical_indicators, daily_ml_matrix)
-│   ├── 04_training/   # Training tables (with targets and splits)
-│   ├── 05_assertions/ # Data quality assertions
-│   └── 06_api/        # API views for dashboard
-├── macros/            # SQL macros (reusable functions)
-│   ├── features.sql                          # Price/return macros
-│   ├── technical_indicators_all_symbols.sql  # RSI, MACD, BB, ATR (38 symbols)
-│   ├── cross_asset_features.sql              # Correlations, spreads
-│   ├── big8_cot_enhancements.sql             # CFTC COT helpers
-│   ├── big8_bucket_features.sql              # Big 8 bucket scores
-│   └── master_feature_matrix.sql             # Master builder (300+ features)
-└── views/             # SQL views for internal analysis
+├── ddl/                    # DDL files (CREATE TABLE statements)
+│   ├── 00_schemas.sql      # Creates all 9 schemas
+│   ├── 01_reference/       # Reference/lookup tables
+│   ├── 02_raw/             # Raw vendor tables
+│   ├── 03_staging/         # Cleaned/normalized data
+│   ├── 04_features/        # Engineered features
+│   ├── 05_training/        # Training artifacts
+│   ├── 06_forecasts/       # Serving contract (dashboard reads here)
+│   ├── 07_ops/             # Operations/monitoring
+│   └── 08_explanations/    # SHAP/feature importance
+├── macros/                 # SQL macros (reusable functions)
+│   ├── big8_bucket_features.sql    # Dashboard SCORES (0-100)
+│   ├── bucket_features.sql         # Model FEATURES (vectors)
+│   ├── technical_indicators_all_symbols.sql
+│   ├── cross_asset_features.sql
+│   └── ...
+├── seeds/                  # Reference data seeding
+│   ├── seed_symbols.py     # 33 canonical symbols
+│   ├── seed_regimes.py     # Regime weights
+│   └── seed_splits.py      # Train/val/test splits
+├── migrations/             # Versioned migrations
+│   ├── versions/
+│   │   └── V0001__init.sql
+│   └── migrate.py
+└── tests/                  # SQL tests
+    ├── sql/
+    │   ├── test_schemas_exist.sql
+    │   ├── test_no_future_leakage.sql
+    │   └── ...
+    └── harness.py
 ```
 
-## Schemas (8 Total)
+## Schemas (9 total)
 
-| Schema     | Owner   | Purpose                          | Table Count |
-|------------|---------|----------------------------------|-------------|
-| `raw`        | Ingestion | Immutable source data (databento, fred, eia, etc.) | 15+ |
-| `staging`    | Anofox  | Cleaned/normalized time series     | 10+ |
-| `features`   | Anofox  | Engineered features (300+, Big 8 buckets, daily_ml_matrix) | 10+ |
-| `training`   | Anofox  | ML training matrices (with targets, splits, regimes) | 5+ |
-| `forecasts`  | TSci    | Model predictions (per horizon: 1w, 1m, 3m, 6m, 12m) | 5+ |
-| `reference`  | System  | Catalogs, calendars, metadata | 5+ |
-| `ops`        | System  | Ingestion status, pipeline metrics | 3+ |
-| `tsci`       | TSci    | Agent jobs, runs, qa_checks, simulations | 4+ |
+| Schema | Purpose | Table Count |
+|--------|---------|-------------|
+| `raw` | Immutable source data from collectors | 12 |
+| `staging` | Cleaned/normalized daily grains | 7 |
+| `features` | Engineered features, bucket materializations | 10+ |
+| `features_dev` | Dev views (pre-snapshot) | varies |
+| `training` | OOF predictions, meta matrices, weights | 6 |
+| `forecasts` | Serving contract (dashboard reads this) | 4 |
+| `reference` | Symbols, calendars, regimes, driver maps | 10 |
+| `ops` | Ingestion status, alerts, data quality | 7 |
+| `explanations` | SHAP values (weekly) | 1 |
 
-## V15 Contract
+## Data Flow
 
-- **Anofox** builds features in `raw` → `staging` → `features` → `training` (via SQL macros).
-- **TSci agents** orchestrate models, read from `training.*`, write forecasts to `forecasts.*` and logs to `tsci.*`.
-- **Baselines** (LightGBM/CatBoost/XGBoost) train on `training.*` tables.
-- **QRA + Monte Carlo** combine model outputs, write final forecasts to `forecasts.*`.
+```
+Trigger.dev jobs → raw.* (MotherDuck, source of truth)
+                       ↓
+              AnoFox SQL macros
+                       ↓
+              staging.* → features.*
+                       ↓
+         [SYNC] → Local DuckDB (training)
+                       ↓
+         AutoGluon training (Mac M4)
+                       ↓
+              predictions → forecasts.*
+                       ↓
+              Vercel Dashboard
+```
+
+## Runtime Topology
+
+- **MotherDuck** = Cloud source of truth. All ingestion writes here.
+- **Local DuckDB** = Ephemeral compute for training. Attaches MotherDuck via:
+  ```sql
+  -- Local DuckDB session (main = local scratch)
+  -- Attach MotherDuck by name (NO alias in workspace mode)
+  ATTACH 'md:usoil_intelligence?motherduck_token=${MOTHERDUCK_TOKEN}';
+  
+  -- Verify attachment
+  SHOW DATABASES;
+  
+  -- Query cloud data using database.schema.table
+  SELECT * FROM usoil_intelligence.features.daily_ml_matrix_zl;
+  ```
+
+Same schemas work in both environments. The separation is **runtime namespace**, not separate DDL files.
 
 ## Deployment
 
-Deploy all schemas and macros to MotherDuck:
 ```bash
+# Create/refresh schemas
 python scripts/setup_database.py --both
+
+# Run migrations
+python database/migrations/migrate.py
+
+# Seed reference data
+python database/seeds/seed_reference_tables.py
+
+# Sync cloud → local
+python scripts/sync_motherduck_to_local.py
+
+# Run tests
+python database/tests/harness.py
 ```
 
-See `DATABASE_SETUP_GUIDE.md` for details.
+## Big 8 Bucket Modeling Rules
+
+The Big 8 buckets are:
+1. **Crush** - ZL/ZS/ZM spread economics
+2. **China** - China demand proxy
+3. **FX** - Currency effects
+4. **Fed** - Monetary policy
+5. **Tariff** - Trade policy
+6. **Biofuel** - RIN prices, biodiesel
+7. **Energy** - Crude, HO, RB
+8. **Volatility** - VIX, stress indices
+
+Rules:
+- Bucket features implemented via SQL macros in `database/macros/`
+- `bucket_features.sql` = model FEATURES (vectors for training)
+- `big8_bucket_features.sql` = dashboard SCORES (0-100 for display)
+- AutoGluon `TabularPredictor` for specialists
+- AutoGluon `TimeSeriesPredictor` for core ZL
+- Meta model fuses Big 8 + core outputs
+
+## 33 Canonical Symbols
+
+- **Agricultural (11):** ZL, ZS, ZM, ZC, ZW, KE, ZO, CT, KC, SB, CC
+- **Energy (4):** CL, HO, RB, NG
+- **Metals (5):** GC, SI, HG, PA, PL
+- **Treasuries (3):** ZN, ZB, ZF
+- **FX (9):** 6A, 6B, 6C, 6E, 6J, 6M, 6N, 6S, DX
+- **Palm (1):** FCPO
+
+## Naming Conventions
+
+| Concept | Pattern | Examples |
+|---------|---------|----------|
+| **Volatility** (price variance) | `volatility_*` | `volatility_zl_21d` |
+| **Volume** (trading activity) | `volume_*` | `volume_zl_sma_20` |
+| **Features** | `{source}_{symbol}_{indicator}` | `databento_zl_close`, `fred_dxy` |
+
+**NEVER use `vol_*` alone** - always spell out `volatility_` or `volume_`.

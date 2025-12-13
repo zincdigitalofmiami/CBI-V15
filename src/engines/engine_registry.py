@@ -2,11 +2,9 @@
 Engine Registry - Multi-Engine Support Architecture
 Phase 2.5: Registry for managing multiple forecasting engines.
 
-Supports model registration for TSci to orchestrate:
-- LightGBM (baseline)
-- CatBoost (quantile regression)
-- XGBoost (quantile regression)
-- Future: TFT, Prophet, GARCH, etc.
+Supports model registration for orchestration layers to use:
+- AutoGluon-based engines (primary, V15.1)
+- Legacy baselines (LightGBM/CatBoost/XGBoost) for comparison
 """
 
 from typing import Dict, List, Optional
@@ -19,11 +17,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Model family registry (name -> import path)
+# Note: These are **legacy baselines** only; the canonical V15.1 stack uses AutoGluon.
 MODEL_FAMILIES = {
     "lightgbm": "src.training.baselines.lightgbm_zl",
     "catboost": "src.training.baselines.catboost_zl",
     "xgboost": "src.training.baselines.xgboost_zl",
-    # Future models:
+    # Future legacy models (if ever added, for experiments only):
     # "tft": "src.training.deep.tft_zl",
     # "prophet": "src.training.statistical.prophet_zl",
     # "garch": "src.training.statistical.garch_zl",
@@ -119,12 +118,10 @@ class EngineRegistry:
         # Subclasses can override for regime-specific selection
         selected = []
 
-        # High volatility regimes: prefer statistical models
+        # High volatility regimes: prefer statistical / robust models
         if regime in ["high_volatility", "crisis"]:
             if "anofox" in self.engines:
                 selected.append("anofox")
-            if "tsci" in self.engines:
-                selected.append("tsci")
 
         # Trending regimes: prefer ML models
         elif regime in ["trending", "bull", "bear"]:
@@ -140,8 +137,6 @@ class EngineRegistry:
 
         # Long horizons: prefer robust models
         elif horizon >= 90:
-            if "tsci" in self.engines:
-                selected.append("tsci")
             if "autogluon" in self.engines:
                 selected.append("autogluon")
 

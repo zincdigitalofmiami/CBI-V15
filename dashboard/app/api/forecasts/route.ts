@@ -1,6 +1,8 @@
 import { queryMotherDuck } from '@/lib/md';
 import { NextResponse } from 'next/server';
 
+export const runtime = 'nodejs'; // Required for native DuckDB
+
 export async function GET() {
   try {
     const rows = await queryMotherDuck(`

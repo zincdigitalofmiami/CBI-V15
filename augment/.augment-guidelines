@@ -1,0 +1,47 @@
+# Augment Guidelines (CBI-V15)
+
+**Exact path (do not move/rename):** `/Volumes/Satechi Hub/CBI-V15/.augment-guidelines`
+
+## AI AGENT MASTER GUIDELINES (CBI-V15)
+**Path:** `/Volumes/Satechi Hub/CBI-V15/AI_GUIDELINES.md`
+
+Read before tasks:
+1) `docs/architecture/MASTER_PLAN.md`
+2) `AGENTS.md`
+3) `database/README.md`
+4) `AI_GUIDELINES.md`
+5) Active plan in `.cursor/plans/*.plan.md`
+
+Protocol:
+- Verify paths/imports/APIs before use; no hallucination.
+- Prevent leakage/look-ahead; train-only stats; set seeds.
+- Follow naming rules (`volatility_*` vs `volume_*`; never `vol_*`).
+- Run sanity checks/tests; keep Augment configs in `augment/`; avoid root clutter.
+
+## Purpose
+- Anchor Augment-specific guardrails, mirroring the README-style guides in `.cursor/README.md` and `.kilocode/README.md`.
+- Keep Augment artifacts contained and consistent with workspace rules.
+
+## Read First (order)
+1) `docs/architecture/MASTER_PLAN.md`
+2) `AGENTS.md`
+3) `database/README.md`
+4) `.cursor/plans/autogluon_hybrid_implementation_c2287cb0.plan.md`
+
+## File Placement
+- Keep Augment configs/ignores inside `augment/` (e.g., `augment/.augment.md`, `augment/.augmentignore`).
+- Do **not** place data, code, or docs under `augment/`—configs only.
+- Never duplicate this file; keep it only at the exact path above.
+
+## Cleanliness Rules
+- No new markdown unless explicitly required and permanently placed (follow `AGENTS.md` hard stops).
+- Avoid root clutter; remove stale or duplicate Augment artifacts promptly.
+- Keep links to the core docs up to date.
+
+## Do / Don’t (Augment Codes)
+- ✅ Use `augment/` for Augment configs/ignores only.
+- ✅ Follow naming conventions from `AGENTS.md` (`volatility_*` vs `volume_*`; no `vol_*`).
+- ✅ Reference the active plan in `.cursor/plans/` before changes.
+- ❌ Don’t scatter Augment files outside `augment/` or repo guardrails.
+- ❌ Don’t add data, notebooks, or code to `augment/`.
+- ❌ Don’t create stray markdown files; update existing docs instead.

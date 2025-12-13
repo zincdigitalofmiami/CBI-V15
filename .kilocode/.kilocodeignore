@@ -1,0 +1,104 @@
+# Kilocode Indexing Exclusions
+# Prevent indexing of large files, build artifacts, and generated content
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Data files (can be very large)
+*.parquet
+*.csv
+*.duckdb
+*.db
+*.sqlite
+*.sqlite3
+data/duckdb/
+Data/duckdb/
+Data/databento/
+Data/raw/
+Data/models/
+
+# Model files (large binary files)
+models/
+*.pkl
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.model
+*.joblib
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+.vercel/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# External drive paths
+# NOTE: Do not ignore `/Volumes/` on macOS because this repo lives on an external volume.
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Dataform
+dataform/.dataform/
+dataform/node_modules/
+
+# Cache
+.cache/
+*.tmp
+*.temp
+
+# Archive (legacy/backup files)
+_archive/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Specific large directories
+dashboard/.next/
+dashboard/node_modules/
+dashboard/.vercel/
+mlx/
+
+# Generated/compiled files
+*.pyc
+*.pyo
+*.class

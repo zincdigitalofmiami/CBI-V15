@@ -19,3 +19,12 @@ News and sentiment data from ScrapeCreators API.
 ## Schedule
 
 - Every 15 minutes (real-time monitoring)
+
+
+
+
+
+
+
+
+

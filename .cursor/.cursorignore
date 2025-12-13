@@ -1,0 +1,37 @@
+# ML artifacts
+*.csv
+*.parquet
+*.duckdb
+*.sqlite
+*.feather
+*.pkl
+*.joblib
+
+# Training outputs
+models/
+checkpoints/
+artifacts/
+logs/
+wandb/
+
+# Large notebooks
+notebooks/.ipynb_checkpoints/
+notebooks/archive/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Data dumps
+data/
+datasets/
+downloads/
+
+# OS files
+.DS_Store
+
+# Virtual envs
+.venv/
+env/
+venv/

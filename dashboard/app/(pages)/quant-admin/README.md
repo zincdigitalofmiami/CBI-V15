@@ -1,18 +1,18 @@
-# Quant Admin / TSci + AnoFox (`/quant-admin`)
+# Quant Admin / TSci + AnoFox (`/quant-admin`) – Legacy / Optional
 
 ## Purpose
 Internal quant cockpit for:
 - Pipeline health (ingestion + feature + training).
 - Feature and training matrix completeness.
 - Model registry and experiment metrics.
-- TSci runs and QA checks.
+- TSci runs and QA checks (optional/legacy in V15.1).
 
 ## Data Sources (MotherDuck)
 - `ops.ingestion_status`, `ops.pipeline_metrics`
 - `features.daily_ml_matrix_zl`
 - `training.daily_ml_matrix_zl`
 - `reference.feature_catalog`, `reference.model_registry`
-- `tsci.jobs`, `tsci.runs`, `tsci.qa_checks`
+- TSci-related tables have been removed; use ops/reference/forecasts tables for monitoring.
 
 ## Key Components
 
@@ -36,11 +36,11 @@ Internal quant cockpit for:
   - Hit rate
 - Champion vs challenger comparison
 
-### 4. TSci Runs
-- Table of runs with filters
+### 4. Model / Forecast Runs
+- Table of recent model runs with filters
 - Status (running, completed, failed)
 - Links to logs and artifacts
-- Narratives and recommendations
+- Narratives and recommendations from AutoGluon + SQL outputs
 
 ## Schema Reference
 
@@ -67,17 +67,11 @@ CREATE TABLE reference.model_registry (
 );
 ```
 
-### `tsci.runs`
+### `forecasts.zl_predictions` (example)
 ```sql
-CREATE TABLE tsci.runs (
-  run_id TEXT PRIMARY KEY,
-  job_id TEXT,
-  status TEXT,
-  metrics_json JSON,
-  narrative TEXT,
-  started_at TIMESTAMP,
-  completed_at TIMESTAMP
-);
+SELECT as_of_date, horizon, p10, p50, p90, metadata
+FROM forecasts.zl_predictions
+ORDER BY as_of_date DESC;
 ```
 
 ## Metrics Display
@@ -97,7 +91,7 @@ CREATE TABLE tsci.runs (
 ## Notes
 - This route should **not appear in the main nav**.
 - Authentication/authorization required (dev/ops only).
-- This is the primary consumer of TSci report artifacts.
+- This can consume TSci report artifacts when TSci is enabled, but TSci is not required for core V15.1 operation.
 - No business-friendly simplification needed; this is the cockpit.
 
 ## Visual Design

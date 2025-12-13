@@ -1,137 +1,51 @@
 /**
  * Databento Futures Ingestion - Trigger.dev Job
- * 
- * Ingests futures prices for all 38 symbols:
- * - Agricultural: ZL, ZS, ZM, ZC, ZW, KE, MW, ZO, ZR, LE, GF
+ *
+ * Ingests futures prices for all 38 symbols using the official Databento SDK
+ * Based on zl-intelligence working pattern: databento_to_motherduck.py
+ *
+ * Symbols by category:
+ * - Agricultural: ZL, ZS, ZM, ZC, ZW, ZO, ZR, HE, LE, GF, FCPO
  * - Energy: CL, HO, RB, NG
  * - Metals: GC, SI, HG, PL, PA
- * - Treasuries: ZN, ZB, ZF
+ * - Treasuries: ZF, ZN, ZB
  * - FX: 6E, 6B, 6J, 6C, 6A, 6S, 6M, 6N, 6L, DX
- * - Palm Oil: FCPO
- * 
- * Uses Databento Historical API for backfills and Live API for real-time.
+ *
+ * Uses Databento Historical API for backfills, schema: ohlcv-1d
  */
 
 import { schedules, task } from "@trigger.dev/sdk/v3";
-import { MotherDuckClient } from "../../../src/shared/motherduck_client";
+import { exec } from "child_process";
+import path from "path";
+import { promisify } from "util";
 
-const DATABENTO_API_KEY = process.env.DATABENTO_API_KEY!;
-const DATABENTO_BASE_URL = "https://hist.databento.com/v0";
+const execAsync = promisify(exec);
 
-// All 38 futures symbols
+// All 38 futures symbols (matches zl-intelligence)
 const FUTURES_SYMBOLS = {
-  agricultural: ["ZL", "ZS", "ZM", "ZC", "ZW", "KE", "MW", "ZO", "ZR", "LE", "GF"],
+  agricultural: ["ZL", "ZS", "ZM", "ZC", "ZW", "ZO", "ZR", "HE", "LE", "GF", "FCPO"],
   energy: ["CL", "HO", "RB", "NG"],
   metals: ["GC", "SI", "HG", "PL", "PA"],
-  treasuries: ["ZN", "ZB", "ZF"],
+  treasuries: ["ZF", "ZN", "ZB"],
   fx: ["6E", "6B", "6J", "6C", "6A", "6S", "6M", "6N", "6L", "DX"],
-  palm_oil: ["FCPO"],
 };
 
 const ALL_SYMBOLS = Object.values(FUTURES_SYMBOLS).flat();
 
-interface DatabentoBBO {
-  ts_event: string;
-  symbol: string;
-  bid_px: number;
-  ask_px: number;
-  bid_sz: number;
-  ask_sz: number;
-}
-
-/**
- * Fetch BBO (Best Bid/Offer) data from Databento
- */
-async function fetchDatabentoBBO(
-  symbols: string[],
-  startDate: string,
-  endDate: string
-): Promise<DatabentoBBO[]> {
-  const url = new URL(`${DATABENTO_BASE_URL}/timeseries.get_range`);
-
-  const params = {
-    dataset: "GLBX.MDP3", // CME Globex
-    symbols: symbols.join(","),
-    schema: "bbo-1s", // Best bid/offer at 1-second intervals
-    start: startDate,
-    end: endDate,
-    stype_in: "continuous", // Continuous contracts
-    encoding: "json",
-  };
-
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
-  });
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${DATABENTO_API_KEY}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Databento API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data;
-}
-
-/**
- * Calculate OHLCV from BBO data
- */
-function aggregateToOHLCV(bboData: DatabentoBBO[], interval: "1min" | "5min" | "1h" | "1d") {
-  const intervalMs = {
-    "1min": 60 * 1000,
-    "5min": 5 * 60 * 1000,
-    "1h": 60 * 60 * 1000,
-    "1d": 24 * 60 * 60 * 1000,
-  }[interval];
-
-  const buckets = new Map<string, DatabentoBBO[]>();
-
-  for (const tick of bboData) {
-    const ts = new Date(tick.ts_event).getTime();
-    const bucketKey = `${tick.symbol}_${Math.floor(ts / intervalMs) * intervalMs}`;
-
-    if (!buckets.has(bucketKey)) {
-      buckets.set(bucketKey, []);
-    }
-    buckets.get(bucketKey)!.push(tick);
-  }
-
-  const ohlcv = [];
-  for (const [key, ticks] of buckets.entries()) {
-    const [symbol, tsStr] = key.split("_");
-    const midPrices = ticks.map((t) => (t.bid_px + t.ask_px) / 2);
-
-    ohlcv.push({
-      symbol,
-      timestamp: new Date(parseInt(tsStr)),
-      open: midPrices[0],
-      high: Math.max(...midPrices),
-      low: Math.min(...midPrices),
-      close: midPrices[midPrices.length - 1],
-      volume: ticks.reduce((sum, t) => sum + t.bid_sz + t.ask_sz, 0),
-    });
-  }
-
-  return ohlcv;
-}
-
 /**
  * Main Trigger.dev task: Databento Daily Ingestion
+ * Uses the working Python SDK approach from zl-intelligence
  */
 export const databentoIngestJob = task({
   id: "databento-ingest-job",
   retry: {
     maxAttempts: 3,
     factor: 2,
-    minTimeoutInMs: 5000,
-    maxTimeoutInMs: 60000,
+    minTimeoutInMs: 10000,
+    maxTimeoutInMs: 120000, // 2 minutes for large data pulls
   },
   run: async (payload: { symbols?: string[]; daysBack?: number }, { ctx }) => {
-    const symbols = payload.symbols || ALL_SYMBOLS;
+    const symbols = payload.symbols || ["ZL", "ZS", "ZM"]; // Start with core symbols
     const daysBack = payload.daysBack || 1;
 
     const endDate = new Date().toISOString().split("T")[0];
@@ -139,71 +53,78 @@ export const databentoIngestJob = task({
       .toISOString()
       .split("T")[0];
 
-    console.log(`[Databento] Fetching ${symbols.length} symbols from ${startDate} to ${endDate}`);
+    console.log(`[Databento] Starting ingestion for ${symbols.length} symbols: ${symbols.join(", ")}`);
+    console.log(`[Databento] Date range: ${startDate} to ${endDate}`);
 
-    // Fetch in batches to avoid rate limits (1,500 req/min)
-    const BATCH_SIZE = 10;
-    const allOHLCV = [];
+    // Path to the working Python script
+    const scriptPath = path.join(process.cwd(), "trigger", "DataBento", "Scripts", "collect_daily.py");
 
-    for (let i = 0; i < symbols.length; i += BATCH_SIZE) {
-      const batch = symbols.slice(i, i + BATCH_SIZE);
+    try {
+      // Execute the Python script with proper environment
+      const { stdout, stderr } = await execAsync(
+        `cd ${process.cwd()} && python3 "${scriptPath}" --symbols ${symbols.join(" ")} --days ${daysBack}`,
+        {
+          env: {
+            ...process.env,
+            PYTHONPATH: process.cwd(),
+          },
+          timeout: 300000, // 5 minutes timeout
+        }
+      );
 
-      try {
-        console.log(`[Databento] Batch ${i / BATCH_SIZE + 1}: ${batch.join(", ")}`);
+      console.log(`[Databento] Script output:`, stdout);
 
-        const bboData = await fetchDatabentoBBO(batch, startDate, endDate);
-        const ohlcv = aggregateToOHLCV(bboData, "1d");
-
-        allOHLCV.push(...ohlcv);
-
-        console.log(`[Databento] Fetched ${ohlcv.length} daily bars`);
-
-        // Rate limit: 1,500 req/min = 1 req per 40ms
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      } catch (error) {
-        console.error(`[Databento] Error fetching batch ${batch.join(", ")}:`, error);
+      if (stderr) {
+        console.warn(`[Databento] Script warnings:`, stderr);
       }
+
+      // Parse success from output (script should print success indicators)
+      const success = stdout.includes("✅") || stdout.includes("SUCCESS") || !stdout.includes("ERROR");
+      const recordsMatch = stdout.match(/(\d+)\s+records?|(\d+)\s+rows?/i);
+      const recordsIngested = recordsMatch ? parseInt(recordsMatch[1] || recordsMatch[2]) : 0;
+
+      return {
+        success,
+        recordsIngested,
+        symbols: symbols.length,
+        symbolsProcessed: symbols,
+        dateRange: { start: startDate, end: endDate },
+        scriptOutput: stdout.substring(0, 500), // Truncate for logging
+        timestamp: new Date().toISOString(),
+      };
+
+    } catch (error) {
+      console.error(`[Databento] Script execution failed:`, error);
+      throw new Error(`Databento ingestion failed: ${error.message}`);
     }
-
-    // Load to MotherDuck
-    // Transform to match raw.databento_ohlcv_daily schema (as_of_date, not timestamp)
-    if (allOHLCV.length > 0) {
-      const records = allOHLCV.map(r => ({
-        as_of_date: r.timestamp.toISOString().split("T")[0],
-        symbol: r.symbol,
-        open: r.open,
-        high: r.high,
-        low: r.low,
-        close: r.close,
-        volume: r.volume,
-      }));
-
-      const motherduck = new MotherDuckClient();
-      await motherduck.insertBatch("raw.databento_ohlcv_daily", records);
-      await motherduck.close();
-      console.log(`[Databento] Loaded ${records.length} records to MotherDuck`);
-    }
-
-    return {
-      success: true,
-      recordsIngested: allOHLCV.length,
-      symbols: symbols.length,
-      dateRange: { start: startDate, end: endDate },
-      timestamp: new Date().toISOString(),
-    };
   },
 });
 
 /**
  * Schedule: Run daily at 6 PM UTC (after market close)
+ * Start conservative: core agricultural symbols only
  */
 export const databentoSchedule = schedules.task({
   id: "databento-daily-schedule",
-  cron: "0 18 * * *", // 6 PM UTC
+  cron: "0 18 * * *", // 6 PM UTC daily
   task: databentoIngestJob,
   payload: {
-    symbols: ALL_SYMBOLS,
+    symbols: ["ZL", "ZS", "ZM", "CL", "HO"], // Core symbols only
     daysBack: 1,
+  },
+});
+
+/**
+ * Weekly backfill schedule: Run Sundays at 2 AM UTC
+ * Pulls larger historical batches for all symbols
+ */
+export const databentoWeeklyBackfill = schedules.task({
+  id: "databento-weekly-backfill",
+  cron: "0 2 * * 0", // Sundays at 2 AM UTC
+  task: databentoIngestJob,
+  payload: {
+    symbols: ALL_SYMBOLS, // All 38 symbols
+    daysBack: 7, // Weekly batch
   },
 });
 

@@ -18,3 +18,12 @@ Commitment of Traders (COT) data from Commodity Futures Trading Commission.
 ## Schedule
 
 - Weekly (Friday after report release at 3:30 PM ET)
+
+
+
+
+
+
+
+
+

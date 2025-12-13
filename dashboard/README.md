@@ -193,14 +193,13 @@ export function Chart({ data }) {
 | `forecasts` | Model predictions | AnoFox |
 | `reference` | Catalogs & registries | AnoFox |
 | `ops` | Pipeline health | AnoFox |
-| `tsci` | Agent jobs & QA | TSci |
+| *(removed)* | *(legacy agent jobs & QA)* | deprecated |
 
 **Key Tables:**
 - `features.daily_ml_matrix_zl` - Big-8 scores + features
 - `training.daily_ml_matrix_zl` - Training data with targets
 - `forecasts.zl_predictions` - Point forecasts + bands by horizon
 - `reference.model_registry` - Active models
-- `tsci.runs` - TSci experiment runs
 
 See [Database Audit Report](../../docs/database_audit_report.md) for current state.
 

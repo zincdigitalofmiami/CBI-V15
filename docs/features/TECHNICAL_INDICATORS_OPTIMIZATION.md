@@ -307,63 +307,6 @@ FROM `${ref("databento_daily_ohlcv")}`
 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
 ```
 
-### Step 3: Incremental Updates (Python - pandas-ta)
-
-```python
-# src/features/technical_indicators_incremental.py
-
-import pandas as pd
-import pandas_ta as ta
-from google.cloud import duckdb
-
-def calculate_indicators_incremental(symbol: str, start_date: str):
-    """Calculate indicators for new data only"""
-    client = duckdb.Client()
-    
-    # Get new data only
-    query = f"""
-    SELECT * FROM `cbi-v15.staging.market_daily`
-    WHERE symbol = '{symbol}' 
-      AND date >= '{start_date}'
-    ORDER BY date
-    """
-    
-    df = client.query(query).to_dataframe()
-    
-    # Calculate indicators using pandas-ta
-    df.ta.rsi(length=14, append=True)
-    df.ta.macd(append=True)
-    df.ta.bbands(length=20, std=2, append=True)
-    df.ta.sma(length=10, append=True)
-    df.ta.sma(length=20, append=True)
-    df.ta.atr(length=14, append=True)
-    
-    # Upload to DuckDB/MotherDuck
-    df.to_gbq('features.technical_indicators_daily', 
-              project_id='cbi-v15', 
-              if_exists='append')
-```
-
----
-
-## 💰 Cost Comparison
-
-### DuckDB/MotherDuck SQL Approach (Recommended)
-- **Initial Load**: ~50-100 GB query = **$0.00** (free tier)
-- **Time**: 2-5 minutes
-- **Incremental**: ~1 GB/day = **$0.00** (free tier)
-- **Total Monthly**: **$0.00** ✅
-
-### Python Approach
-- **Initial Load**: Export 1 GB + Compute (Mac) + Upload 1 GB = **$0.00**
-- **Time**: 1-5 minutes
-- **Incremental**: ~0.1 GB/day = **$0.00**
-- **Total Monthly**: **$0.00** ✅
-
-**Both are free, but DuckDB/MotherDuck is faster and more scalable!**
-
----
-
 ## 🎯 Final Recommendation
 
 ### For Initial 15-Year Load: **DuckDB/MotherDuck SQL UDFs** ✅
@@ -418,4 +361,3 @@ def calculate_indicators_incremental(symbol: str, start_date: str):
 ---
 
 **Last Updated**: November 28, 2025
-

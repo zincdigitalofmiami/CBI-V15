@@ -32,7 +32,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # MotherDuck connection
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 PARQUET_DIR = Path("/Volumes/Satechi Hub/CBI-V15/data/raw/fred")
 
 FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
@@ -49,8 +49,11 @@ FX_SERIES: List[str] = [
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
-    """Get MotherDuck connection."""
-    return duckdb.connect(f"md:{MOTHERDUCK_DB}")
+    """Get MotherDuck connection (authenticated)."""
+    token = os.getenv("MOTHERDUCK_TOKEN")
+    if not token:
+        raise RuntimeError("MOTHERDUCK_TOKEN not set in environment")
+    return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={token}")
 
 
 def get_last_loaded_date(con: duckdb.DuckDBPyConnection) -> date:

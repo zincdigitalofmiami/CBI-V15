@@ -1,6 +1,8 @@
 # CBI-V15 Intelligence Platform
 
-> **Institutional-grade ZL futures forecasting system** combining AI-driven orchestration with high-performance SQL-native feature engineering.
+> **Read first – fast-moving workspace.** Always check the latest work before editing: `docs/architecture/MASTER_PLAN.md`, `AGENTS.md`, `DATA_LINKS_MASTER.md`, and the active master plan `.cursor/plans/ALL_PHASES_INDEX.md`. Multiple agents work in parallel—plans can drift; verify current files, avoid duplicating scripts/MDs/folders, and keep the explorer clean.
+
+> **ZL (Soybean Oil) forecasting system** — DuckDB/MotherDuck + AutoGluon 1.4 + Trigger.dev, with SQL-first features.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MotherDuck](https://img.shields.io/badge/Database-MotherDuck-blue)](https://motherduck.com)
@@ -10,261 +12,137 @@
 
 ## 🎯 Overview
 
-CBI-V15 is a quantitative forecasting platform for ZL (Soybean Oil) futures that combines:
-
-- **TSci Agents** — LLM-driven agentic orchestrator for experiment planning and model selection
-- **AnoFox Engine** — High-performance SQL-native feature engineering within DuckDB
-- **Next.js Dashboard** — Real-time visualization and intelligence reporting
-- **MotherDuck** — Cloud-native data warehouse for production forecasts
-
-**Key Innovation**: TSci acts as the "Brain" (strategic decision-making) while AnoFox acts as the "Muscle" (fast SQL feature computation), creating a hybrid system optimized for both intelligence and performance.
+CBI-V15 combines:
+- **SQL-first features (AnoFox macros)** — 300+ features in `database/macros/`
+- **AutoGluon 1.4** — Quantile Tabular/TimeSeries (P10/P50/P90) on Mac M4
+- **Trigger.dev** — Ingestion by source under `trigger/<Source>/Scripts/`
+- **MotherDuck + Local DuckDB** — Cloud source of truth; local mirror for fast training
+- **Next.js Dashboard** — Queries MotherDuck directly
 
 ---
 
-## ✨ Key Features
-
-| Feature                | Description                                                       |
-| ---------------------- | ----------------------------------------------------------------- |
-| 🧠 **TSci Agents**     | OpenAI-powered orchestration (Curator, Planner, Forecaster, Reporter) with hallucination guardrails |
-| ⚡ **AnoFox Engine**   | SQL-native feature engineering with 300+ features across 38 symbols |
-| 📊 **Big 8 Drivers**   | Crush, China, FX, Fed, Tariff, Biofuel, Energy, **Volatility** (focus overlays, not cages) |
-| 🎯 **Multi-Model**     | LightGBM, CatBoost, XGBoost quantile models with AutoML sweeps |
-| 📈 **QRA Ensemble**    | Regime-weighted Quantile Regression Averaging (L3) |
-| 🎲 **Monte Carlo**     | 1,000-path risk simulation with VaR/CVaR/downside metrics (L4) |
-| 🦆 **MotherDuck**      | Cloud data warehouse with local DuckDB mirroring                  |
-| 📉 **TradingView**     | Live ZL charts, Forex Heatmap, and Tech Gauges (Dark Mode)        |
-| 🎛️ **Regime-Aware**    | Adaptive models with TSci meta-learning framework                        |
+## 🏗️ Architecture (V15.1)
+- **Ingestion**: Trigger.dev jobs write to MotherDuck (`raw.*`), organized per source (`trigger/DataBento`, `trigger/FRED`, `trigger/EIA_EPA`, `trigger/USDA`, `trigger/CFTC`, `trigger/ScrapeCreators`, `trigger/ProFarmer`, `trigger/UofI_Feeds`, `trigger/Weather`, etc.)
+- **Features**: SQL macros (AnoFox) in `database/macros/` → `features.*` tables/views
+- **Training**: Sync MotherDuck → local DuckDB (`data/duckdb/cbi_v15.duckdb`), train AutoGluon quantile models (bucket specialists + main ZL)
+- **Forecasts**: Upload to MotherDuck (`forecasts.zl_predictions`); dashboard reads from MotherDuck
+- **Risk**: Monte Carlo in `src/simulators/monte_carlo_sim.py` (VaR/CVaR)
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Data Sources (38+ symbols)           │
-│  Databento  │  ScrapeCreator  │  FRED  │  EIA  │ USDA  │
-└──────────────────────┬──────────────────────────────────┘
-                       ↓
-┌──────────────────────────────────────────────────────────┐
-│      Ingestion Layer (trigger/<Source>/Scripts/)         │
-│  • DataBento   • ScrapeCreators   • FRED   • EIA_EPA    │
-│  • USDA        • CFTC             • Weather/NOAA        │
-└──────────────────────┬───────────────────────────────────┘
-                       ↓
-┌──────────────────────────────────────────────────────────┐
-│          AnoFox Engine (src/engines/anofox/)             │
-│  • build_features.py (300+ features, all symbols)       │
-│  • build_training.py (train/val/test splits)           │
-│  • anofox_bridge.py (TSci ↔ SQL interface)             │
-└──────────────────────┬───────────────────────────────────┘
-                       ↓
-┌──────────────────────────────────────────────────────────┐
-│               MotherDuck (database/)                     │
-│  raw → staging → features → training → forecasts        │
-│  (8 schemas, 30+ tables, SQL macros, assertions, API)   │
-└──────────────────────┬───────────────────────────────────┘
-                       ↓
-┌──────────────────────────────────────────────────────────┐
-│     TSci Agents + OpenAI (src/models/tsci/)              │
-│  • curator.py    (data QA + LLM quality analysis)       │
-│  • planner.py    (model selection + LLM suggestions)    │
-│  • forecaster.py (QRA ensemble + LLM weighting)         │
-│  • reporter.py   (narrative generation + LLM reports)   │
-│  • model_sweep.py (AutoML-lite per bucket/horizon)      │
-└──────────────────────┬───────────────────────────────────┘
-                       ↓
-┌──────────────────────────────────────────────────────────┐
-│        4-Level Model Stack (L1→L2→L3→L4)                 │
-│  L1: Base Models (LightGBM, CatBoost, XGBoost)          │
-│  L2: Meta-Learner (model_sweep.py, regime tagging)     │
-│  L3: QRA Ensemble (regime-weighted quantile averaging)  │
-│  L4: Monte Carlo (1,000 paths, VaR/CVaR, scenarios)    │
-└──────────────────────┬───────────────────────────────────┘
-                       ↓
-┌──────────────────────────────────────────────────────────┐
-│               Next.js Dashboard (dashboard/)             │
-│  • /forecasts   • /neural-quant  • /sentiment           │
-│  • /market-overview  • /quant-admin (TSci reports)      │
-└──────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📁 Project Structure
-
+## 📁 Project Structure (clean layout)
 ```
 CBI-V15/
-├── dashboard/            # 🌐 Next.js Dashboard
-│   ├── app/              # App Router pages
-│   └── components/       # Visualizations (TradingView, Nivo)
-│
-├── database/             # 🗄️ SQL Schemas & Macros
-│   ├── definitions/      # 00-08 DDL files
-│   └── macros/           # Feature SQL macros
-│
-├── src/                  # 🐍 Python Source
-│   ├── engines/          # AnoFox engine + engine registry
-│   ├── models/           # TSci agents (Curator, Planner, Forecaster, Reporter)
-│   ├── ingestion/        # Data collectors (databento, fred, eia, scrape_creator, etc.)
-│   ├── training/         # Baseline models (lightgbm, catboost, xgboost)
-│   ├── ensemble/         # L3: QRA ensemble
-│   ├── simulators/       # L4: Monte Carlo risk simulation
-│   └── utils/            # OpenAI client, keychain manager
-│
-├── docs/                 # 📚 Documentation
-│   ├── architecture/     # System design
-│   └── project_docs/     # Migrated docs
-│
-├── scripts/              # 🔧 Utility Scripts
-│
-└── config/               # ⚙️ Configuration
-    └── requirements/     # Python dependencies
+├── trigger/                # Trigger.dev ingestion per source (Scripts/ + README per source)
+├── database/               # Schemas (raw→features→forecasts) + macros (AnoFox)
+├── src/
+│   ├── engines/anofox/     # AnoFox bridge
+│   ├── training/           # Baselines; AutoGluon module to be created
+│   ├── simulators/         # Monte Carlo
+│   └── models/             # (currently empty; reserved for local model definitions)
+├── docs/                   # Architecture & ops docs
+├── scripts/                # Setup, sync, validation, ops
+├── config/                 # YAML/requirements
+├── dashboard/              # Next.js app
+└── .cursor/.kilocode/      # Tool-specific configs (plans, ignores)
 ```
 
 ---
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+
-- MotherDuck account
-
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/zincdigitalofmiami/CBI-V15.git
-cd CBI-V15
-```
-
-### 2. Install Python Dependencies
-
+## 🚀 Quick Start (local dev)
+1) **Python env**
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r config/requirements/requirements.txt
 ```
-
-### 3. Configure Environment
-
+2) **Node deps (dashboard)**
+```bash
+cd dashboard && npm install
+```
+3) **Set env (example)**
 ```bash
 export MOTHERDUCK_DB=cbi_v15
-export MOTHERDUCK_TOKEN=<your-token>
-export SCRAPECREATOR_API_KEY=<your-key>
-export FRED_API_KEY=<your-key>
+export MOTHERDUCK_TOKEN=<token>
+export DATABENTO_API_KEY=<key>
+export FRED_API_KEY=<key>
 ```
-
-### 4. Initialize Database
-
+4) **Sync cloud → local DuckDB before training**
 ```bash
-python scripts/setup/execute_motherduck_schema.py
+python scripts/sync_motherduck_to_local.py --dry-run
 ```
-
-### 5. Start Dashboard
-
-```bash
-cd dashboard
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
----
-
-## 🔑 Environment Variables
-
-| Variable                | Description              | Required |
-| ----------------------- | ------------------------ | -------- |
-| `MOTHERDUCK_DB`         | MotherDuck database name (`cbi_v15`) | ✅       |
-| `MOTHERDUCK_TOKEN`      | MotherDuck auth token    | ✅       |
-| `OPENAI_API_KEY`        | OpenAI API key (for TSci agents) | ✅       |
-| `OPENAI_MODEL`          | OpenAI model ID (default: `gpt-5.1`) | Optional |
-| `DATABENTO_API_KEY`     | Databento API key        | ✅       |
-| `FRED_API_KEY`          | FRED API key             | ✅       |
-| `SCRAPECREATOR_API_KEY` | ScrapeCreator API key    | ✅       |
-| `EIA_API_KEY`           | EIA API key              | Optional |
-| `USDA_NASS_API_KEY`     | USDA NASS API key        | Optional |
-
-> Secrets: keep tokens/keys in a local `.env` (already gitignored), direnv, or macOS Keychain. Use `MOTHERDUCK_DB` (not `MOTHERDUCK_DATABASE`) set to your actual database name (default `cbi_v15`). Avoid committing shell init files with secrets.
-
----
-
-## 📚 Documentation
-
-- [V15 Architecture](docs/architecture/) — System design and data flow
-- [Big 8 Drivers](docs/project_docs/BIG_8_DRIVERS.md) — Key market indicators
-- [Feature Catalog](docs/project_docs/COMPLETE_FEATURE_LIST_290.md) — Complete feature list
-- [TSci + AnoFox Integration](docs/project_docs/ANOFOX_TSCI_INTEGRATION.md) — How they work together
-
----
-
-## 🛠️ Development
-
-### Run Ingestion
-
-```bash
-python trigger/ScrapeCreators/Scripts/collect_news_buckets.py
-python trigger/FRED/Scripts/collect_fred_fx.py
-```
-
-### Build Features & Training Data
-
-```bash
-# Build all features (300+ across 38 symbols)
-python src/engines/anofox/build_features.py
-
-# Build training tables with targets and splits
-python src/engines/anofox/build_training.py
-```
-
-### Train Models
-
-```bash
-# Train baseline models (quantile regression: P10/P50/P90)
-python src/training/baselines/lightgbm_zl.py
-python src/training/baselines/catboost_zl.py
-python src/training/baselines/xgboost_zl.py
-
-# Or run TSci-orchestrated sweep
-python src/models/tsci/planner.py
-```
-
-### Run Dashboard Locally
-
+5) **Run dashboard**
 ```bash
 cd dashboard && npm run dev
 ```
 
 ---
 
+## 🔑 Environment (minimum)
+- `MOTHERDUCK_DB`, `MOTHERDUCK_TOKEN`
+- `DATABENTO_API_KEY`, `FRED_API_KEY`
+- (Optional) `SCRAPECREATOR_API_KEY`, `EIA_API_KEY`, `USDA_NASS_API_KEY`
+- Secrets in `.env` or macOS Keychain; never committed.
+
+---
+
+## 📚 Key Docs
+- `docs/architecture/MASTER_PLAN.md` — source of truth (V15.1 AutoGluon hybrid)
+- `AGENTS.md` — guardrails, Big 8 coverage, naming rules
+- `DATA_LINKS_MASTER.md` — canonical data sources
+- `PHASE_0_EXECUTION_READY.md` — readiness checklist
+- `.cursor/plans/ALL_PHASES_INDEX.md` — active master implementation plan (Phases 0–5)
+
+---
+
+## 🧑‍💻 Engineering Agent Prompt (Codex/Cursor)
+
+Use this developer prompt when starting a Codex/Cursor session or major change:
+
+```text
+You are the CBI-V15 Engineering Agent.
+
+Follow the system rules and Cursor rules.json.
+
+Task:
+I want you to operate strictly within the CBI-V15 architecture.
+Before making any changes:
+1. Validate context.
+2. If any file or directory is missing, ask me for it.
+3. Explain your plan BEFORE writing code.
+4. Produce minimal, surgical diffs.
+
+Never hallucinate imports, modules, directories, dependencies, or data sources.
+Never reintroduce BigQuery or v14 patterns.
+Never write code outside the defined directories.
+Keep everything aligned with the V15.1 training engine: Big 8 Tabular → Core TS → Meta → Ensemble → Monte Carlo.
+
+When ready, ask: "Show me the files involved in this operation."
+```
+
+---
+
+## 📦 Big 8 Bucket Modeling Rules
+
+Enforce these rules in all engineering plans and changes:
+
+- Big 8 buckets are: Crush, China, FX, Fed, Tariff, Biofuel, Energy, Volatility
+- Bucket features are derived from SQL macros only in `database/macros/`
+- Use AutoGluon `TabularPredictor` for all Big 8 bucket specialists
+- Use AutoGluon `TimeSeriesPredictor` for core ZL forecasting
+- Meta model fuses Big 8 + core ZL outputs
+- Ensemble layer smooths predictions into final forecasts
+- Monte Carlo simulation produces probabilistic scenarios (VaR/CVaR), not raw forecasts
+
+---
+
+## 🧭 Notes & Conventions
+- Ingestion lives under `trigger/<Source>/Scripts/` (no src/ingestion for new work).
+- Features in SQL macros only (`database/macros/`); avoid Python feature loops.
+- Training on Mac M4 CPU; `presets='extreme_quality'` (slower without GPU).
+- Keep repo clean: configs/ignores inside their folders (`.cursor/*`, `.kilocode/*`, `augment/*`); no stray files at root.
+
+---
+
 ## 📝 License
-
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Acknowledgments
-
-- [MotherDuck](https://motherduck.com) — Cloud DuckDB
-- [Databento](https://databento.com) — Market data
-- [Vercel](https://vercel.com) — Dashboard hosting
-
----
-
-## ⚡ About Zinc Digital
-
-**Institutional Quantitative Architecture & AI Strategy**
-
-Building high-performance trading infrastructure and agentic forecasting engines involved in the global markets.
-
-🌐 **[www.zincdigital.co](https://www.zincdigital.co)**
-
-> _14 hour days, all hustle. Straight outta Miami._ 🌴
-
-<br />
-
-<div align="center">
-  <p>Made with ❤️ by <a href="https://www.zincdigital.co">Zinc Digital</a></p>
-</div>
+MIT — see [LICENSE](LICENSE).

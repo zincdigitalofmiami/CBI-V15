@@ -15,7 +15,7 @@ DB_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DB_DIR / "cbi_v15.duckdb"
 
 # Schema SQL files directory
-SCHEMA_DIR = Path("database/definitions")
+SCHEMA_DIR = Path("database/models")
 
 
 def execute_statements(conn, statements, statement_type):

@@ -14,3 +14,12 @@ Market data ingestion from DataBento API.
 
 - ZL (Primary): Every hour
 - All others: Every 4 hours
+
+
+
+
+
+
+
+
+

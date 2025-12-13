@@ -52,7 +52,6 @@ Predefined shocks and their effect on P&L:
 | `forecasts.zl_predictions` | Point forecasts + bands | `price_1w`, `price_1m`, `ci_lower`, `ci_upper` |
 | `training.daily_ml_matrix_zl` | Realized returns (backtests) | `target_ret_*` |
 | `reference.model_registry` | Active model info | `model_id`, `metrics_json` |
-| `tsci.runs` | Narratives & recommendations | `narrative`, `metrics_json` |
 
 ### SQL Example
 ```sql
@@ -117,9 +116,9 @@ AND action = 'Increase coverage before price move'
 
 ## Notes
 - All monetary values use Admin-configured base volume and currency
-- Strategy text comes from TSci reporter output (`tsci.runs.narrative`)
+- Strategy text should come from AutoGluon + SQL outputs (TSci is removed)
 - P&L calculations should be precomputed in SQL where possible
-- Scenarios are defined in SQL/TSci, not hard-coded in React
+- Scenarios should be defined in SQL/orchestration, not hard-coded in React
 - This is a **decision support page** - clarity over complexity
 
 ## Visual Design

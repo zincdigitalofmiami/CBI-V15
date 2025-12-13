@@ -27,8 +27,8 @@ export OPENAI_MODEL="gpt-5.1"
 
 ### Custom Fine-Tuned Model
 ```bash
-# Use your fine-tuned model ID
-export OPENAI_MODEL="ft:gpt-4.1:org:zl-tsci-2025-01"
+# Use your fine-tuned model ID (CBI-V15 specific)
+export OPENAI_MODEL="ft:gpt-4.1:org:zl-cbi-v15-2025-01"
 ```
 
 ### Pro/Flagship Model
@@ -39,7 +39,7 @@ export OPENAI_MODEL="o3-pro"
 
 ---
 
-## 🧠 Fine-Tuning for TSci
+## 🧠 Fine-Tuning for CBI-V15 Orchestration
 
 ### What to Fine-Tune On
 
@@ -91,9 +91,9 @@ Create a fine-tuning dataset with your architecture docs and example decisions:
 
 Include these in your fine-tuning dataset or as few-shot examples:
 
-1. `docs/project_docs/tsci_anofox_architecture.md` - Architecture overview
-2. `docs/architecture/META_LEARNING_FRAMEWORK.md` - Model selection logic
-3. `docs/architecture/ENSEMBLE_ARCHITECTURE_PROPOSAL.md` - Ensemble design
+1. `docs/architecture/MASTER_PLAN.md` - Architecture overview
+2. `docs/architecture/META_LEARNING_FRAMEWORK.md` - Model selection logic (historical)
+3. `docs/architecture/ENSEMBLE_ARCHITECTURE_PROPOSAL.md` - Ensemble design (historical)
 4. `docs/ops/BIG_8_BUCKETS_REFERENCE.md` - Bucket definitions
 5. `docs/ops/NAMING_CONVENTIONS.md` - Volatility vs volume rules
 
@@ -110,13 +110,13 @@ import json
 training_examples = []
 
 # Add architecture docs as system context
-with open("docs/project_docs/tsci_anofox_architecture.md") as f:
+with open("docs/architecture/MASTER_PLAN.md") as f:
     arch_doc = f.read()
 
 # Add example decisions (curator, planner, forecaster, reporter)
 # ... (see examples above)
 
-with open("tsci_finetuning_data.jsonl", "w") as f:
+with open("cbi_v15_finetuning_data.jsonl", "w") as f:
     for example in training_examples:
         f.write(json.dumps(example) + "\n")
 ```
@@ -130,7 +130,7 @@ client = OpenAI()
 
 # Upload training file
 file = client.files.create(
-    file=open("tsci_finetuning_data.jsonl", "rb"),
+    file=open("cbi_v15_finetuning_data.jsonl", "rb"),
     purpose="fine-tune"
 )
 
@@ -138,21 +138,21 @@ file = client.files.create(
 job = client.fine_tuning.jobs.create(
     training_file=file.id,
     model="gpt-4.1",  # or "gpt-5.1"
-    suffix="zl-tsci-2025-01",
+    suffix="zl-cbi-v15-2025-01",
 )
 
 print(f"Fine-tuning job created: {job.id}")
-print(f"Custom model will be: ft:gpt-4.1:org:zl-tsci-2025-01")
+print(f"Custom model will be: ft:gpt-4.1:org:zl-cbi-v15-2025-01")
 ```
 
 ### Step 3: Use Custom Model
 
 ```bash
 # After fine-tuning completes
-export OPENAI_MODEL="ft:gpt-4.1:org:zl-tsci-2025-01"
+export OPENAI_MODEL="ft:gpt-4.1:org:zl-cbi-v15-2025-01"
 
-# Run TSci with custom model
-python src/models/tsci/planner.py
+# Run your orchestration script with custom model
+python path/to/your_orchestration_planner.py
 ```
 
 ---
@@ -164,16 +164,9 @@ For even stronger performance, use OpenAI's RFT after supervised fine-tuning:
 ### Step 1: Define Grader Function
 
 ```python
-def tsci_decision_grader(sample: dict, item: dict) -> float:
+def orchestration_decision_grader(sample: dict, item: dict) -> float:
     """
-    Grade TSci decisions based on downstream forecast performance.
-    
-    Args:
-        sample: Model output (suggested model candidates, weights, etc.)
-        item: Reference/gold standard (best-performing configuration)
-    
-    Returns:
-        Score 0.0-1.0 (higher is better)
+    Grade orchestration decisions based on downstream forecast performance.
     """
     # Compare suggested models to gold standard
     suggested_models = set(sample.get("candidate_models", []))
@@ -198,16 +191,16 @@ client = OpenAI()
 
 # Upload RFT training file (with grader results)
 file = client.files.create(
-    file=open("tsci_rft_data.jsonl", "rb"),
+    file=open("cbi_v15_rft_data.jsonl", "rb"),
     purpose="fine-tune"
 )
 
 # Create RFT job
 rft_job = client.fine_tuning.jobs.create(
     training_file=file.id,
-    model="ft:gpt-4.1:org:zl-tsci-2025-01",  # Your base fine-tuned model
+    model="ft:gpt-4.1:org:zl-cbi-v15-2025-01",  # Your base fine-tuned model
     method="rft",  # Reinforcement fine-tuning
-    suffix="zl-tsci-rft",
+    suffix="zl-cbi-v15-rft",
 )
 
 print(f"RFT job: {rft_job.id}")
@@ -221,8 +214,8 @@ print(f"RFT job: {rft_job.id}")
 |------------|----------|---------|------|-------------------|
 | **gpt-5.1** | Default, fast decisions | Low | $ | Good |
 | **o3-pro** | Complex regime analysis | High | $$$ | Excellent |
-| **ft:gpt-4.1:...:zl-tsci** | Domain-specific TSci | Medium | $$ | Very Good (specialized) |
-| **ft:...:zl-tsci-rft** | RFT-optimized TSci | Medium | $$ | Excellent (tuned to rewards) |
+| **ft:gpt-4.1:...:zl-cbi-v15** | Domain-specific CBI-V15 | Medium | $$ | Very Good (specialized) |
+| **ft:...:zl-cbi-v15-rft** | RFT-optimized CBI-V15 | Medium | $$ | Excellent (tuned to rewards) |
 
 ### Recommendation
 
@@ -261,16 +254,13 @@ def get_default_model(model: Optional[str] = None) -> str:
 ```bash
 # 1. Use default model
 export OPENAI_API_KEY="your_key"
-python src/models/tsci/planner.py
+python path/to/your_orchestration_planner.py
 
 # 2. Use Pro model for complex reasoning
 export OPENAI_MODEL="o3-pro"
-python src/models/tsci/planner.py
+python path/to/your_orchestration_planner.py
 
 # 3. Use your custom fine-tuned model
-export OPENAI_MODEL="ft:gpt-4.1:org:zl-tsci-2025-01"
-python src/models/tsci/planner.py
+export OPENAI_MODEL="ft:gpt-4.1:org:zl-cbi-v15-2025-01"
+python path/to/your_orchestration_planner.py
 ```
-
-**That's it!** TSci automatically uses whichever model you specify.
-

@@ -50,15 +50,15 @@ else
     echo "   ❌ Macros directory not found"
 fi
 
-# Database Definitions
+# Database Models (DDL)
 echo ""
 echo "4️⃣  Database Definitions:"
-if [ -d "$PROJECT_ROOT/database/definitions" ]; then
-    DEF_COUNT=$(find "$PROJECT_ROOT/database/definitions" -name "*.sql" 2>/dev/null | wc -l | tr -d ' ')
-    echo "   ✅ Definitions directory exists"
+if [ -d "$PROJECT_ROOT/database/models" ]; then
+    DEF_COUNT=$(find "$PROJECT_ROOT/database/models" -name "*.sql" 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ Models directory exists"
     echo "   📊 SQL definition files: $DEF_COUNT"
 else
-    echo "   ⚠️  Definitions directory not found"
+    echo "   ⚠️  Models directory not found"
 fi
 
 # API Keys

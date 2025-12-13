@@ -43,23 +43,27 @@ echo "   LDFLAGS: $LDFLAGS"
 echo "   CPPFLAGS: $CPPFLAGS"
 echo ""
 
-echo "3️⃣  Installing LightGBM from source (with libomp)..."
-echo "   This prevents segfaults on Mac M4"
+echo "3️⃣  Checking LightGBM installation..."
 echo ""
 
-# Build LightGBM from source with explicit OpenMP flags
-pip install lightgbm --no-binary :all: \
-  --config-settings=cmake.define.OpenMP_C_FLAGS="-Xpreprocessor -fopenmp -I${LIBOMP_PREFIX}/include" \
-  --config-settings=cmake.define.OpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp -I${LIBOMP_PREFIX}/include" \
-  --config-settings=cmake.define.OpenMP_libomp_LIBRARY="${LIBOMP_PREFIX}/lib/libomp.dylib"
+# Check if LightGBM is already installed
+if python3 -c "import lightgbm" 2>/dev/null; then
+    echo "   ✅ LightGBM already installed"
+    echo "   ⚠️  If you experience segfaults, rebuild with:"
+    echo "      pip install lightgbm --force-reinstall --no-binary :all: --config-settings=..."
+else
+    echo "   Installing LightGBM (pre-built wheel)..."
+    pip install lightgbm
+fi
 
 echo ""
 echo "4️⃣  Installing AutoGluon 1.4..."
 echo ""
 
-# Install AutoGluon (will use pre-built LightGBM)
-pip install autogluon.tabular[all]>=1.4.0
-pip install autogluon.timeseries[all]>=1.4.0
+# Install AutoGluon with pre-built wheels (avoids Rust compiler requirement)
+pip install --upgrade pip
+pip install autogluon.tabular[all]>=1.4.0 --no-build-isolation
+pip install autogluon.timeseries[all]>=1.4.0 --no-build-isolation
 pip install autogluon.core>=1.4.0
 
 echo ""
@@ -108,9 +112,10 @@ except ImportError as e:
     sys.exit(1)
 
 print("\n✨ AutoGluon 1.4 ready for Mac M4!")
-print("   Available models: LightGBM, CatBoost, XGBoost, FastAI, PyTorch")
-print("   Presets: 'best', 'high', 'good', 'medium' (CPU-compatible)")
-print("\n⚠️  Note: 'extreme' preset requires GPU (not compatible with Mac M4)")
+print("   Available models: LightGBM, CatBoost, XGBoost, FastAI, PyTorch, TabPFNv2, Mitra, TabICL")
+print("   Presets: 'extreme_quality', 'best', 'high', 'good', 'medium' (all CPU-compatible)")
+print("\n⚠️  Note: 'extreme_quality' works on Mac M4 CPU but will be slower than GPU")
+print("   Foundation models (TabPFNv2, Mitra, TabICL) included in extreme_quality run on CPU")
 EOF
 
 echo ""
@@ -123,6 +128,15 @@ echo "   1. Run: python scripts/sync_motherduck_to_local.py"
 echo "   2. Test: python -c 'from autogluon.tabular import TabularPredictor; print(\"Ready!\")'"
 echo "   3. Start Phase 2: Create TabularPredictor wrapper"
 echo ""
+
+
+
+
+
+
+
+
+
 
 
 

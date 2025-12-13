@@ -19,3 +19,12 @@ USDA agricultural data ingestion (WASDE, export sales, crop progress).
 - Export Sales: Weekly (Thursday after release)
 - WASDE: Monthly (report date)
 - Crop Progress: Weekly (Monday after release)
+
+
+
+
+
+
+
+
+

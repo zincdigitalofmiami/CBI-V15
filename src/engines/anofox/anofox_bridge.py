@@ -1,6 +1,12 @@
 """
-AnofoxBridge - Python Bridge for TSci ↔ Anofox Integration
-Phase 2.2: Creates bridge between TSci agents and Anofox SQL-native execution.
+AnofoxBridge - Python Bridge for Anofox SQL Execution
+Phase 2.2: Original bridge between TSci agents and Anofox SQL-native execution.
+
+V15.1 Note:
+- TSci is no longer the primary orchestrator; this bridge is optional/legacy.
+- It can still be used by orchestration layers (or ad-hoc tools) that need a thin
+  Python wrapper around Anofox SQL functions, but production modeling flows should
+  treat this as a utility, not a core dependency.
 """
 
 import duckdb
@@ -18,10 +24,10 @@ DUCKDB_PATH = Path(__file__).resolve().parents[2] / "data" / "duckdb" / "cbi_v15
 
 class AnofoxBridge:
     """
-    Bridge class that connects TSci agents to Anofox SQL-native execution.
+    Bridge class that connects Python orchestration code to Anofox SQL-native execution.
 
-    TSci makes strategic decisions (what to clean, which model, how to ensemble).
-    Anofox executes heavy computations efficiently in SQL.
+    Historically this was called by TSci agents; in V15.1 it is an optional utility
+    for executing Anofox-powered SQL operations from Python.
     """
 
     def __init__(
@@ -63,7 +69,7 @@ class AnofoxBridge:
     def clean_data(self, table_name: str, strategy: str = "gap_fill") -> pd.DataFrame:
         """
         Clean data using Anofox Tabular extension.
-        Called by TSci Curator Agent.
+        Historically called by TSci Curator Agent; now a generic utility.
 
         Args:
             table_name: Table name (with schema, e.g., 'raw.zl_prices')
@@ -112,7 +118,7 @@ class AnofoxBridge:
     def calculate_features(self, table_name: str) -> pd.DataFrame:
         """
         Calculate features using Anofox Statistics extension.
-        Called by TSci Planner Agent.
+        Historically called by TSci Planner Agent; now a generic utility.
 
         Args:
             table_name: Table name (with schema)
@@ -150,7 +156,7 @@ class AnofoxBridge:
     ) -> pd.DataFrame:
         """
         Generate baseline forecast using Anofox Forecast extension.
-        Called by TSci Forecaster Agent.
+        Historically called by TSci Forecaster Agent; now a generic utility.
 
         Args:
             table_name: Table name (with schema)
@@ -185,7 +191,7 @@ class AnofoxBridge:
     def calculate_metrics(self, actual: pd.DataFrame, predicted: pd.DataFrame) -> Dict:
         """
         Calculate forecast quality metrics using Anofox.
-        Called by TSci Reporter Agent.
+        Historically called by TSci Reporter Agent; now a generic utility.
 
         Args:
             actual: DataFrame with actual values

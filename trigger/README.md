@@ -1,5 +1,7 @@
 # Trigger.dev Jobs - CBI-V15 Orchestration
 
+> Fast-moving workspace: always check the latest `TRIGGER_SETUP.md`, `WEB_SCRAPING_TARGETS_MASTER.md`, `DATA_LINKS_MASTER.md`, and active master plan `.cursor/plans/ALL_PHASES_INDEX.md` before editing or adding jobs. Keep explorer clean; no duplicate jobs/scripts/MDs.
+
 **Purpose:** Domain-organized ingestion and orchestration for CBI-V15.
 
 **Key Principle:** Ingestion is organized by **source**, not topic. Each source has `Guides/`, `Scripts/`, and `README.md`.
@@ -16,13 +18,7 @@ trigger/
 ├── TRIGGER_SETUP.md               # Setup guide
 ├── WEB_SCRAPING_TARGETS_MASTER.md # ALL URLs to scrape
 │
-├── Adapters/                      # Shared utilities
-│   └── README.md
-│
-├── Analysts/                      # Multi-source analyst/news scrapers
-│   ├── Guides/
-│   ├── Scripts/
-│   │   └── collect_china_news.py
+├── Adapters/                      # Shared utilities (future)
 │   └── README.md
 │
 ├── CFTC/                          # Commitment of Traders
@@ -37,6 +33,13 @@ trigger/
 │   ├── Scripts/
 │   │   ├── collect_daily.py
 │   │   └── databento_ingest_job.ts
+│   └── README.md
+│
+├── DirectScrapers/                # Direct website scraping (not API)
+│   ├── Guides/
+│   ├── Scripts/
+│   │   ├── collect_china_news.py
+│   │   └── collect_tariff_news.py
 │   └── README.md
 │
 ├── EIA_EPA/                       # Energy & biofuels
@@ -55,10 +58,8 @@ trigger/
 │   │   └── fred_seed_harvest.ts
 │   └── README.md
 │
-├── Policy/                        # Policy/trade scrapers
-│   ├── Guides/
-│   ├── Scripts/
-│   │   └── collect_tariff_news.py
+├── Orchestration/                 # Cross-source orchestration
+│   ├── collect_all_buckets.py
 │   └── README.md
 │
 ├── ProFarmer/                     # Premium ag intelligence
@@ -74,16 +75,17 @@ trigger/
 │   ├── Guides/
 │   │   └── NEWS_PIPELINE.md
 │   ├── Scripts/
-│   │   ├── buckets/*.py
+│   │   ├── buckets/
+│   │   │   ├── collect_biofuel_policy.py
+│   │   │   ├── collect_china_demand.py
+│   │   │   ├── collect_tariffs_trade_policy.py
+│   │   │   └── collect_trump_truth_social.py
 │   │   ├── collect_news_buckets.py
 │   │   ├── direct_url_scraper.py
 │   │   ├── sentiment_calculator.py
 │   │   ├── intelligent_news_pipeline.ts
 │   │   └── news_to_signals_openai_agent.ts
 │   └── README.md
-│
-├── Scripts/                       # Cross-source orchestration
-│   └── collect_all_buckets.py
 │
 ├── TradingEconomics/              # Global commodity data
 │   ├── Guides/
@@ -92,9 +94,9 @@ trigger/
 │   │   └── tradingeconomics_goldmine.ts
 │   └── README.md
 │
-├── UofI_Feeds/                    # University of Illinois
+├── UofI_Feeds/                    # University of Illinois (CRITICAL)
 │   ├── Guides/
-│   ├── Scripts/
+│   ├── Scripts/                   # ⚠️ NEEDS IMPLEMENTATION
 │   └── README.md
 │
 ├── USDA/                          # Agricultural data
@@ -129,92 +131,59 @@ trigger/
 ---
 
 ## Single Source of Truth
-
-- ✅ **Canonical ingestion** → `trigger/<Source>/Scripts/`
-- ⚠️ `src/ingestion/` now only holds legacy pointers/README stubs; no active ingestion logic
-
----
-
-## Active Jobs
-
-| Job | Location | Target | Status |
-|-----|----------|--------|--------|
-| `collect_daily.py` | `DataBento/Scripts/` | `raw.databento_ohlcv_daily` | ✅ Active |
-| `collect_fred_rates_curve.py` | `FRED/Scripts/` | `raw.fred_economic` | ✅ Active |
-| `collect_eia_biofuels.py` | `EIA_EPA/Scripts/` | `raw.eia_biofuels` | ✅ Active |
-| `collect_news_buckets.py` | `ScrapeCreators/Scripts/` | `raw.scrapecreators_news_buckets` | ✅ Active |
-| `collect_all_buckets.py` | `Scripts/` | `raw.bucket_news` | ✅ Active |
-| `profarmer_all_urls.ts` | `ProFarmer/Scripts/` | `raw.bucket_news` | ✅ Active |
-| `ingest_cot.py` | `CFTC/Scripts/` | `raw.cftc_cot_*` | ✅ Active |
-| `ingest_wasde.py` | `USDA/Scripts/` | WASDE exports | ✅ Active |
+- ✅ Ingestion lives in `trigger/<Source>/Scripts/` (canonical)
+- ⚠️ `src/ingestion/` is legacy pointers only; no active ingestion logic
 
 ---
 
-## Priority Implementation Order
+## Status Snapshot (Dec 2025)
 
-### Phase 1: Critical Ingestion Jobs (NEEDED)
-1. **EPA RIN Prices** - `EIA_EPA/Scripts/epa_rin_prices.ts`
-2. **USDA Export Sales** - `USDA/Scripts/usda_fas_exports.ts`
-3. **CFTC COT** - `CFTC/Scripts/cftc_cot_reports.ts`
+### ✅ Implemented
+- DataBento: `collect_daily.py`, `databento_ingest_job.ts`
+- FRED: `collect_fred_*.py`, `fred_seed_harvest.ts`
+- EIA_EPA: `collect_eia_biofuels.py`, `eia_procurement_ingest.ts`
+- ScrapeCreators: `collect_news_buckets.py`, `intelligent_news_pipeline.ts`, bucket collectors
+- ProFarmer: `profarmer_*.ts`, `profarmer_anchor.py`
+- Vegas: `collect_vegas_intel.py`, `vegas_intel_job.ts`
+- CFTC: `ingest_cot.py`
+- USDA: `ingest_export_sales.py`, `ingest_wasde.py`
+- Weather: `ingest_weather.py`
+- DirectScrapers: `collect_china_news.py`, `collect_tariff_news.py`
 
-### Phase 2: News & Intelligence (NEEDED)
-4. **Farm Policy News** - `UofI_Feeds/Scripts/farmpolicynews.ts`
-5. **farmdoc Daily** - `UofI_Feeds/Scripts/farmdoc_daily.ts`
-
-### Phase 3: Weather (NEEDED)
-6. **NOAA Weather** - `Weather/Scripts/noaa_weather.ts`
-7. **INMET Brazil** - `Weather/Scripts/inmet_brazil.ts`
+### ⚠️ Needs Implementation
+- EPA RIN prices: `EIA_EPA/Scripts/epa_rin_prices.ts`
+- Farm Policy News: `UofI_Feeds/Scripts/farmpolicynews.ts` (CRITICAL)
+- farmdoc Daily: `UofI_Feeds/Scripts/farmdoc_daily.ts` (CRITICAL)
+- CFTC COT Trigger job: `CFTC/Scripts/cftc_cot_reports.ts`
+- USDA FAS Trigger job: `USDA/Scripts/usda_fas_exports.ts`
 
 ---
 
 ## Configuration
 
-### Environment Variables
-All jobs read from `process.env`:
-- `TRIGGER_SECRET_KEY`
-- `MOTHERDUCK_TOKEN`
-- `MOTHERDUCK_DB`
-- `DATABENTO_API_KEY`
-- `FRED_API_KEY`
-- `EIA_API_KEY`
+### Environment (common)
+- `MOTHERDUCK_TOKEN`, `MOTHERDUCK_DB`
+- `DATABENTO_API_KEY`, `FRED_API_KEY`, `EIA_API_KEY`
 - `SCRAPECREATORS_API_KEY`
-- `PROFARMER_USERNAME`
-- `PROFARMER_PASSWORD`
-- `OPENAI_API_KEY`
-- `ANCHOR_API_KEY`
+- `PROFARMER_USERNAME`, `PROFARMER_PASSWORD`, `ANCHOR_API_KEY`
+- `OPENAI_API_KEY` (for AI-powered jobs)
 
-### Scheduling
-- **Intraday**: Market data, news (every 15min - 1hr)
-- **Daily**: Macro data, weather, policy (1-3x daily)
-- **Weekly**: USDA exports, CFTC COT (weekly after release)
-- **Monthly**: WASDE, production reports (monthly after release)
+### Scheduling (typical)
+- Intraday: Market data, news (15–60 min)
+- Daily: Macro, policy, weather (1–3x/day)
+- Weekly: USDA exports, CFTC COT
+- Monthly: WASDE, production reports
 
 ---
 
-## Development
-
-### Setup
+## Development (local)
 ```bash
-# Install Trigger.dev CLI
-npm install -g @trigger.dev/cli
-
-# Initialize project
 cd trigger
-npx trigger.dev init
-
-# Deploy jobs
+npm install
+# run individual job locally
+npx trigger.dev run path/to/job.ts
+# deploy (when connected)
 npx trigger.dev deploy
 ```
 
-### Testing
-```bash
-# Test individual job
-npx trigger.dev run {job-name}
-
-# Monitor jobs
-npx trigger.dev logs
-```
-
----
-
-**Last Updated:** December 10, 2025
+**Last Updated:** December 13, 2025

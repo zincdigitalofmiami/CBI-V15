@@ -19,7 +19,7 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 
@@ -159,7 +159,7 @@ def main():
 ⚠️  WARNING: This script will DELETE ALL DATA in the database!
 
 This includes:
-  - All schemas (raw, staging, features, training, forecasts, reference, ops, tsci)
+  - All schemas (raw, staging, features, training, forecasts, reference, ops)
   - All tables
   - All data
   - All macros

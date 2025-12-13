@@ -108,10 +108,10 @@ def test_load_macros() -> None:
         """
     )
 
-    # FRED observations table (canonical source for all FRED data)
+    # FRED economic table (canonical source for all FRED data)
     con.execute(
         """
-        CREATE TABLE raw.fred_observations (
+        CREATE TABLE raw.fred_economic (
             date DATE,
             series_id TEXT,
             value DOUBLE
@@ -120,7 +120,7 @@ def test_load_macros() -> None:
     )
     con.execute(
         """
-        INSERT INTO raw.fred_observations VALUES
+        INSERT INTO raw.fred_economic VALUES
         ('2024-01-01', 'DGS10', 4.0),
         ('2024-01-01', 'DGS2', 4.5),
         ('2024-01-01', 'DFEDTARU', 5.5),

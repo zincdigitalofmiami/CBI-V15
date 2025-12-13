@@ -5,7 +5,7 @@ Shared utilities used across the application - API clients, credential managemen
 
 ## What Belongs Here
 - `keychain_manager.py` - macOS Keychain integration
-- `openai_client.py` - OpenAI API client for TSci
+- `openai_client.py` - OpenAI API client for orchestration/tools
 - Database connection utilities
 - Common helpers
 
@@ -15,5 +15,4 @@ Shared utilities used across the application - API clients, credential managemen
 
 ## Current Files
 - `keychain_manager.py` - Secure credential storage via macOS Keychain
-- `openai_client.py` - OpenAI client for TSci agent calls
-
+- `openai_client.py` - OpenAI client for CBI-V15 orchestration and tools

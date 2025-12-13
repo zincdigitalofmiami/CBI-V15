@@ -222,7 +222,7 @@ trigger/FRED/Scripts/fred_seed_harvest.ts
 
 **Frequency:** Weekly (updated monthly by EPA)
 
-**Status:** ✅ **Table definition exists** - `database/definitions/01_raw/epa_rin_prices.sql` ✅ **CREATED**
+**Status:** ✅ **Table definition exists** - `database/models/01_raw/epa_rin_prices.sql` ✅ **CREATED**
 
 ### 3.2 EIA (Energy Information Administration)
 
@@ -576,7 +576,6 @@ training    -- Training datasets
 forecasts   -- Model predictions
 reference   -- Calendars, catalogs, metadata
 ops         -- Pipeline metrics, logs
-tsci        -- TSci agent jobs/runs
 ```
 
 ---
@@ -876,6 +875,584 @@ All ingestion jobs organized by **source** in `trigger/<Source>/Scripts/`:
 - `trigger/TradingEconomics/Scripts/` - Global commodity data
 - `trigger/Policy/Scripts/` - Government & think tank policy docs
 - `trigger/Analysts/Scripts/` - Analyst feeds, social media
+
+---
+
+## 🌦️ 13. Weather Data - Expanded Coverage
+
+### 13.1 INMET Brazil (Institutional-Grade Weather)
+
+**API Endpoints:**
+```
+https://apitempo.inmet.gov.br/estacao/{start}/{end}/{station_id}
+https://apitempo.inmet.gov.br/token
+https://apitempo.inmet.gov.br/estacoes
+https://apitempo.inmet.gov.br/estacao/dados-estacao
+https://apitempo.inmet.gov.br/estacoes/T/A/,,/A/
+https://portal.inmet.gov.br/api/estacoes/automaticas
+```
+
+**Coverage:** Station-level data for all 6 Brazil soybean regions
+
+**Target Table:** `raw.noaa_weather_daily` (unified weather table)
+
+**Status:** ⚠️ **Needs implementation**
+
+### 13.2 Argentina SMN (Servicio Meteorológico Nacional)
+
+**API Endpoint:**
+```
+https://ssl.smn.gob.ar/dpd/descarga_opendata.php?file=observaciones/datohorario{station_id}.txt
+```
+
+**Coverage:** Hourly text data for 4 Argentina soybean regions
+
+**Target Table:** `raw.noaa_weather_daily`
+
+**Status:** ⚠️ **Needs implementation**
+
+### 13.3 Copernicus (ECMWF)
+
+**API Endpoint:**
+```
+https://cds.climate.copernicus.eu/api
+```
+
+**Coverage:** European Centre for Medium-Range Weather Forecasts
+
+**Status:** ⚠️ **Needs implementation**
+
+### 13.4 NOAA NOMADS GFS
+
+**Filter Endpoint:**
+```
+https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl
+```
+
+**Coverage:** Global Forecast System 0.25° resolution
+
+**Status:** ⚠️ **Needs implementation**
+
+### 13.5 Meteomatics
+
+**API Endpoint:**
+```
+https://api.meteomatics.com
+```
+
+**Status:** ⚠️ **Requires API key**
+
+---
+
+## 🏦 14. Central Banks & Treasury Data
+
+### 14.1 US Treasury Fiscal Data
+
+**API Endpoint:**
+```
+https://api.fiscaldata.treasury.gov/services/api/v1/
+```
+
+**Coverage:**
+- Treasury auctions: `https://www.treasurydirect.gov/auctions/`
+- TreasuryDirect: `https://www.treasurydirect.gov/`
+
+**Target Table:** `raw.fred_economic` (treasury data)
+
+**Status:** ⚠️ **Needs implementation**
+
+### 14.2 BLS (Bureau of Labor Statistics)
+
+**API Endpoint:**
+```
+https://api.bls.gov/publicAPI/v2/
+```
+
+**Key Series:**
+- UNRATE - Unemployment Rate
+- CPIAUCSL - Consumer Price Index
+- PAYEMS - Nonfarm Payrolls
+
+**Target Table:** `raw.fred_economic`
+
+**Status:** ⚠️ **Needs implementation**
+
+### 14.3 ECB (European Central Bank)
+
+**API Endpoint:**
+```
+https://sdw-wsrest.ecb.europa.eu/service/
+```
+
+**Coverage:** ECB SDW REST API
+
+**Target Table:** `raw.fred_economic`
+
+**Status:** ⚠️ **Needs implementation**
+
+### 14.4 Banco Central do Brasil (SGS)
+
+**API Endpoint:**
+```
+https://www3.bcb.gov.br/sgspub/
+```
+
+**Coverage:** Brazil monetary policy, FX rates (BRL/USD)
+
+**Target Table:** `raw.fred_economic`
+
+**Status:** ⚠️ **Needs implementation**
+
+### 14.5 PBOC (People's Bank of China)
+
+**URL:**
+```
+http://www.pbc.gov.cn/en/
+```
+
+**Coverage:** China monetary policy announcements
+
+**Status:** ⚠️ **Web scraping required**
+
+### 14.6 BCRA (Argentina Central Bank)
+
+**URL:**
+```
+http://www.bcra.gob.ar/
+```
+
+**Coverage:** Argentina monetary policy, ARS/USD rates
+
+**Status:** ⚠️ **Web scraping required**
+
+---
+
+## 📅 15. Economic Calendars (Real-Time Event Data)
+
+### 15.1 TradingEconomics Calendar
+
+**URL:**
+```
+https://tradingeconomics.com/calendar
+```
+
+**Status:** ✅ **Available via TradingEconomics API** (requires key)
+
+### 15.2 ForexFactory Calendar
+
+**URL:**
+```
+https://www.forexfactory.com/calendar
+```
+
+**Status:** ⚠️ **Web scraping required**
+
+### 15.3 Investing.com Calendar
+
+**URL:**
+```
+https://www.investing.com/economic-calendar/
+```
+
+**Status:** ⚠️ **Web scraping required**
+
+### 15.4 MarketWatch Calendar
+
+**URL:**
+```
+https://www.marketwatch.com/economy-politics/calendar
+```
+
+**Status:** ⚠️ **Web scraping required**
+
+---
+
+## 📈 16. Market Data - Alternative Sources
+
+### 16.1 Polygon.io
+
+**API Endpoint:**
+```
+https://api.polygon.io
+```
+
+**Documentation:**
+```
+https://polygon.io/docs/stocks/get_v2_aggs_tickerstocksTicker_rangemultipliertimespan_fromto
+```
+
+**Coverage:** Stocks, forex, crypto tick data
+
+**Credentials:**
+```bash
+POLYGON_API_KEY="your_key_here"
+```
+
+**Status:** ⚠️ **Available, needs implementation**
+
+### 16.2 Alpha Vantage
+
+**Coverage:** Free market data API (equities, FX, crypto)
+
+**Credentials (from v14):**
+```bash
+ALPHA_VANTAGE_API_KEY="BA7CQWXKRFBNFY49"
+```
+
+**Status:** ⚠️ **Free tier, limited to 5 calls/min**
+
+### 16.3 NY Fed Latest Rates
+
+**API Endpoint:**
+```
+https://markets.newyorkfed.org/api/rates/all/latest.json
+```
+
+**Coverage:** Fed rates in real-time JSON
+
+**Status:** ⚠️ **Free, no auth required**
+
+---
+
+## 🏛️ 17. Policy & Regulatory Sources
+
+### 17.1 Federal Register
+
+**API Endpoint:**
+```
+https://www.federalregister.gov/api/v1/documents.json
+```
+
+**Coverage:** US federal regulations, EPA rules, trade policy
+
+**Target Table:** `raw.bucket_news` (source: 'federal_register')
+
+**Status:** ⚠️ **Needs implementation**
+
+### 17.2 Immigration Enforcement (ICE/DHS/CBP)
+
+**URLs:**
+```
+https://www.ice.gov/news/releases
+https://www.dhs.gov/news-releases
+https://www.cbp.gov/newsroom
+```
+
+**Relevance:** Labor policy impacts on ag sector
+
+**Target Table:** `raw.bucket_news`
+
+**Status:** ⚠️ **Needs implementation**
+
+### 17.3 Fed Speeches & FOMC
+
+**URLs:**
+```
+https://www.federalreserve.gov/newsevents/speech/
+https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+```
+
+**Target Table:** `raw.bucket_news` (source: 'fed_communications')
+
+**Status:** ⚠️ **Needs implementation**
+
+---
+
+## 🌾 18. Farm Organizations & Advocacy
+
+**URLs:**
+```
+https://www.farmlabororganizing.org/
+https://ufw.org/
+https://www.wga.com/
+https://www.fb.org/newsroom/
+https://immigrationimpact.com/
+https://www.migrationpolicy.org/
+https://www.splcenter.org/issues/immigrant-justice
+https://www.cfbf.com/news/
+https://www.texasagriculture.gov/
+https://www.fdacs.gov/
+https://www.gfb.org/
+```
+
+**Target Table:** `raw.bucket_news` (source: 'farm_advocacy')
+
+**Status:** ⚠️ **Needs implementation**
+
+---
+
+## 🎯 19. Think Tanks & Trade Policy
+
+**URLs:**
+```
+https://www.heritage.org/agriculture
+https://americafirstpolicy.com/
+https://taxfoundation.org/research/all/federal/trade/
+https://www.aei.org/tag/trade-policy/
+https://www.piie.com/research/piie-charts/us-china-trade-war-tariffs-date-chart
+https://www.csis.org/programs/scholl-chair-international-business/trade-war-monitor
+https://www.uschina.org/
+```
+
+**Target Table:** `raw.bucket_news` (source: 'think_tank_policy')
+
+**Status:** ⚠️ **Needs implementation**
+
+---
+
+## 🗳️ 20. Campaign & Political Sources
+
+**URLs:**
+```
+https://www.donaldjtrump.com/news
+https://www.winred.com/save-america-joint-fundraising-committee/
+```
+
+**Target Table:** `raw.bucket_news` (source: 'campaign_political')
+
+**Status:** ⚠️ **Needs implementation**
+
+---
+
+## 📰 21. Ag/Commodities Media
+
+**URLs:**
+```
+https://www.agweb.com/news/crops/soybeans
+https://www.farmprogress.com/soybeans
+https://www.agriculture.com/markets-commodities
+https://www.agrimoney.com/news/grains-oilseeds/
+https://www.world-grain.com/
+https://www.conab.gov.br/ultimas-noticias
+https://abiove.org.br/en/statistics/
+https://www.agrimoney.com/news/china/
+https://www.reuters.com/business/commodities/
+https://www.eia.gov/biofuels/biodiesel/production/
+```
+
+**Target Table:** `raw.bucket_news` (source: 'ag_media')
+
+**Status:** ⚠️ **Needs implementation**
+
+---
+
+## 📱 22. Social Media Intelligence
+
+### 22.1 Truth Social (via ScrapeCreators)
+
+**Endpoints:**
+```
+https://api.scrapecreators.com/v1/truthsocial
+https://api.scrapecreators.com/v1/truthsocial/post
+https://truthsocial.com/@realDonaldTrump
+https://truthsocial.com/@realDonaldTrump/{post_id}
+```
+
+**Auth (from v14):**
+```bash
+SCRAPECREATORS_API_KEY="B1TOgQvMVSV6TDglqB8lJ2cirqi2"
+```
+
+**Status:** ✅ **Implemented** in `trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py`
+
+### 22.2 Facebook Pages (via ScrapeCreators)
+
+**Endpoint:**
+```
+https://api.scrapecreators.com/v1/facebook/post
+```
+
+**Target Pages:**
+```
+https://www.facebook.com/AmericanSoybeanAssociation/
+https://www.facebook.com/departmentoflabor
+https://www.facebook.com/USDA
+```
+
+**Status:** ⚠️ **Needs implementation**
+
+### 22.3 Reddit Agriculture
+
+**JSON Feed:**
+```
+https://www.reddit.com/r/agriculture.json
+```
+
+**Target Table:** `raw.bucket_news` (source: 'reddit_agriculture')
+
+**Status:** ⚠️ **Needs implementation**
+
+---
+
+## 🚢 23. Shipping & Logistics
+
+### 23.1 MarineTraffic
+
+**URL:**
+```
+https://www.marinetraffic.com/en/data/
+```
+
+**Coverage:** Vessel tracking, port congestion, grain shipping routes
+
+**Target Table:** `raw.shipping_logistics` ⚠️ **Table needs creation**
+
+**Status:** ⚠️ **Requires API subscription**
+
+---
+
+## 🔑 API Keys from V14 Archive (SECURITY AUDIT)
+
+**⚠️ CRITICAL: Hardcoded secrets detected in v14 - MUST rotate**
+
+### Found in v14 Code:
+```python
+# ScrapeCreators (EXPOSED)
+SCRAPECREATORS_API_KEY = "B1TOgQvMVSV6TDglqB8lJ2cirqi2"
+
+# FRED (EXPOSED)
+FRED_API_KEY = "dc195c8658c46ee1df83bcd4fd8a690b"
+
+# Alpha Vantage (EXPOSED)
+ALPHA_VANTAGE_API_KEY = "BA7CQWXKRFBNFY49"
+
+# NOAA (EXPOSED)
+NOAA_TOKEN = "rxoLrCxYOlQyWvVjbBGRlMMhIRElWKZi"
+```
+
+**ACTION REQUIRED:**
+1. Verify these keys still work
+2. Store in `.env` and macOS Keychain (NOT in code)
+3. Update all scripts to use `os.getenv()` or keychain_manager
+4. Consider rotating if they've been in public repos
+
+---
+
+## 📊 COMPLETE DATA SOURCE INVENTORY (50+ Sources)
+
+### **TIER 1: Core Market Data (4 sources)**
+1. Databento - 38 futures symbols
+2. CFTC - COT positioning for all 38
+3. Polygon.io - Alternative market data
+4. NY Fed - Real-time rates
+
+### **TIER 2: Macro/Economic (13 sources)**
+5. FRED - 24 US indicators
+6. US Treasury - Fiscal data, auctions
+7. BLS - Employment, CPI
+8. ECB - European rates
+9. Banco Central do Brasil - Brazil rates
+10. PBOC - China rates
+11. BCRA - Argentina rates
+12. Fed Speeches - Policy signals
+13. FOMC Calendars - Meeting dates
+14. TradingEconomics - Global macro
+15. ForexFactory Calendar
+16. Investing.com Calendar
+17. MarketWatch Calendar
+
+### **TIER 3: Weather (9 sources)**
+18. NOAA - US weather (14 regions)
+19. INMET Brazil - Station-level
+20. Argentina SMN - Hourly data
+21. Copernicus/ECMWF - European forecasts
+22. NOAA NOMADS GFS - Global models
+23. Meteomatics - High-resolution forecasts
+24. ProFarmer Weather - Ag-specific analysis
+
+### **TIER 4: Biofuels/Energy (3 sources)**
+25. EPA - RIN prices (D3/D4/D5/D6)
+26. EIA - Biofuel production, petroleum
+
+### **TIER 5: USDA/Supply (4 sources)**
+27. USDA WASDE - Monthly supply/demand
+28. USDA FAS - Export sales
+29. USDA NASS - Crop progress, conditions
+30. USDA Price Basis - Regional basis spreads
+
+### **TIER 6: News/Intelligence (15+ sources)**
+31. ScrapeCreators - 8 buckets (4 active)
+32. ProFarmer - Premium ag intelligence (22 URLs)
+33. Farm Policy News - UofI (Keith Good)
+34. farmdoc Daily - UofI (Scott Irwin, Carl Zulauf)
+35. Federal Register - Regulatory policy
+36. ICE/DHS/CBP - Immigration enforcement
+37. Trump Campaign - Political news
+38. AgWeb - Crop news
+39. Farm Progress - Ag markets
+40. Agriculture.com - Market analysis
+41. Agrimoney - Global grains
+42. World Grain - Industry news
+43. CONAB Brazil - Brazil production
+44. ABIOVE - Brazil exports
+45. Reuters Commodities - Breaking news
+
+### **TIER 7: Policy/Advocacy (10+ sources)**
+46. Heritage Foundation - Ag policy
+47. America First Policy - Trade policy
+48. Tax Foundation - Trade analysis
+49. AEI - Trade policy
+50. PIIE - Trade war charts
+51. CSIS - Trade war monitor
+52. US-China Business Council
+53. Farm Labor Organizing
+54. United Farm Workers
+55. Multiple state farm bureaus
+
+### **TIER 8: Social/Alternative (3 sources)**
+56. Truth Social - Trump posts
+57. Facebook - Ag organization pages
+58. Reddit Agriculture - Social sentiment
+
+### **TIER 9: Shipping/Logistics (1 source)**
+59. MarineTraffic - Vessel tracking
+
+---
+
+## 🗂️ TARGET TABLE MAPPING
+
+### Single-Schema Tables
+```sql
+raw.databento_ohlcv_daily          -- All 38 futures symbols
+raw.fred_economic                  -- All FRED, BLS, Treasury, Central Bank data
+raw.eia_biofuels                   -- EIA biofuel series
+raw.epa_rin_prices                 -- EPA RIN prices (D3/D4/D5/D6)
+raw.cftc_cot_disaggregated         -- COT data for all 38 symbols
+raw.cftc_cot_tff                   -- Traders in Financial Futures
+raw.noaa_weather_daily             -- All weather (NOAA, INMET, SMN, ECMWF)
+raw.bucket_news                    -- All news/policy/advocacy sources
+raw.scrapecreators_news_buckets    -- ScrapeCreators segmented news
+```
+
+### USDA Multi-Table
+```sql
+raw.usda_export_sales              -- FAS export data
+raw.usda_wasde                     -- WASDE reports
+raw.usda_crop_progress             -- Crop conditions
+raw.usda_price_basis               -- Regional basis
+```
+
+### Future Tables (if needed)
+```sql
+raw.shipping_logistics             -- MarineTraffic vessel data
+raw.economic_calendar              -- Event calendar aggregation
+```
+
+---
+
+## 🔒 Security Notes
+
+**⚠️ CRITICAL:** v14 had hardcoded API keys in code. All v15 ingestion MUST:
+1. Read keys from environment variables or macOS Keychain
+2. Never commit keys to git
+3. Use `src/utils/keychain_manager.py` for key retrieval
+4. Store in `.env` (gitignored)
+
+**Rotate immediately if v14 keys were exposed:**
+- FRED API key
+- NOAA token
+- Alpha Vantage key
+- Any keys found in public repos
 
 ---
 

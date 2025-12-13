@@ -18,3 +18,12 @@ Import from this folder in your ingestion scripts:
 import { httpClient } from "../Adapters/http_client";
 import { scrapeCreatorsAdapter } from "../Adapters/scrapecreators";
 ```
+
+
+
+
+
+
+
+
+

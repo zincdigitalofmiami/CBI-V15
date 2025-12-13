@@ -19,3 +19,12 @@ Premium agricultural market intelligence from ProFarmer (paid subscription).
 ## Authentication
 
 Requires `PROFARMER_USERNAME` and `PROFARMER_PASSWORD` environment variables.
+
+
+
+
+
+
+
+
+

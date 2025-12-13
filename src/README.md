@@ -6,12 +6,11 @@ Core Python application code. This is where the business logic lives.
 ## Structure
 ```
 src/
-├── engines/       # Model engine registry (LightGBM, TFT, etc.)
+├── engines/       # Model engine registry (AutoGluon + legacy baselines like LightGBM/TFT)
 ├── features/      # Feature engineering code
 ├── ingestion/     # Data collectors (one folder per source)
 ├── models/        # Model definitions (if needed locally)
 ├── training/      # Training pipelines
-├── tsci/          # TimeSeriesScientist agent layer
 └── utils/         # Shared utilities
 ```
 
@@ -31,4 +30,3 @@ src/
 - Files: `snake_case.py`
 - Classes: `PascalCase`
 - Functions: `snake_case`
-

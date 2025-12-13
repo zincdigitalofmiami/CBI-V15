@@ -86,3 +86,6 @@ data/duckdb/*.duckdb
 # Archive folder (legacy/backup files - not part of active repo)
 _archive/
 skaffold
+
+# MLX (install via pip, not source)
+mlx/

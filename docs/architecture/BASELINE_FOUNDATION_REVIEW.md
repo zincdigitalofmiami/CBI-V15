@@ -1,8 +1,8 @@
-# Baseline Foundation Review - Pre-Advanced Models
+# Baseline Foundation Review - Pre-Advanced Models (Historical)
 
 **Date**: November 28, 2025  
-**Goal**: Ensure robust foundation before complexity explosion  
-**Status**: ✅ **VALIDATED** (with recommendations)
+**Goal**: Ensure robust **data/feature** foundation before complexity explosion  
+**Status**: ✅ **VALIDATED** (with recommendations, **modeling architecture now superseded by V15.1 AutoGluon plan**)
 
 ---
 
@@ -302,11 +302,15 @@
 
 ---
 
-## 🎯 Part 3: Baseline Plan Review
+## 🎯 Part 3: Baseline Plan Review (Legacy)
 
-### Current Baseline Architecture
+### Legacy Baseline Architecture (v15.0)
 
-#### Phase 1: LightGBM Baselines ✅
+> **Note:** The LightGBM/TFT-centric baseline plan below predates the decision to standardize on **AutoGluon 1.4** as the modeling framework.  
+> In V15.1, these baselines are **optional reference benchmarks only**; the production stack is:
+> - Big 8 buckets → AutoGluon `TabularPredictor`
+> - Core ZL → AutoGluon `TimeSeriesPredictor`
+> - Meta + ensemble → AutoGluon stacking + `WeightedEnsemble_L2`
 
 **Models**:
 - ✅ LightGBM regression per horizon (1w, 1m, 3m, 6m)
@@ -614,4 +618,3 @@ The foundation is solid. We can proceed with baseline training while completing 
 ---
 
 **Last Updated**: November 28, 2025
-

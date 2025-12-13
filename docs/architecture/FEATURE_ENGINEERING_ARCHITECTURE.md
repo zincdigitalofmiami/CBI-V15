@@ -98,9 +98,9 @@
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  READY FOR ML TRAINING                                          │
-│  • CatBoost Quantile Regression (96 models)                     │
-│  • PyTorch TFT (16 models)                                      │
-│  • Monte Carlo Ensemble                                         │
+│  • AutoGluon TabularPredictor (Big 8 bucket specialists)        │
+│  • AutoGluon TimeSeriesPredictor (core ZL forecaster)           │
+│  • AutoGluon stacking + WeightedEnsemble_L2 + Monte Carlo       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -122,7 +122,7 @@
 
 ---
 
-## 🔄 Daily Update Workflow
+## 🔄 Daily Update Workflow (Aligned with V15.1)
 
 ```bash
 # 1. Ingest raw data (Databento, FRED, EIA, ScrapeCreators)
@@ -131,14 +131,16 @@ python trigger/FRED/Scripts/collect_fred_rates_curve.py
 python trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
 python trigger/ScrapeCreators/Scripts/collect_news_buckets.py
 
-# 2. Build features
+# 2. Build features (SQL-first via AnoFox)
 python src/engines/anofox/build_all_features.py
 
-# 3. Train models (next step)
-python src/training/probabilistic/train_catboost_all_buckets.py
+# 3. Train models (AutoGluon stack – see MASTER_PLAN)
+#    Big 8 buckets → AutoGluon TabularPredictor
+#    Core ZL       → AutoGluon TimeSeriesPredictor
 
-# 4. Generate forecasts
-python src/ensemble/monte_carlo_ensemble.py
+# 4. Generate forecasts & risk metrics
+#    Upload forecasts to MotherDuck (forecasts.*)
+#    Run Monte Carlo on final forecasts only
 ```
 
 ---
@@ -186,11 +188,11 @@ python src/ensemble/monte_carlo_ensemble.py
 
 ---
 
-## 🚧 Next Steps
+## 🚧 Next Steps (Conceptual)
 
-1. **Train CatBoost Models** (96 models)
-   - 8 buckets × 4 horizons × 3 quantiles
-   - Populate `*_neural_score` columns
+1. **Train AutoGluon Models**
+   - 8 Big 8 bucket specialists (TabularPredictor, quantile mode)
+   - Core ZL forecaster (TimeSeriesPredictor, quantile mode)
 
 2. **Add Sentiment Scores**
    - FinBERT on Mac MPS

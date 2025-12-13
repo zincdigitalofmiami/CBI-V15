@@ -13,3 +13,12 @@ Economic data ingestion from Federal Reserve Economic Data (FRED) API.
 ## Schedule
 
 - Daily at 1 AM UTC
+
+
+
+
+
+
+
+
+

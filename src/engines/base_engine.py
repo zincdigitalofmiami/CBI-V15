@@ -12,16 +12,17 @@ from pathlib import Path
 class BaseEngine(ABC):
     """
     Base class for all forecasting engines.
-    
-    All engines (TSci, Anofox, Chronos-2, AutoGluon) must implement this interface.
+
+    All engines (Anofox, AutoGluon, and any legacy baselines) must implement this interface.
+    TSci is no longer the primary orchestrator; it is optional/legacy.
     """
     
     def __init__(self, name: str, model_dir: Optional[Path] = None):
         """
         Initialize engine.
-        
+
         Args:
-            name: Engine name (e.g., 'tsci', 'anofox', 'chronos2', 'autogluon')
+            name: Engine name (e.g., 'anofox', 'autogluon', 'chronos2', 'baseline_lightgbm')
             model_dir: Directory to store model artifacts
         """
         self.name = name
@@ -116,4 +117,3 @@ class BaseEngine(ABC):
         # Default: return empty DataFrame
         # Subclasses should override if they support feature importance
         return pd.DataFrame(columns=['feature', 'importance'])
-

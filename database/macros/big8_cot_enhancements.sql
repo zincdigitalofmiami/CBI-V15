@@ -21,8 +21,8 @@
 -- ============================================================================
 
 CREATE OR REPLACE MACRO calc_cot_signal(
-    spec_net_pct DOUBLE,
-    comm_net_pct DOUBLE
+    spec_net_pct,
+    comm_net_pct
 ) AS (
     CASE
         -- Extreme long positioning (>30% of OI) = potential reversal (bearish)
@@ -44,7 +44,7 @@ CREATE OR REPLACE MACRO calc_cot_signal(
 -- Forward-fills weekly COT data to daily frequency
 -- ============================================================================
 
-CREATE OR REPLACE MACRO get_latest_cot_disagg(symbol_code TEXT) AS TABLE
+CREATE OR REPLACE MACRO get_latest_cot_disagg(symbol_code) AS TABLE
 SELECT
     d.as_of_date,
     COALESCE(
@@ -72,7 +72,7 @@ LEFT JOIN raw.cftc_cot_disaggregated cot
 -- MACRO: Get Latest COT Data for FX/Treasuries (TFF Report)
 -- ============================================================================
 
-CREATE OR REPLACE MACRO get_latest_cot_tff(symbol_code TEXT) AS TABLE
+CREATE OR REPLACE MACRO get_latest_cot_tff(symbol_code) AS TABLE
 SELECT
     d.as_of_date,
     COALESCE(
@@ -104,7 +104,7 @@ LEFT JOIN raw.cftc_cot_tff cot
 -- MACRO: Calculate COT Momentum (Week-over-Week Change)
 -- ============================================================================
 
-CREATE OR REPLACE MACRO calc_cot_momentum(symbol_code TEXT) AS TABLE
+CREATE OR REPLACE MACRO calc_cot_momentum(symbol_code) AS TABLE
 WITH cot_data AS (
     SELECT
         report_date,
@@ -128,7 +128,7 @@ WHERE prev_week_net_pct IS NOT NULL;
 -- MACRO: Calculate COT Extremes (Z-Score)
 -- ============================================================================
 
-CREATE OR REPLACE MACRO calc_cot_extremes(symbol_code TEXT, lookback_weeks INT) AS TABLE
+CREATE OR REPLACE MACRO calc_cot_extremes(symbol_code, lookback_weeks) AS TABLE
 WITH cot_stats AS (
     SELECT
         report_date,
@@ -177,4 +177,3 @@ FROM cot_stats;
 
 -- Get COT extremes for Crude Oil (CL)
 -- SELECT * FROM calc_cot_extremes('CL', 52) ORDER BY report_date DESC LIMIT 10;
-

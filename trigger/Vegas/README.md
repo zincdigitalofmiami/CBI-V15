@@ -13,3 +13,12 @@ Las Vegas events and demand intelligence from Glide API.
 ## Schedule
 
 - Daily at 3 AM UTC
+
+
+
+
+
+
+
+
+

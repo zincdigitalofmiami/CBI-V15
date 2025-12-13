@@ -221,7 +221,7 @@ WITH fed_data AS (
         MAX(CASE WHEN series_id = 'DGS10' THEN value END) AS dgs10,
         MAX(CASE WHEN series_id = 'DGS2' THEN value END) AS dgs2,
         MAX(CASE WHEN series_id = 'DFEDTARU' THEN value END) AS fed_rate
-    FROM raw.fred_observations
+    FROM raw.fred_economic
     WHERE series_id IN ('DGS10', 'DGS2', 'DFEDTARU')
     GROUP BY date
 ),
@@ -413,7 +413,7 @@ WITH vol_data AS (
     SELECT
         date AS as_of_date,
         MAX(CASE WHEN series_id = 'VIXCLS' THEN value END) AS vix
-    FROM raw.fred_observations
+    FROM raw.fred_economic
     WHERE series_id = 'VIXCLS'
     GROUP BY date
 ),

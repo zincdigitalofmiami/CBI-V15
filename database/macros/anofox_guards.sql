@@ -98,3 +98,12 @@ CREATE OR REPLACE MACRO fill_weekly_to_daily(
 
 
 
+
+
+
+
+
+
+
+
+

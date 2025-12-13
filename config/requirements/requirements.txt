@@ -34,6 +34,14 @@ autogluon.core>=1.4.0
 #       "extreme_quality" preset will run on CPU but is much faster with a CUDA GPU (32GB+ VRAM recommended).
 #       The libomp fix (see scripts/setup/install_autogluon_mac.sh) is STILL CRITICAL for the tree models
 #       (LightGBM, CatBoost, XGBoost) within the extreme_quality preset to avoid segfaults on Mac M4.
+#
+# NOTE: Mitra (Salesforce time-series foundation model) works well on Mac M4 with Metal (MPS) acceleration.
+#       Use Mitra as fallback when Chronos-Bolt hangs on Mac M4 (see src/training/autogluon/mitra_trainer.py).
+
+# =============================================================================
+# Time Series Foundation Models (Mac M4 Metal-Accelerated)
+# =============================================================================
+mitra-forecast>=0.1.0  # Salesforce Mitra - Metal (MPS) compatible on Mac M4
 
 # =============================================================================
 # Baseline Models (Legacy - being phased out for AutoGluon)

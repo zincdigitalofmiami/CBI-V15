@@ -34,10 +34,12 @@
 - **AutoGluon 1.4**: Primary engine using hybrid TabularPredictor + TimeSeriesPredictor
   - TabularPredictor with `presets='extreme_quality'` for bucket specialists (includes foundation models)
      - TabularPredictor with `presets='extreme_quality'` for main ZL predictor (all 300+ features)
-     - TimeSeriesPredictor with Chronos-Bolt for zero-shot baseline (CPU-compatible)
+     - TimeSeriesPredictor (Chronos-Bolt excluded on Mac M4 due to mutex hang - uses alternative models)
+     - **Mitra (Salesforce)**: Metal-accelerated time series foundation model via `mitra_trainer.py` (optional fallback)
    - **NO Vertex AI, NO BQML, NO Cloud AutoML**
-   - **Mac M4**: All training runs locally on CPU.
+   - **Mac M4**: All training runs locally on CPU with Metal (MPS) acceleration where available.
    - **Note**: Foundation models (TabPFNv2, Mitra, TabICL) included in `extreme_quality` will run on Mac M4 CPU, but will be significantly slower than with a GPU. The `libomp` fix in `scripts/setup/install_autogluon_mac.sh` is still required for the tree model components (LightGBM, CatBoost, XGBoost).
+   - **Mitra Integration**: Available at `src/training/autogluon/mitra_trainer.py` with Metal (MPS) support for Mac M4. See implementation notes in `src/training/README.md`.
 
 **Model Stack** (~90-135 models total):
 - **L0**: 9 specialists (8 bucket specialists + 1 main ZL predictor)
@@ -130,7 +132,7 @@
 
 ### File Organization
 - **DuckDB SQL Macros** → `database/macros/` (AnoFox feature engineering)
-- **Raw Table Definitions** → `database/definitions/01_raw/`
+- **Raw Table Definitions** → `database/models/01_raw/`
 - **Python/Trigger Ingestion** → `trigger/<Source>/Scripts/`
 - **AutoGluon Training** → `src/training/autogluon/`
 - **Trigger.dev Jobs** → `trigger/`
@@ -171,7 +173,7 @@
 - `src/` - Python source code (ingestion, training, engines, models)
   - `src/engines/anofox/` - AnoFox bridge to DuckDB
   - `src/training/autogluon/` - AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
-  - `src/models/tsci/` - TSci LLM agents (optional strategic layer)
+  - (TSci LLM agents removed in V15.1; orchestration now handled directly via AutoGluon + SQL)
   - `trigger/<Source>/Scripts/` - Data collection scripts (per-source)
 - `trigger/` - Trigger.dev orchestration jobs
 - `data/` - Local DuckDB mirror + model artifacts
@@ -253,7 +255,7 @@
 
 ### MotherDuck Schema Structure
 
-**Schemas**: raw, staging, features, training, forecasts, reference, ops, tsci
+**Schemas**: raw, staging, features, training, forecasts, reference, ops
 **Primary Keys**: All tables use `as_of_date` (NOT `date`) for consistency
 **Indexing**: DuckDB handles automatically
 **Master Feature Table**: `features.daily_ml_matrix` (300+ features)

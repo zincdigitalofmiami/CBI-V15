@@ -15,9 +15,9 @@ export default function StrategyPage() {
                     {/* Strategy Summary */}
                     <section className="bg-[#1a1f2e] border border-[#2a2f3e] rounded-lg p-6">
                         <h2 className="text-xl font-light text-white mb-4">Strategy Summary</h2>
-                        <p className="text-gray-300 italic">TSci reporter recommendation will appear here</p>
+                        <p className="text-gray-300 italic">AutoGluon + SQL strategy summary will appear here</p>
                         <div className="mt-4 text-sm text-gray-600">
-                            Data source: <code className="text-gray-400">tsci.runs.metrics_json</code>
+                            Data source: <code className="text-gray-400">forecasts.zl_predictions, reference.model_registry</code>
                         </div>
                     </section>
 

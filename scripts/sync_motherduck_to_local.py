@@ -50,7 +50,6 @@ ALL_SCHEMAS = [
     "forecasts",
     "reference",
     "ops",
-    "tsci",
 ]
 
 
@@ -402,5 +401,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
 
 

@@ -17,3 +17,12 @@ Global commodity and economic data from TradingEconomics API (paid).
 ## Authentication
 
 Requires `TRADINGECONOMICS_API_KEY` environment variable.
+
+
+
+
+
+
+
+
+

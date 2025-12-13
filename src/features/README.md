@@ -9,11 +9,11 @@ Feature engineering code - Python implementations of technical indicators and fe
 - Feature validation utilities
 
 ## What Does NOT Belong Here
-- Feature SQL definitions (→ `database/definitions/03_features/`)
+- Feature SQL definitions (→ `database/models/03_features/`)
 - Feature documentation (→ `docs/features/`)
 
 ## Relationship to Database
-- SQL in `database/definitions/03_features/` defines how features are STORED
+- SQL in `database/models/03_features/` defines how features are STORED
 - Python here defines how features are COMPUTED (for streaming/incremental)
 - For batch processing, prefer SQL; for streaming, use Python
 
