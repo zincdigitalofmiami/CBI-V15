@@ -7,9 +7,9 @@ from datetime import datetime
 
 # Regime thresholds
 REGIME_THRESHOLDS = {
-    "CALM": {"vix_max": 20, "vol_zscore_max": 0.5},
-    "STRESSED": {"vix_max": 30, "vol_zscore_max": 1.5},
-    "CRISIS": {"vix_min": 30, "vol_zscore_min": 1.5},
+    "CALM": {"vix_max": 20, "volatility_zscore_max": 0.5},
+    "STRESSED": {"vix_max": 30, "volatility_zscore_max": 1.5},
+    "CRISIS": {"vix_min": 30, "volatility_zscore_min": 1.5},
 }
 
 

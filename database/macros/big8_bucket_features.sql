@@ -436,18 +436,18 @@ zl_vol AS (
             PARTITION BY symbol
             ORDER BY as_of_date
             ROWS BETWEEN 20 PRECEDING AND CURRENT ROW
-        ) * SQRT(252) AS zl_realized_vol_21d
+        ) * SQRT(252) AS zl_realized_volatility_21d
     FROM zl_returns
 ),
-vol_features AS (
+volatility_features AS (
     SELECT
         v.as_of_date,
         v.vix,
-        z.zl_realized_vol_21d,
+        z.zl_realized_volatility_21d,
         -- VIX momentum
         (v.vix - LAG(v.vix, 21) OVER (ORDER BY v.as_of_date)) / NULLIF(LAG(v.vix, 21) OVER (ORDER BY v.as_of_date), 0) AS vix_momentum,
         -- ZL volatility momentum
-        (z.zl_realized_vol_21d - LAG(z.zl_realized_vol_21d, 21) OVER (ORDER BY v.as_of_date)) / NULLIF(LAG(z.zl_realized_vol_21d, 21) OVER (ORDER BY v.as_of_date), 0) AS zl_volatility_momentum
+        (z.zl_realized_volatility_21d - LAG(z.zl_realized_volatility_21d, 21) OVER (ORDER BY v.as_of_date)) / NULLIF(LAG(z.zl_realized_volatility_21d, 21) OVER (ORDER BY v.as_of_date), 0) AS zl_volatility_momentum
     FROM vol_data v
     LEFT JOIN zl_vol z ON v.as_of_date = z.as_of_date
 )
@@ -456,10 +456,10 @@ SELECT
     -- Score: Inverse of volatility (high volatility = risk-off = lower score)
     50 - (vix_momentum * 25) - (zl_volatility_momentum * 25) AS volatility_bucket_score,
     vix,
-    zl_realized_vol_21d AS zl_volatility,
+    zl_realized_volatility_21d AS zl_volatility,
     vix_momentum,
     zl_volatility_momentum
-FROM vol_features;
+FROM volatility_features;
 
 -- ============================================================================
 -- MASTER: ALL BIG 8 BUCKET SCORES
