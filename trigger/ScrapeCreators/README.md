@@ -13,12 +13,13 @@ News and sentiment data from ScrapeCreators API.
 
 ## Target Tables
 
-- `raw.bucket_news` - Raw news articles
+- `raw.scrapecreators_news_buckets` - Raw news articles
 - `features.news_signals` - Processed signals with sentiment, impact, themes
 
 ## Schedule
 
 - Every 15 minutes (real-time monitoring)
+
 
 
 

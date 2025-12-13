@@ -116,7 +116,7 @@ export const profarmerDailyIngest = task({
         created_at: new Date().toISOString(),
       }));
       
-      await motherduck.insertBatch("raw.bucket_news", records);
+      await motherduck.insertBatch("raw.scrapecreators_news_buckets", records);
       
       console.log(`[ProFarmer] Loaded ${records.length} articles to MotherDuck`);
       

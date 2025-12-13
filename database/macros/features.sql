@@ -19,7 +19,7 @@ WITH base_calcs AS (
         LAG(close, 5) OVER (PARTITION BY symbol ORDER BY as_of_date) AS lag_close_5d,
         LAG(close, 10) OVER (PARTITION BY symbol ORDER BY as_of_date) AS lag_close_10d,
         LAG(close, 21) OVER (PARTITION BY symbol ORDER BY as_of_date) AS lag_close_21d
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
 ),
 returns_calcs AS (
@@ -71,7 +71,7 @@ SELECT
     LN(LEAD(close, 21)  OVER (PARTITION BY symbol ORDER BY as_of_date) / NULLIF(close, 0)) AS target_ret_1m,
     LN(LEAD(close, 63)  OVER (PARTITION BY symbol ORDER BY as_of_date) / NULLIF(close, 0)) AS target_ret_3m,
     LN(LEAD(close, 126) OVER (PARTITION BY symbol ORDER BY as_of_date) / NULLIF(close, 0)) AS target_ret_6m
-FROM raw.databento_ohlcv_daily
+FROM raw.databento_futures_ohlcv_1d
 WHERE symbol = sym;
 
 -- Master Feature Matrix Macro

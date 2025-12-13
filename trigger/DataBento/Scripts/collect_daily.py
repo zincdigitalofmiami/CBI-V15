@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Collect daily OHLCV futures data from Databento API
-Stores to: raw.databento_ohlcv_daily
+Stores to: raw.databento_futures_ohlcv_1d
 
 NOTE: This stores to DuckDB/MotherDuck, NOT BigQuery.
 """
@@ -140,7 +140,7 @@ def collect_daily_data(
         # Convert to DataFrame
         df = pd.DataFrame(data)
 
-        # Standardize column names to match raw.databento_ohlcv_daily schema
+        # Standardize column names to match raw.databento_futures_ohlcv_1d schema
         df = df.rename(
             columns={
                 "ts_event": "as_of_date",
@@ -194,7 +194,7 @@ def main(use_motherduck: bool = True):
         result = con.execute(
             """
             SELECT MAX(as_of_date) as last_date
-            FROM raw.databento_ohlcv_daily
+            FROM raw.databento_futures_ohlcv_1d
             WHERE symbol = 'ZL'
         """
         ).df()
@@ -231,12 +231,12 @@ def main(use_motherduck: bool = True):
     try:
         con.execute(
             """
-            INSERT INTO raw.databento_ohlcv_daily 
+            INSERT INTO raw.databento_futures_ohlcv_1d 
             SELECT * FROM combined_df
         """
         )
         logger.info(
-            f"✅ Successfully loaded {len(combined_df)} rows to raw.databento_ohlcv_daily"
+            f"✅ Successfully loaded {len(combined_df)} rows to raw.databento_futures_ohlcv_1d"
         )
     except Exception as e:
         logger.error(f"❌ Failed to load data: {e}")

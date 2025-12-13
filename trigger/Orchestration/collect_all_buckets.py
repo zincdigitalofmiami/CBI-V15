@@ -41,7 +41,7 @@ from ProFarmer.Scripts.profarmer_anchor import fetch_profarmer_articles
 
 MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
-RAW_TABLE = "raw.bucket_news"  # Separate table from scrapecreators_news_buckets
+RAW_TABLE = "raw.scrapecreators_news_buckets"  # Separate table from scrapecreators_news_buckets
 
 
 def fetch_all_bucket_news() -> List[Dict[str, Any]]:
@@ -115,7 +115,7 @@ def deduplicate_by_url(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def load_to_motherduck(articles: List[Dict[str, Any]]) -> None:
-    """Load articles to MotherDuck raw.bucket_news table"""
+    """Load articles to MotherDuck raw.scrapecreators_news_buckets table"""
     if not articles:
         print("[motherduck] No articles to load")
         return

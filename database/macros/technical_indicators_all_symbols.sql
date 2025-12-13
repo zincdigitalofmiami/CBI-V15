@@ -21,7 +21,7 @@ WITH price_changes AS (
         symbol,
         close,
         close - LAG(close, 1) OVER w AS price_change
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
     WINDOW w AS (PARTITION BY symbol ORDER BY as_of_date)
 ),
@@ -65,7 +65,7 @@ WITH ema_calcs AS (
         -- EMA approximation using SMA (good enough for features)
         AVG(close) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN fast - 1 PRECEDING AND CURRENT ROW) AS ema_fast,
         AVG(close) OVER (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN slow - 1 PRECEDING AND CURRENT ROW) AS ema_slow
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
 ),
 macd_line AS (
@@ -96,7 +96,7 @@ WITH stats AS (
         close,
         AVG(close) OVER w AS bb_middle,
         STDDEV(close) OVER w AS bb_std
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
     WINDOW w AS (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN period - 1 PRECEDING AND CURRENT ROW)
 )
@@ -128,7 +128,7 @@ WITH true_range AS (
             ABS(high - LAG(close, 1) OVER w),
             ABS(low - LAG(close, 1) OVER w)
         ) AS tr
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
     WINDOW w AS (PARTITION BY symbol ORDER BY as_of_date)
 )
@@ -153,7 +153,7 @@ WITH high_low AS (
         low,
         MAX(high) OVER w AS highest_high,
         MIN(low) OVER w AS lowest_low
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
     WINDOW w AS (PARTITION BY symbol ORDER BY as_of_date ROWS BETWEEN period - 1 PRECEDING AND CURRENT ROW)
 ),
@@ -187,7 +187,7 @@ WITH price_data AS (
         LAG(close, 10) OVER w AS lag_10d,
         LAG(close, 21) OVER w AS lag_21d,
         LAG(close, 63) OVER w AS lag_63d
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
     WINDOW w AS (PARTITION BY symbol ORDER BY as_of_date)
 )
@@ -217,7 +217,7 @@ WITH volume_data AS (
         LAG(close, 1) OVER w AS prev_close,
         AVG(volume) OVER (w ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS avg_volume_21d,
         STDDEV(volume) OVER (w ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS std_volume_21d
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = sym
     WINDOW w AS (PARTITION BY symbol ORDER BY as_of_date)
 )

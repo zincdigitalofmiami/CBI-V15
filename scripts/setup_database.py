@@ -3,6 +3,7 @@
 Database Setup Script
 
 Deploys all schemas, tables, macros, and views to MotherDuck/DuckDB.
+Reads DDL files from database/ddl/ in numeric order.
 
 Usage:
     python scripts/setup_database.py --motherduck  # Deploy to MotherDuck
@@ -18,8 +19,9 @@ from datetime import datetime
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATABASE_DIR = ROOT_DIR / "database"
-MODELS_DIR = DATABASE_DIR / "models"
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
+DDL_DIR = DATABASE_DIR / "ddl"
+MACROS_DIR = DATABASE_DIR / "macros"
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "usoil_intelligence")
 
 
 def get_motherduck_connection():
@@ -43,8 +45,15 @@ def execute_sql_file(con: duckdb.DuckDBPyConnection, file_path: Path, descriptio
     try:
         with open(file_path, "r") as f:
             sql = f.read()
+            # Remove SQL comments before splitting
+            lines = []
+            for line in sql.split("\n"):
+                stripped = line.strip()
+                if not stripped.startswith("--"):
+                    lines.append(line)
+            clean_sql = "\n".join(lines)
             # Split by semicolon and execute each statement
-            statements = [s.strip() for s in sql.split(";") if s.strip()]
+            statements = [s.strip() for s in clean_sql.split(";") if s.strip()]
             for stmt in statements:
                 if stmt:
                     con.execute(stmt)
@@ -56,153 +65,68 @@ def execute_sql_file(con: duckdb.DuckDBPyConnection, file_path: Path, descriptio
 
 
 def setup_schemas(con: duckdb.DuckDBPyConnection):
-    """Create all schemas"""
+    """Create all schemas from ddl/00_schemas.sql"""
     print("\n📦 Creating schemas...")
-    schema_file = MODELS_DIR / "00_init" / "00_schemas.sql"
-    return execute_sql_file(con, schema_file, "Creating 8 schemas")
+    schema_file = DDL_DIR / "00_schemas.sql"
+    if not schema_file.exists():
+        print(f"    ❌ Schema file not found: {schema_file}")
+        return False
+    return execute_sql_file(con, schema_file, "Creating 9 schemas")
 
 
-def setup_raw_tables(con: duckdb.DuckDBPyConnection):
-    """Create raw data tables"""
-    print("\n📥 Creating raw tables...")
-    raw_dir = MODELS_DIR / "01_raw"
-
-    files = [
-        "bucket_news.sql",
-        "databento_daily.sql",
-        "databento_futures.sql",
-        "eia_biofuels.sql",
-        "epa_rin_prices.sql",
-        "scrapecreators_buckets.sql",
-        "cftc_cot.sql",  # CFTC COT tables
-        "fred_observations.sql",
-        "fred_series_metadata.sql",
-        "noaa_weather.sql",  # Weather data
-        "ops_training_logs.sql",
-        "tradingeconomics_commodities.sql",
-        "usda_data.sql",  # USDA WASDE, export sales, crop progress
-    ]
-
+def setup_ddl_folder(con: duckdb.DuckDBPyConnection, folder_name: str, description: str):
+    """Execute all SQL files in a DDL subfolder in numeric order"""
+    folder_path = DDL_DIR / folder_name
+    if not folder_path.exists():
+        print(f"  ⚠️  Folder not found: {folder_path}")
+        return True  # Not a failure, just skip
+    
+    print(f"\n📥 {description}...")
+    
+    # Get all .sql files sorted by name (numeric prefix)
+    sql_files = sorted(folder_path.glob("*.sql"))
+    if not sql_files:
+        print(f"  ⚠️  No SQL files in {folder_name}")
+        return True
+    
     success = True
-    for file in files:
-        file_path = raw_dir / file
-        if file_path.exists():
-            success &= execute_sql_file(con, file_path, f"Creating {file}")
-        else:
-            print(f"  ⚠️  {file} not found, skipping")
-
-    return success
-
-
-def setup_staging_tables(con: duckdb.DuckDBPyConnection):
-    """Create staging tables"""
-    print("\n🔄 Creating staging tables...")
-    staging_dir = MODELS_DIR / "02_staging"
-
-    files = [
-        "market_daily.sql",
-        "crush_daily.sql",
-        "china_daily.sql",
-        "news_bucketed.sql",
-    ]
-
-    success = True
-    for file in files:
-        file_path = staging_dir / file
-        if file_path.exists():
-            success &= execute_sql_file(con, file_path, f"Creating {file}")
-        else:
-            print(f"  ⚠️  {file} not found, skipping")
-
-    return success
-
-
-def setup_feature_tables(con: duckdb.DuckDBPyConnection):
-    """Create feature tables and views"""
-    print("\n📊 Creating feature tables and views...")
-    features_dir = MODELS_DIR / "03_features"
-
-    files = [
-        "core_macro_fx.sql",  # Core macro/FX view (CRITICAL - base for all buckets)
-        "technical_indicators_all_symbols.sql",
-        "news_signals.sql",
-        "daily_ml_matrix.sql"
-    ]
-
-    success = True
-    for file in files:
-        file_path = features_dir / file
-        if file_path.exists():
-            success &= execute_sql_file(con, file_path, f"Creating {file}")
-        else:
-            print(f"  ⚠️  {file} not found, skipping")
-
-    return success
-
-
-def setup_training_tables(con: duckdb.DuckDBPyConnection):
-    """Create training tables"""
-    print("\n🎯 Creating training tables...")
-    training_dir = MODELS_DIR / "04_training"
-
-    files = [
-        "daily_ml_matrix.sql",
-        "bucket_predictions.sql",
-    ]
-
-    success = True
-    for file in files:
-        file_path = training_dir / file
-        if file_path.exists():
-            success &= execute_sql_file(con, file_path, f"Creating {file}")
-        else:
-            print(f"  ⚠️  {file} not found, skipping")
-
-    return success
-
-
-def setup_forecasts_tables(con: duckdb.DuckDBPyConnection):
-    """Create forecasts tables"""
-    print("\n📈 Creating forecasts tables...")
-    forecasts_dir = MODELS_DIR / "07_forecasts"
-
-    files = [
-        "zl_predictions.sql",
-    ]
-
-    success = True
-    for file in files:
-        file_path = forecasts_dir / file
-        if file_path.exists():
-            success &= execute_sql_file(con, file_path, f"Creating {file}")
-        else:
-            print(f"  ⚠️  {file} not found, skipping")
-
+    for sql_file in sql_files:
+        result = execute_sql_file(con, sql_file, f"Running {sql_file.name}")
+        success = success and result
+    
     return success
 
 
 def load_macros(con: duckdb.DuckDBPyConnection):
-    """Load all SQL macros"""
+    """Load all SQL macros from database/macros/"""
     print("\n🔧 Loading SQL macros...")
-    macros_dir = DATABASE_DIR / "macros"
-
-    files = [
+    
+    if not MACROS_DIR.exists():
+        print(f"  ⚠️  Macros directory not found: {MACROS_DIR}")
+        return True
+    
+    # Load macros in dependency order
+    macro_files = [
+        "utils.sql",
+        "asof_joins.sql",
+        "anofox_guards.sql",
         "features.sql",
         "technical_indicators_all_symbols.sql",
         "cross_asset_features.sql",
-        "big8_cot_enhancements.sql",  # COT helper macros
+        "big8_cot_enhancements.sql",
         "big8_bucket_features.sql",
         "master_feature_matrix.sql",
     ]
-
+    
     success = True
-    for file in files:
-        file_path = macros_dir / file
+    for file in macro_files:
+        file_path = MACROS_DIR / file
         if file_path.exists():
-            success &= execute_sql_file(con, file_path, f"Loading {file}")
+            result = execute_sql_file(con, file_path, f"Loading {file}")
+            success = success and result
         else:
             print(f"  ⚠️  {file} not found, skipping")
-
+    
     return success
 
 
@@ -212,24 +136,31 @@ def verify_setup(con: duckdb.DuckDBPyConnection):
 
     # Check schemas
     schemas = con.execute(
-        "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema'"
+        """SELECT schema_name FROM information_schema.schemata 
+           WHERE schema_name IN ('raw', 'staging', 'features', 'features_dev', 
+                                 'training', 'forecasts', 'reference', 'ops', 'explanations')
+           ORDER BY schema_name"""
     ).fetchall()
-    print(f"  Schemas: {len(schemas)} found")
+    print(f"  Schemas: {len(schemas)}/9 found")
     for schema in schemas:
         print(f"    - {schema[0]}")
 
     # Check tables
     tables = con.execute(
-        """
-        SELECT table_schema, table_name
-        FROM information_schema.tables
-        WHERE table_schema IN ('raw', 'staging', 'features', 'training', 'forecasts', 'reference')
-        ORDER BY table_schema, table_name
-    """
+        """SELECT table_schema, table_name
+           FROM information_schema.tables
+           WHERE table_schema IN ('raw', 'staging', 'features', 'training', 
+                                  'forecasts', 'reference', 'ops', 'explanations')
+           ORDER BY table_schema, table_name"""
     ).fetchall()
     print(f"\n  Tables: {len(tables)} found")
+    
+    # Group by schema
+    by_schema = {}
     for schema, table in tables:
-        print(f"    - {schema}.{table}")
+        by_schema.setdefault(schema, []).append(table)
+    for schema, tbls in sorted(by_schema.items()):
+        print(f"    {schema}: {len(tbls)} tables")
 
     return True
 
@@ -238,31 +169,15 @@ def cleanup_existing_schemas(con: duckdb.DuckDBPyConnection, target_name: str):
     """Drop all existing schemas before setup"""
     print(f"\n🗑️  Cleaning up existing schemas in {target_name}...")
 
-    # Get all schemas to drop
-    schemas = con.execute(
-        """
-        SELECT schema_name
-        FROM information_schema.schemata
-        WHERE schema_name NOT LIKE 'pg_%'
-        AND schema_name NOT IN ('information_schema', 'main')
-        ORDER BY schema_name
-    """
-    ).fetchall()
-
-    if not schemas:
-        print("  ✅ No existing schemas to clean up")
-        return True
-
-    # Drop each schema with CASCADE
-    for schema in schemas:
-        schema_name = schema[0]
-        print(f"  Dropping schema: {schema_name}")
+    schemas_to_drop = ['raw', 'staging', 'features', 'features_dev', 
+                       'training', 'forecasts', 'reference', 'ops', 'explanations']
+    
+    for schema_name in schemas_to_drop:
         try:
             con.execute(f"DROP SCHEMA IF EXISTS {schema_name} CASCADE")
             print(f"    ✅ Dropped {schema_name}")
         except Exception as e:
-            print(f"    ❌ Error dropping {schema_name}: {e}")
-            return False
+            print(f"    ⚠️  {schema_name}: {e}")
 
     print(f"  ✅ Cleanup complete")
     return True
@@ -271,7 +186,7 @@ def cleanup_existing_schemas(con: duckdb.DuckDBPyConnection, target_name: str):
 def main():
     """Main setup function"""
     parser = argparse.ArgumentParser(
-        description="Setup CBI-V15 database",
+        description="Setup CBI-V15 database from ddl/ folder",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -282,24 +197,17 @@ Examples:
   python scripts/setup_database.py --both --force
         """,
     )
-    parser.add_argument(
-        "--motherduck", action="store_true", help="Deploy to MotherDuck"
-    )
+    parser.add_argument("--motherduck", action="store_true", help="Deploy to MotherDuck")
     parser.add_argument("--local", action="store_true", help="Deploy to local DuckDB")
-    parser.add_argument(
-        "--both", action="store_true", help="Deploy to both MotherDuck and local"
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force fresh setup (drops all existing schemas first)",
-    )
+    parser.add_argument("--both", action="store_true", help="Deploy to both")
+    parser.add_argument("--force", action="store_true", help="Force fresh setup (drops schemas first)")
+    parser.add_argument("--skip-macros", action="store_true", help="Skip loading macros")
 
     args = parser.parse_args()
 
-    # Default to both if no option specified
+    # Default to local if no option specified
     if not (args.motherduck or args.local or args.both):
-        args.both = True
+        args.local = True
 
     targets = []
     if args.motherduck or args.both:
@@ -309,6 +217,7 @@ Examples:
 
     print("=" * 80)
     print("CBI-V15 DATABASE SETUP")
+    print(f"DDL Source: {DDL_DIR}")
     if args.force:
         print("⚠️  FORCE MODE: Will delete all existing schemas first")
     print("=" * 80)
@@ -324,48 +233,42 @@ Examples:
 
             # Step 0: Cleanup if --force flag is set
             if args.force:
-                if not cleanup_existing_schemas(con, target_name):
-                    print(f"❌ Failed to cleanup {target_name}")
-                    continue
+                cleanup_existing_schemas(con, target_name)
 
-            # Step 1: Create schemas
+            # Step 1: Create schemas (00_schemas.sql)
             if not setup_schemas(con):
                 print(f"❌ Failed to create schemas in {target_name}")
                 continue
 
-            # Step 2: Create raw tables
-            if not setup_raw_tables(con):
-                print(f"⚠️  Some raw tables failed in {target_name}")
+            # Step 2-8: Run DDL subfolders in numeric order
+            ddl_folders = [
+                ("01_reference", "Creating reference tables"),
+                ("02_raw", "Creating raw tables"),
+                ("03_staging", "Creating staging tables"),
+                ("04_features", "Creating feature tables"),
+                ("05_training", "Creating training tables"),
+                ("06_forecasts", "Creating forecast tables"),
+                ("07_ops", "Creating ops tables"),
+                ("08_explanations", "Creating explanations tables"),
+            ]
+            
+            for folder, desc in ddl_folders:
+                setup_ddl_folder(con, folder, desc)
 
-            # Step 3: Create staging tables
-            if not setup_staging_tables(con):
-                print(f"⚠️  Some staging tables failed in {target_name}")
+            # Step 9: Load macros (unless skipped)
+            if not args.skip_macros:
+                load_macros(con)
 
-            # Step 4: Create feature tables
-            if not setup_feature_tables(con):
-                print(f"⚠️  Some feature tables failed in {target_name}")
-
-            # Step 5: Create training tables
-            if not setup_training_tables(con):
-                print(f"⚠️  Training tables failed in {target_name}")
-
-            # Step 6: Create forecasts tables
-            if not setup_forecasts_tables(con):
-                print(f"⚠️  Some forecasts tables failed in {target_name}")
-
-            # Step 7: Load macros
-            if not load_macros(con):
-                print(f"⚠️  Some macros failed to load in {target_name}")
-
-            # Step 8: Verify setup
+            # Step 10: Verify setup
             verify_setup(con)
 
             print(f"\n✅ {target_name} setup complete!")
-
             con.close()
 
         except Exception as e:
             print(f"\n❌ Error setting up {target_name}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
 
     print("\n" + "=" * 80)
@@ -373,11 +276,9 @@ Examples:
     print("=" * 80)
     print(f"Finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\nNext steps:")
-    print("  1. Run: python src/engines/anofox/build_all_features.py")
-    print(
-        "  2. Train models: python src/training/probabilistic/train_catboost_all_buckets.py"
-    )
-    print("  3. Generate forecasts: python src/ensemble/monte_carlo_ensemble.py")
+    print("  1. Seed reference data: python database/seeds/seed_symbols.py")
+    print("  2. Run features: python src/engines/anofox/build_all_features.py")
+    print("  3. Train models: python src/training/autogluon/mitra_trainer.py")
 
 
 if __name__ == "__main__":

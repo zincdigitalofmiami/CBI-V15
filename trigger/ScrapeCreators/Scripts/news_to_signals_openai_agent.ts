@@ -141,7 +141,7 @@ export const newsToSignalsAgent = task({
       source: string;
     }>(`
       SELECT article_id, headline, content, source
-      FROM raw.bucket_news
+      FROM raw.scrapecreators_news_buckets
       WHERE created_at >= NOW() - INTERVAL '${lookbackHours} hours'
         AND article_id NOT IN (SELECT article_id FROM features.news_signals)
       LIMIT ${batchSize}

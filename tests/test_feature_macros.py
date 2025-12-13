@@ -26,16 +26,18 @@ def test_load_macros() -> None:
     con.execute("CREATE SCHEMA IF NOT EXISTS staging")
     con.execute("CREATE SCHEMA IF NOT EXISTS features")
 
-    # Create dummy raw data table for prices
+    # Create dummy raw data table for prices (matches DDL)
     con.execute(
         """
-        CREATE TABLE raw.databento_ohlcv_daily (
-            as_of_date DATE,
+        CREATE TABLE raw.databento_futures_ohlcv_1d (
             symbol TEXT,
-            close DOUBLE,
+            as_of_date DATE,
+            open DOUBLE,
             high DOUBLE,
             low DOUBLE,
-            volume DOUBLE
+            close DOUBLE,
+            volume BIGINT,
+            open_interest BIGINT
         )
         """
     )
@@ -43,21 +45,37 @@ def test_load_macros() -> None:
     # Insert sample price data
     con.execute(
         """
-        INSERT INTO raw.databento_ohlcv_daily VALUES
-        ('2024-01-01', 'ZL', 45.50, 46.00, 45.00, 100000),
-        ('2024-01-02', 'ZL', 45.75, 46.25, 45.50, 110000),
-        ('2024-01-03', 'ZL', 45.60, 46.00, 45.40, 105000),
-        ('2024-01-04', 'ZL', 45.80, 46.10, 45.60, 108000),
-        ('2024-01-05', 'ZL', 45.90, 46.20, 45.70, 112000)
+        INSERT INTO raw.databento_futures_ohlcv_1d VALUES
+        ('ZL', '2024-01-01', 45.00, 46.00, 45.00, 45.50, 100000, 50000),
+        ('ZL', '2024-01-02', 45.50, 46.25, 45.50, 45.75, 110000, 51000),
+        ('ZL', '2024-01-03', 45.40, 46.00, 45.40, 45.60, 105000, 52000),
+        ('ZL', '2024-01-04', 45.60, 46.10, 45.60, 45.80, 108000, 53000),
+        ('ZL', '2024-01-05', 45.70, 46.20, 45.70, 45.90, 112000, 54000)
         """
     )
 
-    # Stub dependent raw tables required for macro binding
+    # CFTC COT table (matches DDL with computed columns)
     con.execute(
         """
-        CREATE TABLE raw.cftc_cot_disaggregated (
+        CREATE TABLE raw.cftc_cot (
             report_date DATE,
             symbol TEXT,
+            open_interest BIGINT,
+            prod_merc_long BIGINT,
+            prod_merc_short BIGINT,
+            swap_long BIGINT,
+            swap_short BIGINT,
+            managed_money_long BIGINT,
+            managed_money_short BIGINT,
+            other_rept_long BIGINT,
+            other_rept_short BIGINT,
+            nonrept_long BIGINT,
+            nonrept_short BIGINT,
+            prod_merc_net BIGINT,
+            swap_net BIGINT,
+            managed_money_net BIGINT,
+            other_rept_net BIGINT,
+            nonrept_net BIGINT,
             managed_money_net_pct_oi DOUBLE,
             prod_merc_net_pct_oi DOUBLE
         )
@@ -65,13 +83,15 @@ def test_load_macros() -> None:
     )
     con.execute(
         """
-        INSERT INTO raw.cftc_cot_disaggregated VALUES
-        ('2024-01-01', 'ZL', 5.0, -2.0),
-        ('2024-01-02', 'ZS', -3.0, 1.5),
-        ('2024-01-03', 'ZM', 2.5, -1.0),
-        ('2024-01-04', 'HG', 1.0, -0.5)
+        INSERT INTO raw.cftc_cot VALUES
+        ('2024-01-01', 'ZL', 100000, 20000, 15000, 10000, 8000, 30000, 25000, 5000, 4000, 3000, 2000, 5000, 2000, 5000, 1000, 1000, 5.0, 5.0),
+        ('2024-01-02', 'ZS', 100000, 20000, 15000, 10000, 8000, 25000, 28000, 5000, 4000, 3000, 2000, 5000, 2000, -3000, 1000, 1000, -3.0, 5.0),
+        ('2024-01-03', 'ZM', 100000, 20000, 15000, 10000, 8000, 27000, 24500, 5000, 4000, 3000, 2000, 5000, 2000, 2500, 1000, 1000, 2.5, 5.0),
+        ('2024-01-04', 'HG', 100000, 20000, 15000, 10000, 8000, 26000, 25000, 5000, 4000, 3000, 2000, 5000, 2000, 1000, 1000, 1000, 1.0, 5.0)
         """
     )
+    # Create view for backward compatibility
+    con.execute("CREATE VIEW raw.cftc_cot_disaggregated AS SELECT * FROM raw.cftc_cot")
 
     # EIA biodiesel / biofuels table (no RIN prices here)
     con.execute(
@@ -182,17 +202,19 @@ def test_technical_indicators() -> None:
     con.execute("CREATE SCHEMA IF NOT EXISTS staging")
     con.execute("CREATE SCHEMA IF NOT EXISTS features")
 
-    # Create sample data
+    # Create sample data (matches DDL)
     con.execute(
         """
-        CREATE TABLE raw.databento_ohlcv_daily AS
+        CREATE TABLE raw.databento_futures_ohlcv_1d AS
         SELECT 
-            DATE '2024-01-01' + INTERVAL (i) DAY AS as_of_date,
             'ZL' AS symbol,
-            45.0 + (i * 0.1) + (RANDOM() * 0.5) AS close,
+            DATE '2024-01-01' + INTERVAL (i) DAY AS as_of_date,
+            44.5 + (i * 0.1) + (RANDOM() * 0.5) AS open,
             45.5 + (i * 0.1) + (RANDOM() * 0.5) AS high,
-            44.5 + (i * 0.1) + (RANDOM() * 0.5) AS low,
-            100000 + (RANDOM() * 10000) AS volume
+            44.0 + (i * 0.1) + (RANDOM() * 0.5) AS low,
+            45.0 + (i * 0.1) + (RANDOM() * 0.5) AS close,
+            CAST(100000 + (RANDOM() * 10000) AS BIGINT) AS volume,
+            CAST(50000 + (RANDOM() * 5000) AS BIGINT) AS open_interest
         FROM generate_series(0, 100) AS t(i)
         """
     )
@@ -239,17 +261,19 @@ def test_feature_counts() -> None:
     con.execute("CREATE SCHEMA IF NOT EXISTS staging")
     con.execute("CREATE SCHEMA IF NOT EXISTS features")
 
-    # Create sample data for multiple symbols
+    # Create sample data for multiple symbols (matches DDL)
     con.execute(
         """
-        CREATE TABLE raw.databento_ohlcv_daily AS
+        CREATE TABLE raw.databento_futures_ohlcv_1d AS
         SELECT 
-            DATE '2024-01-01' + INTERVAL (i) DAY AS as_of_date,
             symbol,
-            45.0 + (i * 0.1) + (RANDOM() * 0.5) AS close,
+            DATE '2024-01-01' + INTERVAL (i) DAY AS as_of_date,
+            44.5 + (i * 0.1) + (RANDOM() * 0.5) AS open,
             45.5 + (i * 0.1) + (RANDOM() * 0.5) AS high,
-            44.5 + (i * 0.1) + (RANDOM() * 0.5) AS low,
-            100000 + (RANDOM() * 10000) AS volume
+            44.0 + (i * 0.1) + (RANDOM() * 0.5) AS low,
+            45.0 + (i * 0.1) + (RANDOM() * 0.5) AS close,
+            CAST(100000 + (RANDOM() * 10000) AS BIGINT) AS volume,
+            CAST(50000 + (RANDOM() * 5000) AS BIGINT) AS open_interest
         FROM generate_series(0, 100) AS t(i)
         CROSS JOIN (VALUES ('ZL'), ('ZS'), ('CL')) AS s(symbol)
         """

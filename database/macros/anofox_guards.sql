@@ -90,11 +90,12 @@ CREATE OR REPLACE MACRO fill_weekly_to_daily(
 
 -- Example usage in big8_bucket_features.sql:
 -- SELECT * FROM fill_weekly_to_daily(
---     raw.databento_ohlcv_daily,
+--     raw.databento_futures_ohlcv_1d,
 --     raw.epa_rin_prices,
 --     'as_of_date',
 --     'rin_d4_price'
 -- );
+
 
 
 

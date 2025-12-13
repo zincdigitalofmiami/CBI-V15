@@ -10,7 +10,7 @@ Premium agricultural market intelligence from ProFarmer (paid subscription).
 
 ## Target Tables
 
-- `raw.bucket_news` - All ProFarmer articles with bucket tags
+- `raw.scrapecreators_news_buckets` - All ProFarmer articles with bucket tags
 
 ## Schedule
 
@@ -19,6 +19,7 @@ Premium agricultural market intelligence from ProFarmer (paid subscription).
 ## Authentication
 
 Requires `PROFARMER_USERNAME` and `PROFARMER_PASSWORD` environment variables.
+
 
 
 

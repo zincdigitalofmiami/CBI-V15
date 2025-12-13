@@ -12,7 +12,7 @@
  * Total: 22+ URLs scraped 3x daily (6 AM, 12 PM, 6 PM UTC)
  * 
  * Uses Anchor browser automation for authenticated access.
- * Writes to: raw.bucket_news
+ * Writes to: raw.scrapecreators_news_buckets
  */
 
 import { schedules, task } from "@trigger.dev/sdk/v3";
@@ -205,11 +205,11 @@ export const profarmerAllURLs = task({
       }
     }
 
-    // Load to MotherDuck (raw.bucket_news)
+    // Load to MotherDuck (raw.scrapecreators_news_buckets)
     if (allArticles.length > 0) {
       const motherduck = new MotherDuckClient();
-      await motherduck.insertBatch("raw.bucket_news", allArticles);
-      console.log(`[ProFarmer] Loaded ${allArticles.length} articles to raw.bucket_news`);
+      await motherduck.insertBatch("raw.scrapecreators_news_buckets", allArticles);
+      console.log(`[ProFarmer] Loaded ${allArticles.length} articles to raw.scrapecreators_news_buckets`);
     }
 
     return {

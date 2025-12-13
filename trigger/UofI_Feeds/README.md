@@ -9,7 +9,7 @@ Free agricultural intelligence feeds from University of Illinois.
 
 ## Target Tables
 
-- `raw.bucket_news` - Policy and market intelligence articles
+- `raw.scrapecreators_news_buckets` - Policy and market intelligence articles
 
 ## Schedule
 

@@ -197,7 +197,7 @@ SELECT
     volatility_21d,
     rsi_14,
     bb_position
-FROM features.technical_indicators_all_symbols
+FROM features.tech_indicators
 WHERE symbol = 'ZL'
 AND volatility_21d > 0.30  -- 30% annualized volatility
 ORDER BY as_of_date DESC;

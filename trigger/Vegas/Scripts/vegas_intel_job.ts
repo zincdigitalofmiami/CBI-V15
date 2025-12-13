@@ -86,7 +86,7 @@ export const vegasIntelJob = task({
       // Load to MotherDuck
       if (articles.length > 0) {
         const motherduck = new MotherDuckClient();
-        await motherduck.insertBatch("raw.bucket_news", articles);
+        await motherduck.insertBatch("raw.scrapecreators_news_buckets", articles);
         console.log(`[Vegas Intel] Loaded ${articles.length} articles to MotherDuck`);
       }
 

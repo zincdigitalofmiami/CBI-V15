@@ -9,7 +9,7 @@ Direct website scraping for news buckets (not using ScrapeCreators API).
 
 ## Target Tables
 
-- `raw.bucket_news` - News articles by bucket
+- `raw.scrapecreators_news_buckets` - News articles by bucket
 
 ## Schedule
 

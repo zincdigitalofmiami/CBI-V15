@@ -15,8 +15,8 @@ WITH returns AS (
         b.symbol AS symbol2,
         LN(a.close / LAG(a.close, 1) OVER (PARTITION BY a.symbol ORDER BY a.as_of_date)) AS ret1,
         LN(b.close / LAG(b.close, 1) OVER (PARTITION BY b.symbol ORDER BY b.as_of_date)) AS ret2
-    FROM raw.databento_ohlcv_daily a
-    INNER JOIN raw.databento_ohlcv_daily b ON a.as_of_date = b.as_of_date
+    FROM raw.databento_futures_ohlcv_1d a
+    INNER JOIN raw.databento_futures_ohlcv_1d b ON a.as_of_date = b.as_of_date
     WHERE a.symbol = sym1 AND b.symbol = sym2
 )
 SELECT
@@ -39,8 +39,8 @@ WITH returns AS (
         a.symbol,
         LN(a.close / LAG(a.close, 1) OVER (PARTITION BY a.symbol ORDER BY a.as_of_date)) AS ret_asset,
         LN(b.close / LAG(b.close, 1) OVER (PARTITION BY b.symbol ORDER BY b.as_of_date)) AS ret_benchmark
-    FROM raw.databento_ohlcv_daily a
-    INNER JOIN raw.databento_ohlcv_daily b ON a.as_of_date = b.as_of_date
+    FROM raw.databento_futures_ohlcv_1d a
+    INNER JOIN raw.databento_futures_ohlcv_1d b ON a.as_of_date = b.as_of_date
     WHERE a.symbol = sym AND b.symbol = benchmark_sym
 ),
 stats AS (
@@ -76,7 +76,7 @@ WITH prices AS (
         MAX(CASE WHEN symbol = 'HG' THEN close END) AS hg_close,
         MAX(CASE WHEN symbol = 'GC' THEN close END) AS gc_close,
         MAX(CASE WHEN symbol = 'DX' THEN close END) AS dx_close
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol IN ('ZL', 'ZS', 'ZM', 'CL', 'HO', 'RB', 'HG', 'GC', 'DX')
     GROUP BY as_of_date
 )
@@ -111,8 +111,8 @@ WITH spreads AS (
         b.close AS far_price,
         b.close - a.close AS calendar_spread_abs,
         (b.close - a.close) / NULLIF(a.close, 0) AS calendar_spread_pct
-    FROM raw.databento_ohlcv_daily a
-    INNER JOIN raw.databento_ohlcv_daily b ON a.as_of_date = b.as_of_date
+    FROM raw.databento_futures_ohlcv_1d a
+    INNER JOIN raw.databento_futures_ohlcv_1d b ON a.as_of_date = b.as_of_date
     WHERE a.symbol = sym_near AND b.symbol = sym_far
 )
 SELECT * FROM spreads;
@@ -123,7 +123,7 @@ SELECT * FROM spreads;
 CREATE OR REPLACE MACRO calc_correlation_matrix(lookback := 60) AS TABLE
 WITH symbols AS (
     SELECT DISTINCT symbol
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol IN ('ZL', 'ZS', 'ZM', 'ZC', 'ZW', 'CL', 'HO', 'RB', 'NG',
                      'HG', 'GC', 'SI', 'PL', 'ZF', 'ZN', 'ZB', 'DX')
 ),
@@ -132,7 +132,7 @@ returns AS (
         as_of_date,
         symbol,
         LN(close / LAG(close, 1) OVER (PARTITION BY symbol ORDER BY as_of_date)) AS log_return
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol IN (SELECT symbol FROM symbols)
 ),
 pivoted AS (

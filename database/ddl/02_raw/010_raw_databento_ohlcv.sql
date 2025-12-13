@@ -1,9 +1,10 @@
 -- Raw Databento Futures OHLCV
--- Vendor data as-delivered, minimal casting, no business logic
+-- Note: Databento API returns ts_event, collector normalizes to as_of_date
+-- This is intentional for cross-source consistency (all date columns = as_of_date)
 
 CREATE TABLE IF NOT EXISTS raw.databento_futures_ohlcv_1d (
     symbol VARCHAR NOT NULL,
-    date DATE NOT NULL,
+    as_of_date DATE NOT NULL,  -- Normalized from Databento ts_event
     open DECIMAL(10, 2),
     high DECIMAL(10, 2),
     low DECIMAL(10, 2),
@@ -12,7 +13,7 @@ CREATE TABLE IF NOT EXISTS raw.databento_futures_ohlcv_1d (
     open_interest BIGINT,
     source VARCHAR DEFAULT 'databento',
     ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (symbol, date)
+    PRIMARY KEY (symbol, as_of_date)
 );
 
 -- 33 canonical symbols:
@@ -25,6 +26,6 @@ CREATE TABLE IF NOT EXISTS raw.databento_futures_ohlcv_1d (
 
 CREATE INDEX IF NOT EXISTS idx_databento_ohlcv_symbol 
     ON raw.databento_futures_ohlcv_1d(symbol);
-CREATE INDEX IF NOT EXISTS idx_databento_ohlcv_date 
-    ON raw.databento_futures_ohlcv_1d(date);
+CREATE INDEX IF NOT EXISTS idx_databento_ohlcv_as_of_date 
+    ON raw.databento_futures_ohlcv_1d(as_of_date);
 

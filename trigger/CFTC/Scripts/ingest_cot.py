@@ -329,7 +329,7 @@ def ingest_cot_data(start_year: int, end_year: int):
         print(f"\n💾 Inserting disaggregated data into database...")
         con.execute(
             """
-            INSERT OR REPLACE INTO raw.cftc_cot_disaggregated
+            INSERT OR REPLACE INTO raw.cftc_cot
             SELECT * FROM combined_disagg
         """
         )

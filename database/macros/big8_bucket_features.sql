@@ -28,7 +28,7 @@ WITH crush_components AS (
         MAX(CASE WHEN symbol = 'ZL' THEN close END) AS zl_close,
         MAX(CASE WHEN symbol = 'ZS' THEN close END) AS zs_close,
         MAX(CASE WHEN symbol = 'ZM' THEN close END) AS zm_close
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol IN ('ZL', 'ZS', 'ZM')
     GROUP BY as_of_date
 ),
@@ -130,7 +130,7 @@ WITH china_components AS (
         as_of_date,
         MAX(CASE WHEN symbol = 'HG' THEN close END) AS hg_close,  -- Copper (China demand proxy)
         MAX(CASE WHEN symbol = 'ZS' THEN close END) AS zs_close   -- Soybeans
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol IN ('HG', 'ZS')
     GROUP BY as_of_date
 ),
@@ -180,7 +180,7 @@ WITH fx_data AS (
     SELECT
         as_of_date,
         MAX(CASE WHEN symbol = 'DX' THEN close END) AS dx_close  -- Dollar Index
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = 'DX'
     GROUP BY as_of_date
 ),
@@ -329,7 +329,7 @@ biofuel_filled AS (
     FROM (
         -- Generate daily series from min to max date
         SELECT DISTINCT as_of_date 
-        FROM raw.databento_ohlcv_daily 
+        FROM raw.databento_futures_ohlcv_1d 
         WHERE symbol = 'ZL'
     ) d
     LEFT JOIN biofuel_data USING (as_of_date)
@@ -366,7 +366,7 @@ WITH energy_data AS (
         MAX(CASE WHEN symbol = 'HO' THEN close END) AS ho_close,
         MAX(CASE WHEN symbol = 'RB' THEN close END) AS rb_close,
         MAX(CASE WHEN symbol = 'ZL' THEN close END) AS zl_close
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol IN ('CL', 'HO', 'RB', 'ZL')
     GROUP BY as_of_date
 ),
@@ -424,7 +424,7 @@ zl_returns AS (
         symbol,
         close,
         LN(close / LAG(close, 1) OVER (PARTITION BY symbol ORDER BY as_of_date)) AS log_ret
-    FROM raw.databento_ohlcv_daily
+    FROM raw.databento_futures_ohlcv_1d
     WHERE symbol = 'ZL'
 ),
 zl_vol AS (

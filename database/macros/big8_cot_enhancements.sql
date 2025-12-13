@@ -61,7 +61,7 @@ SELECT
     ) AS open_interest
 FROM (
     SELECT DISTINCT as_of_date 
-    FROM raw.databento_ohlcv_daily 
+    FROM raw.databento_futures_ohlcv_1d 
     WHERE symbol = symbol_code
 ) d
 LEFT JOIN raw.cftc_cot_disaggregated cot 
@@ -93,7 +93,7 @@ SELECT
     ) AS open_interest
 FROM (
     SELECT DISTINCT as_of_date 
-    FROM raw.databento_ohlcv_daily 
+    FROM raw.databento_futures_ohlcv_1d 
     WHERE symbol = symbol_code
 ) d
 LEFT JOIN raw.cftc_cot_tff cot 

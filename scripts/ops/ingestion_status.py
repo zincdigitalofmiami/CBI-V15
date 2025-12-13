@@ -33,21 +33,24 @@ def check_ingestion_status():
     
     # Check raw tables
     raw_tables = {
-        "Databento": "raw.databento_ohlcv_daily",
-        "FRED": "raw.fred_macro",
+        "Databento": "raw.databento_futures_ohlcv_1d",
+        "FRED": "raw.fred_economic",
         "ScrapeCreators News": "raw.scrapecreators_news_buckets",
         "ScrapeCreators Trump": "raw.scrapecreators_trump",
         "EIA Biofuels": "raw.eia_biofuels",
+        "CFTC COT": "raw.cftc_cot",
     }
     
     logger.info("\n📥 Raw Layer:")
     for source, table_id in raw_tables.items():
         try:
+            # Use as_of_date for Databento, report_date for CFTC, date for others
+            date_col = "as_of_date" if "databento" in table_id else ("report_date" if "cftc" in table_id else "date")
             query = f"""
             SELECT 
                 COUNT(*) as row_count,
-                MIN(date) as min_date,
-                MAX(date) as max_date
+                MIN({date_col}) as min_date,
+                MAX({date_col}) as max_date
             FROM {table_id}
             """
             result = conn.execute(query).fetchone()
@@ -87,7 +90,7 @@ def check_ingestion_status():
     # Check features
     logger.info("\n🎯 Features Layer:")
     try:
-        query = f"SELECT COUNT(*) as count FROM features.daily_ml_matrix"
+        query = f"SELECT COUNT(*) as count FROM features.daily_ml_matrix_zl"
         result = conn.execute(query).fetchone()
         count = result[0] if result else 0
         

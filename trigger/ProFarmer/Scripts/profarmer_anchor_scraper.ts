@@ -151,7 +151,7 @@ export const profarmerAnchorScraper = task({
     // Load to MotherDuck
     if (allArticles.length > 0) {
       const motherduck = new MotherDuckClient();
-      await motherduck.insertBatch("raw.bucket_news", allArticles);
+      await motherduck.insertBatch("raw.scrapecreators_news_buckets", allArticles);
       console.log(`[ProFarmer Anchor] Loaded ${allArticles.length} articles to MotherDuck`);
     }
 
