@@ -24,7 +24,7 @@ sys.path.insert(0, str(project_root))
 # Database config
 MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
-LOCAL_DB_PATH = project_root / "Data" / "duckdb" / "local.duckdb"
+LOCAL_DB_PATH = project_root / "data" / "duckdb" / "cbi_v15.duckdb"
 
 
 def get_connection(use_motherduck: bool = True):

@@ -25,7 +25,7 @@ from datetime import datetime
 ROOT_DIR = Path(__file__).resolve().parents[3]
 sys.path.append(str(ROOT_DIR))
 
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 # USDA WASDE API (if available) or web scraping
 USDA_WASDE_URL = "https://www.usda.gov/oce/commodity/wasde"

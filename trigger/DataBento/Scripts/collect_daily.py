@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # Database config
 MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
-LOCAL_DB_PATH = project_root / "Data" / "duckdb" / "local.duckdb"
+LOCAL_DB_PATH = project_root / "data" / "duckdb" / "cbi_v15.duckdb"
 
 # Symbols to collect (38 total as per SYSTEM_STATUS)
 SYMBOLS = [

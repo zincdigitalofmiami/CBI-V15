@@ -11,7 +11,7 @@ from pathlib import Path
 
 import duckdb
 
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 
 def build_forecasts(

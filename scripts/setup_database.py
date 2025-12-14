@@ -21,7 +21,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DATABASE_DIR = ROOT_DIR / "database"
 DDL_DIR = DATABASE_DIR / "ddl"
 MACROS_DIR = DATABASE_DIR / "macros"
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "usoil_intelligence")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 
 def get_motherduck_connection():

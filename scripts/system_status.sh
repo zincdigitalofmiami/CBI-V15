@@ -28,7 +28,7 @@ fi
 # Local DuckDB
 echo ""
 echo "2️⃣  Local DuckDB:"
-LOCAL_DB="$PROJECT_ROOT/Data/duckdb/local.duckdb"
+LOCAL_DB="$PROJECT_ROOT/data/duckdb/cbi_v15.duckdb"
 if [ -f "$LOCAL_DB" ]; then
     SIZE=$(du -h "$LOCAL_DB" | cut -f1)
     echo "   ✅ Local database exists ($SIZE)"

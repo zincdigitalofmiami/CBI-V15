@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 ROOT_DIR = Path(__file__).resolve().parents[3]
 sys.path.append(str(ROOT_DIR))
 
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi-v15")
+MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 # USDA FAS Export Sales URL
 USDA_EXPORT_SALES_URL = "https://apps.fas.usda.gov/export-sales/esrd1.html"

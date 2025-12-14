@@ -5,10 +5,13 @@ Prevents logic inversions and data quality issues
 """
 
 from typing import Optional
+import logging
 
 import pandas as pd
 import pandera as pa
 from pandera import Check, Column
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # Training Data Schema (Prevents Logic Inversions)

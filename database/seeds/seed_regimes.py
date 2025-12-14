@@ -67,7 +67,7 @@ if __name__ == "__main__":
     
     token = os.getenv("MOTHERDUCK_TOKEN")
     if token:
-        conn = duckdb.connect(f"md:usoil_intelligence?motherduck_token={token}")
+        conn = duckdb.connect(f"md:cbi_v15?motherduck_token={token}")
     else:
         conn = duckdb.connect("data/duckdb/cbi_v15.duckdb")
     
