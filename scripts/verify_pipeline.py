@@ -1,5 +1,5 @@
 """
-Pipeline verification script (TSci-free).
+Pipeline verification script (AutoGluon-free).
 
 Checks that:
 - AnofoxBridge can connect to DuckDB/MotherDuck.
@@ -15,7 +15,7 @@ from src.engines.anofox.anofox_bridge import AnofoxBridge  # type: ignore
 
 
 def verify() -> None:
-    """Verify core pipeline connectivity without TSci dependencies."""
+    """Verify core pipeline connectivity without AutoGluon dependencies."""
     print("Verifying Pipeline...")
 
     # 1. Initialize Bridge (Local or MotherDuck)

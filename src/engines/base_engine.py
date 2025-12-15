@@ -14,7 +14,7 @@ class BaseEngine(ABC):
     Base class for all forecasting engines.
 
     All engines (Anofox, AutoGluon, and any legacy baselines) must implement this interface.
-    TSci is no longer the primary orchestrator; it is optional/legacy.
+    AutoGluon is no longer the primary orchestrator; it is optional/legacy.
     """
     
     def __init__(self, name: str, model_dir: Optional[Path] = None):

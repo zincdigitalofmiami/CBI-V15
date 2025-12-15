@@ -85,4 +85,4 @@ python src/training/baselines/catboost_zl.py
 ## Integration Notes
 
 - These baselines can be invoked directly from CLI or orchestration scripts.
-- TSci-based orchestration has been removed; use the AutoGluon-centric pipeline as primary, and treat these as optional benchmarks only.
+- AutoGluon-based orchestration has been removed; use the AutoGluon-centric pipeline as primary, and treat these as optional benchmarks only.

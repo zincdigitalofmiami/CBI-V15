@@ -162,15 +162,15 @@ SELECT TS_FORECAST(
 
 ---
 
-## Integration with TSci
+## Integration with Training Pipeline
 
 **Usage Pattern:**
-1. TSci Curator Agent → `anofox_gap_fill()`, `anofox_outlier_detect()`
-2. TSci Planner Agent → `anofox_volatility()`, `anofox_trend_strength()`, `anofox_sma()`, `anofox_rsi()`
-3. TSci Forecaster Agent → `TS_FORECAST()` with various methods
-4. TSci Reporter Agent → `anofox_forecast_quality()` (if available)
+1. Data preprocessing → `anofox_gap_fill()`, `anofox_outlier_detect()`
+2. Feature engineering → `anofox_volatility()`, `anofox_trend_strength()`, `anofox_sma()`, `anofox_rsi()`
+3. Forecasting → `TS_FORECAST()` with various methods (legacy SQL-based forecasting)
+4. Quality checks → `anofox_forecast_quality()` (if available)
 
-**See:** `src/anofox/anofox_bridge.py` for Python wrapper implementation.
+**See:** `src/engines/anofox/anofox_bridge.py` for Python wrapper implementation.
 
 ---
 

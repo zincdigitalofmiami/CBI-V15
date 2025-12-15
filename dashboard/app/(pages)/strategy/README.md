@@ -21,7 +21,7 @@ Provide a structured, model-driven procurement strategy:
 ## Key Views
 
 ### 1. Strategy Summary
-- TSci reporter text: current recommendation and rationale
+- AutoGluon reporter text: current recommendation and rationale
 - BUY / WAIT / MONITOR banner with confidence level
 - Key drivers behind recommendation
 
@@ -116,7 +116,7 @@ AND action = 'Increase coverage before price move'
 
 ## Notes
 - All monetary values use Admin-configured base volume and currency
-- Strategy text should come from AutoGluon + SQL outputs (TSci is removed)
+- Strategy text should come from AutoGluon + SQL outputs (AutoGluon is removed)
 - P&L calculations should be precomputed in SQL where possible
 - Scenarios should be defined in SQL/orchestration, not hard-coded in React
 - This is a **decision support page** - clarity over complexity

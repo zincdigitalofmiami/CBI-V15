@@ -173,7 +173,7 @@
 - `src/` - Python source code (ingestion, training, engines, models)
   - `src/engines/anofox/` - AnoFox bridge to DuckDB
   - `src/training/autogluon/` - AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
-  - (TSci LLM agents removed in V15.1; orchestration now handled directly via AutoGluon + SQL)
+  - (LLM agents removed in V15.1; orchestration now handled directly via AutoGluon + SQL)
   - `trigger/<Source>/Scripts/` - Data collection scripts (per-source)
 - `trigger/` - Trigger.dev orchestration jobs
 - `data/` - Local DuckDB mirror + model artifacts

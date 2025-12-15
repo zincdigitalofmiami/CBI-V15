@@ -58,7 +58,7 @@ def run_qra(
 **Features:**
 - Weighted average of quantiles (NOT simple point forecast averaging)
 - Preserves full uncertainty structure
-- Regime-aware weights (suggested by TSci, executed here)
+- Regime-aware weights (suggested by AutoGluon, executed here)
 
 ## Usage
 
@@ -85,7 +85,7 @@ forecasts = [
     ),
 ]
 
-# Define weights (from TSci or validation performance)
+# Define weights (from AutoGluon or validation performance)
 weights = {
     "catboost": 0.6,
     "lightgbm": 0.4,
@@ -105,7 +105,7 @@ ensemble_df = ensemble.to_dataframe()
 
 ## Integration Notes
 
-- Historically, TSci's **ForecasterAgent** called QRA:
+- Historically, AutoGluon's **ForecasterAgent** called QRA:
   1. Gathered quantile forecasts from L1/L2 models
   2. Asked OpenAI for weight suggestions (based on regime)
   3. Executed QRA numerically (this module)
@@ -131,7 +131,7 @@ score = calculate_interval_score(
 
 ## What Does NOT Belong Here
 - Base model training (→ `src/training/` / AutoGluon wrappers, or legacy baselines)
-- Model selection / orchestration logic (→ AutoGluon, legacy TSci agents, or scripts)
+- Model selection / orchestration logic (→ AutoGluon, legacy AutoGluons, or scripts)
 - Risk simulation (→ `src/simulators/`)
 
 ## Philosophy

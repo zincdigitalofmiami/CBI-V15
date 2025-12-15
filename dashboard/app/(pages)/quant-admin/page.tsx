@@ -5,7 +5,7 @@ export default function QuantAdminPage() {
             <h1 className="text-2xl font-bold mb-4">Quant Admin</h1>
             <p className="mb-4">
                 This is a restored stub for the Quant Admin dashboard.
-                Real-time reports from TSci will appear here once the full pipeline is active.
+                Real-time training metrics and model performance will appear here once the full pipeline is active.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border p-4 rounded shadow">

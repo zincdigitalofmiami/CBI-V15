@@ -27,7 +27,7 @@ training/
 
 ## Relationship to Orchestration
 - V15.1: AutoGluon-based training scripts are the canonical modeling path.
-- TSci is optional/legacy; it may call these scripts for experimentation, but it is not required for production training.
+- AutoGluon is optional/legacy; it may call these scripts for experimentation, but it is not required for production training.
 
 ## Current Models
 - `baselines/lightgbm_zl.py` - LightGBM baseline for ZL (Soybean Oil)

@@ -1,9 +1,9 @@
 """
 AnofoxBridge - Python Bridge for Anofox SQL Execution
-Phase 2.2: Original bridge between TSci agents and Anofox SQL-native execution.
+Phase 2.2: Original bridge between AutoGluons and Anofox SQL-native execution.
 
 V15.1 Note:
-- TSci is no longer the primary orchestrator; this bridge is optional/legacy.
+- AutoGluon is no longer the primary orchestrator; this bridge is optional/legacy.
 - It can still be used by orchestration layers (or ad-hoc tools) that need a thin
   Python wrapper around Anofox SQL functions, but production modeling flows should
   treat this as a utility, not a core dependency.
@@ -26,7 +26,7 @@ class AnofoxBridge:
     """
     Bridge class that connects Python orchestration code to Anofox SQL-native execution.
 
-    Historically this was called by TSci agents; in V15.1 it is an optional utility
+    Historically this was called by AutoGluons; in V15.1 it is an optional utility
     for executing Anofox-powered SQL operations from Python.
     """
 
@@ -69,7 +69,7 @@ class AnofoxBridge:
     def clean_data(self, table_name: str, strategy: str = "gap_fill") -> pd.DataFrame:
         """
         Clean data using Anofox Tabular extension.
-        Historically called by TSci Curator Agent; now a generic utility.
+        Historically called by AutoGluon Curator Agent; now a generic utility.
 
         Args:
             table_name: Table name (with schema, e.g., 'raw.zl_prices')
@@ -118,7 +118,7 @@ class AnofoxBridge:
     def calculate_features(self, table_name: str) -> pd.DataFrame:
         """
         Calculate features using Anofox Statistics extension.
-        Historically called by TSci Planner Agent; now a generic utility.
+        Historically called by AutoGluon Planner Agent; now a generic utility.
 
         Args:
             table_name: Table name (with schema)
@@ -156,7 +156,7 @@ class AnofoxBridge:
     ) -> pd.DataFrame:
         """
         Generate baseline forecast using Anofox Forecast extension.
-        Historically called by TSci Forecaster Agent; now a generic utility.
+        Historically called by AutoGluon Forecaster Agent; now a generic utility.
 
         Args:
             table_name: Table name (with schema)
@@ -191,7 +191,7 @@ class AnofoxBridge:
     def calculate_metrics(self, actual: pd.DataFrame, predicted: pd.DataFrame) -> Dict:
         """
         Calculate forecast quality metrics using Anofox.
-        Historically called by TSci Reporter Agent; now a generic utility.
+        Historically called by AutoGluon Reporter Agent; now a generic utility.
 
         Args:
             actual: DataFrame with actual values

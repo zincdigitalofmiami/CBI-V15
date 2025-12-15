@@ -25,7 +25,7 @@ This is the single entry point. It handles the connection to MotherDuck and load
 *   Wraps SQL-based forecasting functions (e.g., `time_bucket()`, `bar()`).
 
 ## Relationship with Orchestration Layers
-*   **Orchestration layer (e.g., AutoGluon training scripts, legacy TSci agents)** asks: "Please calculate volatility."
+*   **Orchestration layer (e.g., AutoGluon training scripts, legacy AutoGluons)** asks: "Please calculate volatility."
 *   **AnoFox** answers: "Here is the result (calculated in 0.01s)."
 *   **Separation of Concerns**: AnoFox does *not* decide what to calculate. It just calculates.
 

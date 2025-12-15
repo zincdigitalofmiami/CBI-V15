@@ -75,7 +75,7 @@ The dashboard uses a **hybrid approach** based on execution context:
 | `/strategy` | ZL Strategy & Procurement Plan | Procurement + Quant |
 | `/vegas-intel` | Sales Intelligence for Kevin | Sales team |
 | `/admin` | Business Configuration | Business admins |
-| `/quant-admin` | TSci + AnoFox Internal | Quant team (off-menu) |
+| `/quant-admin` | AutoGluon + AnoFox Internal | Quant team (off-menu) |
 
 ### Page Details
 
@@ -96,7 +96,7 @@ The dashboard uses a **hybrid approach** based on execution context:
 - Bucket Detail Panel (time series, feature importance, news)
 
 #### Strategy (`/strategy`)
-- Strategy Summary (TSci recommendation + rationale)
+- Strategy Summary (AutoGluon recommendation + rationale)
 - Hedge Ladder (volume by horizon, color-coded urgency)
 - Scenario Panel (China Soft, Tariffs Escalate, Weather Shock, Fed Pivot)
 - P&L Distribution (percentile bands from Monte Carlo)
@@ -116,7 +116,7 @@ The dashboard uses a **hybrid approach** based on execution context:
 - Pipeline Health (ingestion lag, error counts)
 - Matrix Status (row counts, gaps, coverage)
 - Model Registry (champion vs challenger, metrics)
-- TSci Runs (status, logs, narratives)
+- Training Runs (status, logs, performance metrics)
 
 ## Charting Package
 
@@ -307,7 +307,7 @@ See [VERCEL_CONNECTION.md](./VERCEL_CONNECTION.md) for troubleshooting.
 ### For Quant Team
 - **Full transparency** - Expose pipeline health, model metrics
 - **No simplification** - Show raw SHAP, features, QA checks
-- **Experiment tracking** - TSci runs and narratives
+- **Experiment tracking** - AutoGluon runs and narratives
 
 ## Key Files
 

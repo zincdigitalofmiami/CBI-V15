@@ -104,7 +104,7 @@ AND alert_level = 'HIGH'
 
 ## Notes
 - This page is **explanatory and contextual** - does NOT issue BUY/WAIT/MONITOR signals
-- Impact mapping (event → $$) happens in SQL or TSci, not in React
+- Impact mapping (event → $$) happens in SQL or AutoGluon, not in React
 - Link directly to source documents where available
 - Heavy calculation should be precomputed in `staging.news_topic_signals`
 

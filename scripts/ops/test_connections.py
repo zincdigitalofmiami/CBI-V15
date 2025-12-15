@@ -88,7 +88,7 @@ def test_openai_key():
         logger.info("✅ OPENAI_API_KEY found in environment")
         return True
     
-    logger.info("ℹ️  OPENAI_API_KEY not set (optional unless using TSci)")
+    logger.info("ℹ️  OPENAI_API_KEY not set (optional unless using AutoGluon)")
     return False
 
 def main():

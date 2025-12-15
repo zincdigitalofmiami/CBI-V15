@@ -1,18 +1,18 @@
-# Quant Admin / TSci + AnoFox (`/quant-admin`) – Legacy / Optional
+# Quant Admin / Training + AnoFox (`/quant-admin`) – Internal
 
 ## Purpose
 Internal quant cockpit for:
-- Pipeline health (ingestion + feature + training).
-- Feature and training matrix completeness.
-- Model registry and experiment metrics.
-- TSci runs and QA checks (optional/legacy in V15.1).
+- Pipeline health (ingestion + feature + training)
+- Feature and training matrix completeness
+- Model registry and experiment metrics
+- Training run monitoring and QA checks
 
 ## Data Sources (MotherDuck)
 - `ops.ingestion_status`, `ops.pipeline_metrics`
 - `features.daily_ml_matrix_zl`
 - `training.daily_ml_matrix_zl`
 - `reference.feature_catalog`, `reference.model_registry`
-- TSci-related tables have been removed; use ops/reference/forecasts tables for monitoring.
+- `forecasts.zl_predictions`, `training.model_runs`
 
 ## Key Components
 
@@ -91,7 +91,7 @@ ORDER BY as_of_date DESC;
 ## Notes
 - This route should **not appear in the main nav**.
 - Authentication/authorization required (dev/ops only).
-- This can consume TSci report artifacts when TSci is enabled, but TSci is not required for core V15.1 operation.
+- Displays training run artifacts and model performance metrics.
 - No business-friendly simplification needed; this is the cockpit.
 
 ## Visual Design
@@ -116,8 +116,8 @@ ORDER BY as_of_date DESC;
 - Retired models grayed out
 - Metrics displayed in `font-mono` for alignment
 
-### TSci Run Cards
+### Training Run Cards
 - Status badge (running/completed/failed)
 - Expandable log viewer
-- Narrative text in card body
+- Performance metrics in card body
 - Timestamp in `text-zinc-500`

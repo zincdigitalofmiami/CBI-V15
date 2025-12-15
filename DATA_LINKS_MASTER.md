@@ -18,7 +18,7 @@
 | **TradingEconomics** | `TRADINGECONOMICS_API_KEY` | ⚠️ Needed | **PAID** (~$200/mo, high-value data) |
 | **Anchor** | `ANCHOR_API_KEY` | ✅ Active | Browser automation for scraping |
 | **Trigger.dev** | `TRIGGER_SECRET_KEY` | ✅ Active | Job orchestration |
-| **OpenAI** | `OPENAI_API_KEY` | ✅ Active | TSci agent layer (~$20-100/mo) |
+| **OpenAI** | `OPENAI_API_KEY` | Optional | LLM utilities (optional, not required for core pipeline) |
 | **Gemini** | `GOOGLE_API_KEY` | Optional | Alternative LLM |
 
 ---
