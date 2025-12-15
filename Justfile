@@ -39,3 +39,23 @@ db:seed:
 # Sync MotherDuck to local DuckDB (safe: read-only MD)
 sync:md-to-local args="--dry-run":
     python scripts/sync_motherduck_to_local.py {{args}}
+
+# Autosave lightweight background commits to a backup branch
+# Usage: `just autosave` (Ctrl+C to stop). Commits only when there are changes.
+autosave interval_seconds=300 branch="autosave/pr-1":
+    echo "Starting autosave to branch '{{branch}}' every {{interval_seconds}}s (Ctrl+C to stop)..."
+    while true; do \
+        git rev-parse --abbrev-ref HEAD >/dev/null 2>&1 || { echo "Not a git repo"; exit 1; }; \
+        current_branch=$(git rev-parse --abbrev-ref HEAD); \
+        git fetch -q; \
+        git checkout -q -B "{{branch}}" "$current_branch"; \
+        git add -A; \
+        if ! git diff --cached --quiet; then \
+            ts=$(date -u +%FT%TZ); \
+            git commit -m "autosave: $ts" >/dev/null; \
+            echo "✔ autosaved at $ts"; \
+            git push -u -q origin "{{branch}}" || true; \
+        fi; \
+        git checkout -q "$current_branch"; \
+        sleep {{interval_seconds}}; \
+    done

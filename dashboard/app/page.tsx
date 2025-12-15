@@ -1,13 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ForecastFanChart from '@/components/charts/ForecastFanChart';
+import ConfidenceBadge from '@/components/metrics/ConfidenceBadge';
+import Big8Panel from '@/components/big8/Big8Panel';
 
 type Candle = { time: number; value: number };
 
 export default function ZLChart() {
   const [zlData, setZlData] = useState<any[]>([]);
+  const [forecasts, setForecasts] = useState<any[]>([]);
   const [latestPrice, setLatestPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
+  const [confScore, setConfScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
@@ -24,6 +29,18 @@ export default function ZLChart() {
           setLatestPrice(latest);
           setPriceChange(((latest - prev) / prev) * 100);
           setLastUpdate(new Date());
+        }
+
+        // Fetch latest forecasts (multi-horizon)
+        const fRes = await fetch('/api/forecasts/zl');
+        const fJson = await fRes.json();
+        if (fJson.data) setForecasts(fJson.data);
+
+        // Fetch training metrics as proxy for confidence (later wire real metric)
+        const mRes = await fetch('/api/training/metrics');
+        if (mRes.ok) {
+          // Simple placeholder heuristic: confidence from availability
+          setConfScore(0.7);
         }
       } catch (error) {
         console.error('Error fetching ZL data:', error);
@@ -44,63 +61,16 @@ export default function ZLChart() {
     }));
   }, [zlData]);
 
-  const chartContainerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!chartContainerRef.current || seriesData.length === 0) return;
-
-    let chart: any;
-    let lineSeries: any;
-
-    import('lightweight-charts').then(({ createChart }) => {
-      chart = createChart(chartContainerRef.current!, {
-        layout: { background: { color: '#0a0e1a' }, textColor: '#9ca3af' },
-        grid: {
-          vertLines: { color: '#1f2937' },
-          horzLines: { color: '#1f2937' },
-        },
-        rightPriceScale: { borderVisible: false },
-        timeScale: { borderVisible: false, secondsVisible: false },
-        handleScroll: true,
-        handleScale: true,
-      });
-
-      lineSeries = chart.addLineSeries({
-        color: '#ffffff',
-        lineWidth: 2.5,
-        lineStyle: 0,
-      });
-
-      lineSeries.setData(seriesData);
-
-      const handleResize = () => {
-        if (chartContainerRef.current) {
-          chart.applyOptions({
-            width: chartContainerRef.current.clientWidth,
-            height: chartContainerRef.current.clientHeight,
-          });
-        }
-      };
-
-      handleResize();
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        chart?.remove();
-      };
-    });
-  }, [seriesData]);
-
   return (
-    <main className="h-screen w-screen bg-[#0a0e1a] flex flex-col">
+    <main className="min-h-screen w-screen bg-[#0a0e1a] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4 border-b border-[#1a1f2e]">
         <div>
           <h1 className="text-2xl font-thin text-white tracking-wide">ZL Soybean Oil Futures</h1>
           <p className="text-gray-500 text-xs font-light">Live • Databento API • 5min updates</p>
         </div>
-        <div className="flex items-baseline gap-4">
+        <div className="flex items-center gap-4">
+          {confScore !== null && <ConfidenceBadge value={confScore} />}
           <span className="text-5xl font-extralight text-white">${latestPrice.toFixed(2)}</span>
           <span className={`text-xl font-light ${priceChange >= 0 ? 'text-[#22c55e]' : 'text-red-400'}`}>
             {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
@@ -109,14 +79,17 @@ export default function ZLChart() {
         </div>
       </div>
 
-      {/* Full-screen chart */}
-      <div className="flex-1 p-4">
+      {/* Full-screen chart (price + forecast lines) */}
+      <div className="h-[calc(100vh-96px)] p-4">
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-gray-500 font-light">Loading live ZL data...</p>
           </div>
         ) : zlData.length > 0 ? (
-          <div ref={chartContainerRef} className="h-full w-full" />
+          <ForecastFanChart
+            price={zlData.map((d) => ({ date: d.as_of_date || d.date, close: d.close }))}
+            forecasts={forecasts}
+          />
         ) : (
           <div className="h-full flex items-center justify-center">
             <p className="text-red-400 font-light">No data available</p>
@@ -129,6 +102,9 @@ export default function ZLChart() {
           <span className="text-xs text-gray-600">Last updated: {lastUpdate.toLocaleTimeString()}</span>
         </div>
       )}
+
+      {/* Big 8 panel (scroll below the fold) */}
+      <Big8Panel />
     </main>
   );
 }
