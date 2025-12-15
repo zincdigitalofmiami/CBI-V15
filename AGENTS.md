@@ -101,7 +101,7 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 - Check resources before creating; audit outputs after changes.
 - Use DuckDB/MotherDuck SQL for joins/transforms; keep pipelines idempotent and date‑partitioned.
 - Parameterize SQL; avoid f‑strings for queries. Handle errors explicitly.
-- Keep Python as orchestration (TSci) and bridges only; heavy math/indicators live in SQL.
+- Keep Python as orchestration and bridges only; heavy math/indicators live in SQL.
 - Update adjacent docs when behavior changes (explain why, not just what).
 
 ## What Goes Where
