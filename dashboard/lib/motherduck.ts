@@ -5,11 +5,44 @@
 import { MDConnection } from '@motherduck/wasm-client';
 
 const MOTHERDUCK_DB = process.env.MOTHERDUCK_DB || 'cbi_v15';
+const MOTHERDUCK_ATTACH_ALIAS = 'md_db';
 
 export class MotherDuckClient {
     private static instance: MDConnection | null = null;
+    private static isAttached: boolean = false;
 
     private constructor() { }
+
+    /**
+     * Attach the MotherDuck database and make it the default.
+     *
+     * We attach as `md_db` then `USE md_db` so callers can query with `schema.table`
+     * (e.g. `raw.databento_futures_ohlcv_1d`) without needing a database prefix.
+     */
+    private static async ensureAttached(connection: MDConnection): Promise<void> {
+        if (MotherDuckClient.isAttached) {
+            return;
+        }
+
+        try {
+            await connection.evaluateQuery(
+                `ATTACH 'md:${MOTHERDUCK_DB}' AS ${MOTHERDUCK_ATTACH_ALIAS}`
+            );
+        } catch (attachError: any) {
+            const message = attachError?.message || String(attachError);
+            const alreadyAttached =
+                message.includes('already exists') ||
+                message.includes('already attached') ||
+                message.includes('Catalog Error: Database with name');
+            if (!alreadyAttached) {
+                throw attachError;
+            }
+        }
+
+        // Make the attached database the default so `schema.table` resolves correctly.
+        await connection.evaluateQuery(`USE ${MOTHERDUCK_ATTACH_ALIAS}`);
+        MotherDuckClient.isAttached = true;
+    }
 
     /**
      * Get or create MotherDuck WASM connection
@@ -28,6 +61,7 @@ export class MotherDuckClient {
                 });
 
                 await MotherDuckClient.instance.isInitialized();
+                await MotherDuckClient.ensureAttached(MotherDuckClient.instance);
             } catch (error: any) {
                 throw new Error(`Failed to initialize MotherDuck WASM client: ${error.message || error}`);
             }
@@ -55,20 +89,7 @@ export class MotherDuckClient {
         const connection = await MotherDuckClient.getConnection();
         
         try {
-            // ATTACH database (token is handled by connection-level mdToken)
-            // ATTACH is idempotent - safe to call multiple times
-            // Use fully qualified names (schema.table) in queries
-            try {
-                await connection.evaluateQuery(`ATTACH 'md:${MOTHERDUCK_DB}' AS md_db`);
-            } catch (attachError: any) {
-                // If ATTACH fails (e.g., already attached), continue with query
-                // Some errors are expected if database is already attached
-                if (!attachError.message?.includes('already exists') && 
-                    !attachError.message?.includes('already attached')) {
-                    // Re-throw if it's a different error
-                    throw attachError;
-                }
-            }
+            await MotherDuckClient.ensureAttached(connection);
             
             // Execute the actual query
             const result = await connection.evaluateQuery(sql);

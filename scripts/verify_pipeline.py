@@ -25,7 +25,7 @@ def verify() -> None:
     # 2. Check Data Access
     try:
         df = bridge.conn.execute(
-            "SELECT * FROM features.daily_ml_matrix_zl_v15 LIMIT 5"
+            "SELECT * FROM features.daily_ml_matrix_zl LIMIT 5"
         ).df()
         print(f"✅ Read {len(df)} rows from features matrix")
     except Exception as exc:

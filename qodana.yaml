@@ -17,4 +17,4 @@ qualityGate:
     - rule: "Every problem"
       severity: "HIGH"
       threshold: 0
-linter: jetbrains/qodana-python:2025.2
+linter: jetbrains/qodana-ultimate:2025.2

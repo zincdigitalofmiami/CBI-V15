@@ -4,16 +4,27 @@
 CREATE TABLE IF NOT EXISTS raw.scrapecreators_news_buckets (
     article_id VARCHAR PRIMARY KEY,
     date DATE NOT NULL,  -- Publication date (macros use this)
-    bucket VARCHAR NOT NULL,  -- 'biofuel_policy', 'china_demand', 'tariffs_trade_policy', etc.
+    published_at TIMESTAMP, -- Full timestamp from source
+    
+    -- Content
     headline TEXT,
     content TEXT,
-    sentiment_score DECIMAL(5, 4),
-    zl_sentiment VARCHAR,  -- 'BULLISH_ZL', 'BEARISH_ZL', 'NEUTRAL' (macro uses this)
-    is_trump_related BOOLEAN DEFAULT FALSE,  -- For tariff bucket filtering
-    policy_axis VARCHAR,  -- 'TRADE_CHINA', 'TRADE_TARIFFS', etc.
-    source_name VARCHAR,
+    url TEXT,
+    author VARCHAR,
+    
+    -- Classification
+    bucket_name VARCHAR NOT NULL,  -- 'biofuel_policy', 'china_demand', etc.
+    edition_type VARCHAR,          -- 'pre_open', 'post_close', etc.
     source VARCHAR DEFAULT 'scrapecreators',
-    ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    source_trust_score DECIMAL(3, 2),
+    
+    -- Downstream Enrichments (Populated by Agents)
+    sentiment_score DECIMAL(5, 4),
+    zl_sentiment VARCHAR,  -- 'BULLISH_ZL', 'BEARISH_ZL', 'NEUTRAL'
+    is_trump_related BOOLEAN DEFAULT FALSE,
+    policy_axis VARCHAR,  -- 'TRADE_CHINA', 'TRADE_TARIFFS', etc.
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS raw.scrapecreators_trump (
@@ -28,7 +39,6 @@ CREATE TABLE IF NOT EXISTS raw.scrapecreators_trump (
 );
 
 CREATE INDEX IF NOT EXISTS idx_news_bucket 
-    ON raw.scrapecreators_news_buckets(bucket);
+    ON raw.scrapecreators_news_buckets(bucket_name);
 CREATE INDEX IF NOT EXISTS idx_news_date 
     ON raw.scrapecreators_news_buckets(date);
-

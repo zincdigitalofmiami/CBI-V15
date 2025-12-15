@@ -11,6 +11,9 @@ jobs:
   qodana-js:
     name: Qodana JS/TS
     runs-on: ubuntu-latest
+    env:
+      # Explicitly disable Cloud uploads in this job
+      QODANA_TOKEN: ""
     steps:
       - uses: actions/checkout@v4
       - name: Qodana JS Scan
@@ -31,6 +34,9 @@ jobs:
   qodana-python:
     name: Qodana Python
     runs-on: ubuntu-latest
+    env:
+      # Explicitly disable Cloud uploads in this job
+      QODANA_TOKEN: ""
     steps:
       - uses: actions/checkout@v4
       - name: Qodana Python Scan

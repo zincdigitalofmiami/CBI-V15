@@ -1,4 +1,4 @@
-name: Qodana
+name: Qodana (Cloud)
 on:
   workflow_dispatch:
   pull_request:
@@ -11,18 +11,27 @@ jobs:
   qodana:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       checks: write
+      security-events: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0  # a full history is required for pull request analysis
-      - name: 'Qodana Scan'
+      - name: 'Qodana Scan (Ultimate — single Cloud project)'
         uses: JetBrains/qodana-action@v2025.2
         with:
-          pr-mode: false
+          linter: jetbrains/qodana-ultimate:2025.2
+          pr-mode: true
+          # Force all runs into the same Qodana Cloud project
+          project-id: zincdigitalofmiami/CBI-V15
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1004761266 }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
+
+      - name: 'Upload SARIF to GitHub Code Scanning (Ultimate)'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: qodana.sarif.json
