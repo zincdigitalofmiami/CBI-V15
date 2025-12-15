@@ -12,86 +12,257 @@
 
 ## 🎯 Overview
 
-CBI-V15 combines:
-- **SQL-first features (AnoFox macros)** — 300+ features in `database/macros/`
-- **AutoGluon 1.4** — Quantile Tabular/TimeSeries (P10/P50/P90) on Mac M4
-- **Trigger.dev** — Ingestion by source under `trigger/<Source>/Scripts/`
-- **MotherDuck + Local DuckDB** — Cloud source of truth; local mirror for fast training
-- **Next.js Dashboard** — Queries MotherDuck directly
+**CBI-V15** is a production-grade commodity forecasting intelligence platform for **ZL (Soybean Oil) futures**, combining institutional quantitative methods with modern ML infrastructure.
+
+### Core Components
+
+- **SQL-First Feature Engineering** — 1,428 lines of AnoFox SQL macros in `database/macros/` generating 300+ features across 8 economic buckets (Crush, China, FX, Fed, Tariff, Biofuel, Energy, Volatility)
+- **AutoGluon 1.4 Hybrid Engine** — Multi-layer ensemble architecture:
+  - **L0**: 9 specialist models (8 bucket specialists + 1 main ZL predictor) using TabularPredictor with `extreme_quality` presets
+  - **L1**: Meta-learner ensemble fusing specialist outputs
+  - **L2**: Production forecasts (P10/P50/P90 quantiles) at 1w/1m/3m/6m horizons
+  - **L3**: Monte Carlo simulation for VaR/CVaR risk metrics (analytics only)
+- **Mac M4 Training** — All training runs locally on CPU with Metal (MPS) acceleration where available; includes foundation models (TabPFNv2, Mitra, TabICL)
+- **Trigger.dev Orchestration** — Automated ingestion from 10+ data sources (Databento, FRED, EIA/EPA RINs, USDA FAS/WASDE, CFTC COT, Farm Policy News, farmdoc Daily)
+- **MotherDuck + Local DuckDB** — Cloud-first data warehouse (MotherDuck = source of truth; local mirror synced before training for 100-1000x faster I/O)
+- **Next.js 14 Dashboard** — Real-time ZL price charts, multi-horizon forecast fans, confidence metrics, Big 8 health panel; queries MotherDuck directly via DuckDB-WASM
 
 ---
 
 ## 🏗️ Architecture (V15.1)
-- **Ingestion**: Trigger.dev jobs write to MotherDuck (`raw.*`), organized per source (`trigger/DataBento`, `trigger/FRED`, `trigger/EIA_EPA`, `trigger/USDA`, `trigger/CFTC`, `trigger/ScrapeCreators`, `trigger/ProFarmer`, `trigger/UofI_Feeds`, `trigger/Weather`, etc.)
-- **Features**: SQL macros (AnoFox) in `database/macros/` → `features.*` tables/views
-- **Training**: Sync MotherDuck → local DuckDB (`data/duckdb/cbi_v15.duckdb`), train AutoGluon quantile models (bucket specialists + main ZL)
-- **Forecasts**: Upload to MotherDuck (`forecasts.zl_predictions`); dashboard reads from MotherDuck
-- **Risk**: Monte Carlo in `src/simulators/monte_carlo_sim.py` (VaR/CVaR)
+
+### Data Flow
+
+1. **Ingestion Layer** (`trigger/`)
+   - Trigger.dev jobs write to MotherDuck cloud warehouse (`raw.*` schema)
+   - Organized per source: `DataBento`, `FRED`, `EIA_EPA`, `USDA`, `CFTC`, `ScrapeCreators`, `ProFarmer`, `UofI_Feeds`, `Weather`, `Vegas`, `TradingEconomics`, `Adapters`
+   - All columns prefixed with source (`databento_`, `fred_`, `epa_`, etc.)
+
+2. **Feature Engineering** (`database/macros/`)
+   - AnoFox SQL macros transform raw data → `features.*` schema
+   - 1,428 lines of SQL generating 300+ features
+   - Bucket-specific selectors in `config/bucket_feature_selectors.yaml`
+
+3. **Training Preparation**
+   - Sync MotherDuck → local DuckDB via `scripts/sync_motherduck_to_local.py`
+   - Local mirror at `data/duckdb/cbi_v15.duckdb` (100-1000x faster I/O)
+
+4. **Model Training** (`src/training/autogluon/`)
+   - **L0 Specialists**: 9 AutoGluon TabularPredictors (8 buckets + 1 main ZL)
+     - Each trains 10-15 models (LightGBM, CatBoost, XGBoost, NNs, foundation models)
+     - Each creates WeightedEnsemble_L2 (automatic stacking)
+   - **L1 Meta-Learner**: Ensemble of 9 specialist ensembles
+   - Training artifacts saved to `artifacts/models/` (excluded from git)
+
+5. **Forecast Production**
+   - Upload predictions to MotherDuck (`forecasts.zl_predictions`)
+   - Multi-horizon outputs: 1w, 1m, 3m, 6m
+   - Quantile forecasts: P10, P50, P90
+
+6. **Risk Analytics** (`src/simulators/`)
+   - Monte Carlo simulation in `monte_carlo_sim.py`
+   - Generates 10,000 scenarios for VaR/CVaR calculation
+   - Output: `forecasts.monte_carlo_scenarios` (analytics only, NOT trading signals)
+
+7. **Dashboard** (`dashboard/`)
+   - Next.js 14 app queries MotherDuck directly via DuckDB-WASM
+   - Real-time ZL price charts (Databento API, 5min updates)
+   - Multi-horizon forecast fans with confidence bands
+   - Big 8 bucket health panel
 
 ---
 
-## 📁 Project Structure (clean layout)
+## 📁 Project Structure
+
 ```
 CBI-V15/
-├── trigger/                # Trigger.dev ingestion per source (Scripts/ + README per source)
-├── database/               # Schemas (raw→features→forecasts) + macros (AnoFox)
+├── trigger/                      # Trigger.dev ingestion orchestration
+│   ├── DataBento/                # Futures OHLCV (38 symbols)
+│   ├── FRED/                     # Macro indicators (24+)
+│   ├── EIA_EPA/                  # Energy & biofuel data (EPA RIN prices)
+│   ├── USDA/                     # Export sales, WASDE reports
+│   ├── CFTC/                     # COT positioning data
+│   ├── ScrapeCreators/           # Farm Policy News, farmdoc Daily
+│   ├── ProFarmer/                # Pro Farmer intelligence
+│   ├── UofI_Feeds/               # University of Illinois feeds
+│   ├── Weather/                  # NOAA, INMET, SMN weather data
+│   ├── Vegas/                    # Las Vegas demand intelligence (Glide API)
+│   ├── TradingEconomics/         # Global economics data
+│   ├── Adapters/                 # Shared ingestion utilities
+│   ├── DirectScrapers/           # Custom web scrapers
+│   └── Orchestration/            # Job scheduling & coordination
+├── database/
+│   ├── ddl/                      # 54 DDL files (V15.1 schema)
+│   ├── macros/                   # 1,428 lines of AnoFox SQL macros
+│   ├── seeds/                    # Reference data
+│   ├── migrations/               # Schema version control
+│   └── tests/                    # SQL test fixtures
 ├── src/
-│   ├── engines/anofox/     # AnoFox bridge
-│   ├── training/           # Baselines; AutoGluon module to be created
-│   ├── simulators/         # Monte Carlo
-│   └── models/             # (currently empty; reserved for local model definitions)
-├── docs/                   # Architecture & ops docs
-├── scripts/                # Setup, sync, validation, ops
-├── config/                 # YAML/requirements
-├── dashboard/              # Next.js app
-└── .cursor/.kilocode/      # Tool-specific configs (plans, ignores)
+│   ├── training/
+│   │   ├── autogluon/            # AutoGluon 1.4 hybrid engine
+│   │   │   ├── mitra_trainer.py  # Salesforce Mitra (Metal-accelerated TS)
+│   │   │   └── timeseries_trainer.py  # TimeSeriesPredictor wrapper
+│   │   ├── baselines/            # Baseline models (ARIMA, ETS, etc.)
+│   │   └── utils/                # Training utilities
+│   ├── simulators/
+│   │   └── monte_carlo_sim.py    # VaR/CVaR risk analytics
+│   ├── reporting/
+│   │   └── training_auditor.py   # Training run audits
+│   ├── features/                 # Feature engineering utilities
+│   ├── engines/anofox/           # AnoFox SQL macro bridge
+│   ├── ingestion/                # Legacy ingestion (migrated to trigger/)
+│   ├── ensemble/                 # Ensemble utilities
+│   ├── shared/                   # Shared utilities
+│   ├── data/                     # Data loading utilities
+│   └── utils/                    # General utilities
+├── dashboard/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── big8/             # Big 8 bucket API routes
+│   │   │   ├── forecasts/        # Forecast API routes (ZL)
+│   │   │   ├── health/           # Data source health checks
+│   │   │   ├── models/           # Model metrics API
+│   │   │   ├── live/             # Live price data (Databento)
+│   │   │   ├── training/         # Training status API
+│   │   │   └── shap/             # SHAP explainability API
+│   │   └── page.tsx              # Main dashboard (ZL chart + forecasts)
+│   ├── components/
+│   │   ├── big8/                 # Big8Panel component
+│   │   ├── charts/               # ForecastFanChart, price charts
+│   │   └── metrics/              # ConfidenceBadge, metric displays
+│   └── lib/                      # Dashboard utilities
+├── scripts/
+│   ├── setup/                    # Environment setup (install_autogluon_mac.sh)
+│   ├── sync_motherduck_to_local.py  # Cloud → local sync
+│   ├── validation/               # Data validation scripts
+│   └── test_*.py                 # Integration tests
+├── config/
+│   ├── requirements/             # Python dependencies
+│   ├── bucket_feature_selectors.yaml  # Big 8 bucket feature configs
+│   ├── data_sources.yaml         # Data source configurations
+│   ├── training/                 # Training configs
+│   ├── ingestion/                # Ingestion configs
+│   ├── env-templates/            # .env.example templates
+│   └── schedulers/               # Cron/scheduling configs
+├── docs/
+│   ├── architecture/             # MASTER_PLAN.md, design docs
+│   ├── ops/                      # Operations guides
+│   └── api/                      # API documentation
+├── data/
+│   └── duckdb/                   # Local DuckDB mirror (cbi_v15.duckdb)
+├── archive/                      # Archived legacy code
+├── Justfile                      # Just task runner recipes
+├── qodana.yaml                   # Code quality config
+└── README.md                     # This file
 ```
 
 ---
 
-## 🚀 Quick Start (local dev)
-1) **Python env**
+## 🚀 Quick Start
+
+### Prerequisites
+- **Python 3.11+** (Mac M4 recommended for optimal AutoGluon performance)
+- **Node.js 18+** (for dashboard)
+- **Just** task runner (`brew install just`)
+- **MotherDuck account** with access token
+- **API keys**: Databento, FRED (minimum); optional: EIA, USDA NASS, ScrapeCreator
+
+### Initial Setup
+
+1. **Clone and bootstrap environment**
+   ```bash
+   git clone https://github.com/zincdigitalofmiami/CBI-V15.git
+   cd CBI-V15
+   just setup  # Creates .venv, installs Python deps, runs npm ci
+   ```
+
+2. **Configure environment variables**
+   ```bash
+   cp config/env-templates/.env.example .env
+   # Edit .env with your credentials:
+   # - MOTHERDUCK_DB=cbi_v15
+   # - MOTHERDUCK_TOKEN=<your_token>
+   # - DATABENTO_API_KEY=<your_key>
+   # - FRED_API_KEY=<your_key>
+   ```
+
+3. **Install AutoGluon with Mac M4 optimizations** (Mac only)
+   ```bash
+   source .venv/bin/activate
+   scripts/setup/install_autogluon_mac.sh
+   ```
+
+### Development Workflows
+
+**Run dashboard locally** (queries MotherDuck cloud)
 ```bash
-python -m venv .venv
+just dev  # Starts Trigger.dev (port 3000) + Dashboard (port 3001)
+```
+
+**Sync MotherDuck → local DuckDB** (before training)
+```bash
 source .venv/bin/activate
-pip install -r config/requirements/requirements.txt
+python scripts/sync_motherduck_to_local.py --dry-run  # Preview changes
+python scripts/sync_motherduck_to_local.py            # Execute sync
 ```
-2) **Node deps (dashboard)**
+
+**Run quality checks**
 ```bash
-cd dashboard && npm install
+just qa  # Runs ruff linter
 ```
-3) **Set env (example)**
+
+**Database operations**
 ```bash
-export MOTHERDUCK_DB=cbi_v15
-export MOTHERDUCK_TOKEN=<token>
-export DATABENTO_API_KEY=<key>
-export FRED_API_KEY=<key>
+just db:ddl     # Deploy DDL to MotherDuck
+just db:macros  # Deploy SQL macros to MotherDuck
+just db:seed    # Load seed data
 ```
-4) **Sync cloud → local DuckDB before training**
+
+**Autosave (backup commits every 5min)**
 ```bash
-python scripts/sync_motherduck_to_local.py --dry-run
-```
-5) **Run dashboard**
-```bash
-cd dashboard && npm run dev
+just autosave  # Ctrl+C to stop
 ```
 
 ---
 
-## 🔑 Environment (minimum)
-- `MOTHERDUCK_DB`, `MOTHERDUCK_TOKEN`
-- `DATABENTO_API_KEY`, `FRED_API_KEY`
-- (Optional) `SCRAPECREATOR_API_KEY`, `EIA_API_KEY`, `USDA_NASS_API_KEY`
-- Secrets in `.env` or macOS Keychain; never committed.
+## 🔑 Environment Variables
+
+### Required
+- `MOTHERDUCK_DB` — MotherDuck database name (default: `cbi_v15`)
+- `MOTHERDUCK_TOKEN` — MotherDuck service token
+- `DATABENTO_API_KEY` — Databento API key (38 futures symbols)
+- `FRED_API_KEY` — FRED API key (24+ macro indicators)
+
+### Optional (ingestion enhancers)
+- `EIA_API_KEY` — Energy Information Administration
+- `USDA_NASS_API_KEY` — USDA National Agricultural Statistics Service
+- `SCRAPECREATOR_API_KEY` — ScrapeCreator API (news scraping)
+- `TRADINGECONOMICS_API_KEY` — TradingEconomics API
+- `GLIDE_API_KEY` — Glide API (Vegas demand intelligence)
+
+**Security**: Store secrets in `.env` (gitignored) or macOS Keychain. Never commit credentials.
 
 ---
 
-## 📚 Key Docs
-- `docs/architecture/MASTER_PLAN.md` — source of truth (V15.1 AutoGluon hybrid)
-- `AGENTS.md` — guardrails, Big 8 coverage, naming rules
-- `DATA_LINKS_MASTER.md` — canonical data sources
-- `PHASE_0_EXECUTION_READY.md` — readiness checklist
-- `.cursor/plans/ALL_PHASES_INDEX.md` — active master implementation plan (Phases 0–5)
+## 📚 Key Documentation
+
+### Architecture & Design
+- **[docs/architecture/MASTER_PLAN.md](docs/architecture/MASTER_PLAN.md)** — Single source of truth for V15.1 AutoGluon hybrid architecture
+- **[docs/architecture/FEATURE_ENGINEERING_ARCHITECTURE.md](docs/architecture/FEATURE_ENGINEERING_ARCHITECTURE.md)** — AnoFox SQL macro design patterns
+- **[docs/architecture/META_LEARNING_FRAMEWORK.md](docs/architecture/META_LEARNING_FRAMEWORK.md)** — Multi-layer ensemble strategy
+- **[docs/architecture/ENSEMBLE_ARCHITECTURE_PROPOSAL.md](docs/architecture/ENSEMBLE_ARCHITECTURE_PROPOSAL.md)** — L0/L1/L2 ensemble design
+- **[docs/architecture/BASELINE_V15_STRATEGY.md](docs/architecture/BASELINE_V15_STRATEGY.md)** — Baseline model strategy
+
+### Operations & Deployment
+- **[docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md](docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md)** — Dashboard connection architecture
+- **[docs/ops/deployment_checklist.md](docs/ops/deployment_checklist.md)** — Production deployment guide
+- **[docs/ops/POST_REFACTOR_HARDENING_REPORT.md](docs/ops/POST_REFACTOR_HARDENING_REPORT.md)** — V15.1 refactor report
+
+### Project References
+- **[AGENTS.md](AGENTS.md)** — Engineering agent guardrails, Big 8 coverage rules, naming conventions
+- **[DATA_LINKS_MASTER.md](DATA_LINKS_MASTER.md)** — Canonical data source URLs and API documentation
+- **[config/data_sources.yaml](config/data_sources.yaml)** — Machine-readable data source configurations
+- **[config/bucket_feature_selectors.yaml](config/bucket_feature_selectors.yaml)** — Big 8 bucket feature mappings
 
 ---
 
