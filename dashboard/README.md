@@ -70,12 +70,13 @@ The dashboard uses a **hybrid approach** based on execution context:
 | Route | Purpose | Audience |
 |-------|---------|----------|
 | `/` | Dashboard / Procurement Command Center | Chris (Procurement) |
-| `/legislation` | Policy & Tariff Intel | Policy analysts |
-| `/sentiment` | Big-8 Sentiment Monitor | Quant team |
+| `/market-overview` | Technical Dashboard with TradingView | Procurement + Quant |
 | `/strategy` | ZL Strategy & Procurement Plan | Procurement + Quant |
+| `/sentiment` | Big-8 Sentiment Monitor | Quant team |
+| `/legislation` | Policy & Tariff Intel | Policy analysts |
 | `/vegas-intel` | Sales Intelligence for Kevin | Sales team |
 | `/admin` | Business Configuration | Business admins |
-| `/quant-admin` | AutoGluon + AnoFox Internal | Quant team (off-menu) |
+| `/quant-admin` | Pipeline Health & Model Registry | Quant team (internal) |
 
 ### Page Details
 
