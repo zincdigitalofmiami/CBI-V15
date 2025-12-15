@@ -3,8 +3,18 @@
 ####################################################################################################################
 
 version: "1.0"
-linter: jetbrains/qodana-jvm-community:2025.2
 profile:
   name: qodana.recommended
 include:
+  # License and dependencies
   - name: CheckDependencyLicenses
+qualityGate:
+  conditions:
+    # Fail the build on any Critical or High problem reported by Qodana
+    - rule: "Every problem"
+      severity: "CRITICAL"
+      threshold: 0
+    - rule: "Every problem"
+      severity: "HIGH"
+      threshold: 0
+linter: jetbrains/qodana-python:2025.2

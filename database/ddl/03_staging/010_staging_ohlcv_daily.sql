@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS staging.ohlcv_daily (
     symbol VARCHAR NOT NULL,
-    date DATE NOT NULL,
+    as_of_date DATE NOT NULL,
     open DECIMAL(10, 2),
     high DECIMAL(10, 2),
     low DECIMAL(10, 2),
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS staging.ohlcv_daily (
     gap_filled BOOLEAN DEFAULT FALSE,
     outlier_adjusted BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (symbol, date)
+    PRIMARY KEY (symbol, as_of_date)
 );
 
 -- Covers all 33 canonical symbols
@@ -22,4 +22,6 @@ CREATE TABLE IF NOT EXISTS staging.ohlcv_daily (
 
 CREATE INDEX IF NOT EXISTS idx_staging_ohlcv_symbol 
     ON staging.ohlcv_daily(symbol);
+CREATE INDEX IF NOT EXISTS idx_staging_ohlcv_as_of_date 
+    ON staging.ohlcv_daily(as_of_date);
 

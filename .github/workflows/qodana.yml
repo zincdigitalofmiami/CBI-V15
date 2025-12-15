@@ -8,15 +8,42 @@ on:
     branches: [ main ]
 
 jobs:
-  qodana:
+  qodana-js:
+    name: Qodana JS/TS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Qodana Scan
+      - name: Qodana JS Scan
         uses: JetBrains/qodana-action@v2024.2
         with:
+          linter: jetbrains/qodana-js:2025.2
           pr-mode: false
-      - name: Upload SARIF to GitHub Code Scanning
+      - name: Upload SARIF to GitHub Code Scanning (JS)
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: qodana.sarif.json
+      - name: Upload Qodana Report Artifact (JS)
+        uses: actions/upload-artifact@v4
+        with:
+          name: qodana-js-report
+          path: .qodana/**
+
+  qodana-python:
+    name: Qodana Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Qodana Python Scan
+        uses: JetBrains/qodana-action@v2024.2
+        with:
+          linter: jetbrains/qodana-python:2025.2
+          pr-mode: false
+      - name: Upload SARIF to GitHub Code Scanning (Python)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: qodana.sarif.json
+      - name: Upload Qodana Report Artifact (Python)
+        uses: actions/upload-artifact@v4
+        with:
+          name: qodana-python-report
+          path: .qodana/**

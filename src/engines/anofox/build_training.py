@@ -52,7 +52,6 @@ def build_training(con: duckdb.DuckDBPyConnection = None) -> None:
             LEAD(close, 126) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_6m,
             LEAD(close, 252) OVER (PARTITION BY symbol ORDER BY as_of_date) / close - 1 AS target_ret_12m
         FROM features.daily_ml_matrix_zl f
-        LEFT JOIN staging.ohlcv_daily o USING (as_of_date, symbol)
     """
     )
 

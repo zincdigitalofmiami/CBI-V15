@@ -229,10 +229,14 @@ def main(use_motherduck: bool = True):
 
     # Load to DuckDB
     try:
+        # Idempotent load: replace on primary key (symbol, as_of_date)
         con.execute(
             """
-            INSERT INTO raw.databento_futures_ohlcv_1d 
-            SELECT * FROM combined_df
+            CREATE TEMP TABLE staging_load AS SELECT * FROM combined_df;
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_stage_pk ON staging_load(symbol, as_of_date);
+            INSERT OR REPLACE INTO raw.databento_futures_ohlcv_1d
+            SELECT symbol, as_of_date, open, high, low, close, volume, open_interest
+            FROM staging_load;
         """
         )
         logger.info(

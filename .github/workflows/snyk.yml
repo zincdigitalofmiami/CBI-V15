@@ -1,0 +1,34 @@
+name: Snyk
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  snyk:
+    name: Snyk Open Source (Node.js)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm i; fi
+      - name: Snyk test (SARIF)
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/node@master
+        with:
+          command: test --sarif-file-output=snyk.sarif
+      - name: Upload SARIF to GitHub Code Scanning
+        if: env.SNYK_TOKEN != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif

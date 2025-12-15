@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const rows = await queryMotherDuck(`
       SELECT *
-      FROM raw.databento_ohlcv_daily
+      FROM raw.databento_futures_ohlcv_1d
       WHERE symbol = 'ZL'
       ORDER BY as_of_date DESC
       LIMIT 100

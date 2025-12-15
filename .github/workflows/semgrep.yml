@@ -1,0 +1,32 @@
+name: Semgrep
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Use the official Semgrep Action to handle install and (optional) auth
+      - name: Run Semgrep (OWASP Top 10)
+        uses: returntocorp/semgrep-action@v1
+        env:
+          SEMGREP_RULES: p/owasp-top-ten
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        with:
+          generateSarif: true
+          publish-sarif: false
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif

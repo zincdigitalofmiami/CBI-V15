@@ -30,5 +30,5 @@ CREATE TABLE IF NOT EXISTS raw.scrapecreators_trump (
 CREATE INDEX IF NOT EXISTS idx_news_bucket 
     ON raw.scrapecreators_news_buckets(bucket);
 CREATE INDEX IF NOT EXISTS idx_news_date 
-    ON raw.scrapecreators_news_buckets(published_date);
+    ON raw.scrapecreators_news_buckets(date);
 

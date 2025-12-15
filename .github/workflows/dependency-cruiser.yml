@@ -1,0 +1,34 @@
+name: Dependency-Cruiser
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  depcruise:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run dependency-cruiser (dashboard)
+        run: |
+          npx --yes dependency-cruiser -v
+          npx --yes dependency-cruiser -c dashboard/.dependency-cruiser.js dashboard --output-type text > depcruise-report.txt
+          npx --yes dependency-cruiser -c dashboard/.dependency-cruiser.js dashboard --output-type json > depcruise-report.json
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-cruiser-reports
+          path: |
+            depcruise-report.txt
+            depcruise-report.json

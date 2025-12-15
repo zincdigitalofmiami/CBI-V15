@@ -81,14 +81,17 @@ export class MotherDuckClient {
       `(${columns.map(c => this.formatValue(r[c])).join(", ")})`
     ).join(", ");
 
+    const stamp = Date.now();
+    const tempName = `staging_${stamp}`;
+
     const createTempSql = `
-      CREATE TEMP TABLE staging_${Date.now()} AS 
+      CREATE TEMP TABLE ${tempName} AS 
       SELECT * FROM (VALUES ${values}) AS t(${columns.join(", ")})
     `;
 
     const insertSql = `
       INSERT OR IGNORE INTO ${table}
-      SELECT * FROM staging_${Date.now()}
+      SELECT * FROM ${tempName}
     `;
 
     return new Promise((resolve, reject) => {
