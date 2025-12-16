@@ -1,0 +1,113 @@
+# CBI-V15 Data Ingestion - GitHub Actions
+# Runs scheduled data collection → MotherDuck
+# FREE tier: 2,000 minutes/month
+
+name: Data Ingestion
+
+on:
+  schedule:
+    # Every 6 hours: 6 AM, 12 PM, 6 PM, 12 AM UTC
+    - cron: '0 6,12,18,0 * * *'
+  workflow_dispatch:  # Manual trigger button
+
+env:
+  MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+  MOTHERDUCK_DB: cbi_v15
+  DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
+jobs:
+  databento:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install duckdb databento pandas requests
+      
+      - name: Collect Databento futures data
+        run: python trigger/DataBento/Scripts/collect_daily.py
+
+  fred:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install duckdb fredapi pandas requests tenacity
+      
+      - name: Collect FRED FX data
+        run: python trigger/FRED/Scripts/collect_fred_fx.py
+      
+      - name: Collect FRED rates data
+        run: python trigger/FRED/Scripts/collect_fred_rates_curve.py
+      
+      - name: Collect FRED financial conditions
+        run: python trigger/FRED/Scripts/collect_fred_financial_conditions.py
+
+  usda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install duckdb pandas requests
+      
+      - name: Collect USDA Export Sales
+        run: python trigger/USDA/Scripts/ingest_export_sales.py
+      
+      - name: Collect USDA WASDE
+        run: python trigger/USDA/Scripts/ingest_wasde.py
+
+  epa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install duckdb pandas requests
+      
+      - name: Collect EPA RIN prices
+        run: python trigger/EIA_EPA/Scripts/collect_epa_rin_prices.py
+
+  weather:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install duckdb pandas requests
+      
+      - name: Collect weather data
+        run: python trigger/Weather/Scripts/ingest_weather.py
+
