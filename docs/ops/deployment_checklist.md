@@ -3,6 +3,7 @@
 ## ✅ Completed
 
 ### 1. Vercel Deployment
+
 - [x] Platform deployed to Vercel
 - [x] URL: https://web-6fzk3365k-zincdigitalofmiamis-projects.vercel.app
 - [x] All 6 pages built successfully:
@@ -14,6 +15,7 @@
   - Admin
 
 ### 2. Documentation Created
+
 - [x] Databento Integration Guide
 - [x] Python backfill script (`databento_to_motherduck.py`)
 - [x] MotherDuck schema design
@@ -62,27 +64,27 @@ python scripts/databento_to_motherduck.py
 Location: `web/app/api/motherd uck/route.ts`
 
 ```typescript
-import { NextResponse } from 'next/server';
-import duckdb from 'duckdb';
+import { NextResponse } from "next/server";
+import duckdb from "duckdb";
 
 const MOTHERDUCK_TOKEN = process.env.MOTHERDUCK_TOKEN;
 
 export async function GET() {
-    try {
-        const db = new duckdb.Database(':memory:');
-        const conn = db.connect(`md:usoil_intelligence?motherduck_token=${MOTHERDUCK_TOKEN}`);
-        
-        const result = await conn.all(`
+  try {
+    const db = new duckdb.Database(":memory:");
+    const conn = db.connect(`md:usoil_intelligence?motherduck_token=${MOTHERDUCK_TOKEN}`);
+
+    const result = await conn.all(`
             SELECT date, close, volume
             FROM zl_futures_ohlcv
             WHERE date >= CURRENT_DATE - INTERVAL '1 year'
             ORDER BY date ASC
         `);
-        
-        return NextResponse.json({ success: true, data: result });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
+
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
 }
 ```
 
@@ -91,7 +93,7 @@ export async function GET() {
 Replace the data fetch in `Dashboard /page.tsx`:
 
 ```typescript
-const response = await fetch('/api/motherduck');
+const response = await fetch("/api/motherduck");
 const { data } = await response.json();
 setChartData(data);
 ```
@@ -108,8 +110,8 @@ setChartData(data);
 
 ## 🔐 Credentials Summary
 
-| Service | Key | Location |
-|---------|-----|----------|
-| Databento | `db-8uKak7BPpJejVjqxtJ4xnh9sGWYHE` | Vercel env |
-| MotherDuck | (user's token) | Vercel env |
-| Vercel | https://web-6fzk... | Live |
+| Service    | Key                                | Location   |
+| ---------- | ---------------------------------- | ---------- |
+| Databento  | `db-8uKak7BPpJejVjqxtJ4xnh9sGWYHE` | Vercel env |
+| MotherDuck | (user's token)                     | Vercel env |
+| Vercel     | https://web-6fzk...                | Live       |

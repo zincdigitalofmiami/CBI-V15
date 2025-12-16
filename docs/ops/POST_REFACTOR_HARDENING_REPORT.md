@@ -9,6 +9,7 @@
 ## Executive Summary
 
 Completed 4-step hardening process after database directory refactor:
+
 1. ✅ Created `database/models/MANIFEST.md` (23 SQL files inventoried)
 2. ✅ Grep audit confirmed no stray `database/definitions` references
 3. ⚠️ TSci remnants found (8 code refs, 5 doc files) — tasks updated
@@ -21,6 +22,7 @@ Completed 4-step hardening process after database directory refactor:
 **File:** `database/models/MANIFEST.md`
 
 **Contents:**
+
 - Complete inventory of 23 SQL files by folder
 - Canonical table mapping (FRED → raw.fred_economic, EIA → raw.eia_biofuels, EPA → raw.epa_rin_prices)
 - Migration notes (database/definitions → database/models)
@@ -33,6 +35,7 @@ Completed 4-step hardening process after database directory refactor:
 **Result:** ✅ **CLEAN**
 
 Only 1 file references `database/definitions`:
+
 - `database/models/MANIFEST.md` (documenting the migration)
 
 No stray references in code, configs, or docs.
@@ -42,13 +45,16 @@ No stray references in code, configs, or docs.
 ## Step 3: TSci Remnants Audit
 
 ### Code References (8 total)
-| File | Count | Type |
-|------|-------|------|
-| `src/engines/base_engine.py` | 1 | Docstring |
-| `src/engines/anofox/anofox_bridge.py` | 7 | Docstrings |
+
+| File                                  | Count | Type       |
+| ------------------------------------- | ----- | ---------- |
+| `src/engines/base_engine.py`          | 1     | Docstring  |
+| `src/engines/anofox/anofox_bridge.py` | 7     | Docstrings |
 
 ### Documentation Files (5 total)
+
 Files to archive:
+
 1. `docs/project_docs/timeseriesscientist_integration.md`
 2. `docs/project_docs/tsci_anofox_architecture.md`
 3. `docs/project_docs/tsci_verification_report.md`
@@ -56,9 +62,11 @@ Files to archive:
 5. `docs/project_docs/admin_tsci_verified_1764726658521.webp`
 
 ### Schema
+
 - ✅ No `tsci` schema in `database/models/00_init/00_schemas.sql`
 
 ### Actions Taken
+
 - **Updated Task:** `kPK2BQMnyUnBFejmNJVa8E` — Expanded TSci removal instructions
 - **Added Task:** `75QB2J6csV5W2j3peFdN5p` — Create `docs/_archive/` directory
 
@@ -69,6 +77,7 @@ Files to archive:
 **Result:** ✅ **CLEAN**
 
 All BigQuery references are CORRECT (stating we DON'T use BigQuery):
+
 - `database/README.md` (2 refs)
 - `trigger/DataBento/Scripts/collect_daily.py` (1 ref)
 - `augment/.augment.md` (5 refs)
@@ -125,7 +134,7 @@ grep -ri "bigquery" --include="*.py" --include="*.md" . 2>/dev/null | grep -v ".
 ## Task List Updates
 
 - **Updated:** Task `kPK2BQMnyUnBFejmNJVa8E` (TSci removal)
-- **Added:** Task `75QB2J6csV5W2j3peFdN5p` (docs/_archive/ creation)
+- **Added:** Task `75QB2J6csV5W2j3peFdN5p` (docs/\_archive/ creation)
 - **Completed:** Tasks `cTEc9kxTCKhfHdJ9ykrf8e`, `nMnkn7D8DfQmdSXuKpJzMg` (schema consolidation)
 
 ---

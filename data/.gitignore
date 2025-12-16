@@ -1,0 +1,8 @@
+# Local data files - not tracked in git
+*.duckdb
+*.db
+*.parquet
+*.csv
+*.pkl
+*.joblib
+!.gitignore

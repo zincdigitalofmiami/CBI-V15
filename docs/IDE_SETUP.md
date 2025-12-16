@@ -1,59 +1,55 @@
-# IDE Setup (IntelliJ IDEA Ultimate)
+# IDE & AI Tool Configuration
 
-This guide sets up IntelliJ IDEA Ultimate as the single IDE for Python + SQL + JS/TS for CBI-V15.
+This project uses multiple IDE and AI coding assistants. Configuration folders are organized as follows:
 
-## 1) Required plugins
-- Python
-- Jupyter
-- Database Tools and SQL (DataGrip)
-- JavaScript and TypeScript
-- Tailwind CSS
-- Docker
-- Markdown
-- GitHub
-- JetBrains AI Assistant
+## AI Coding Assistants (Tracked in Git)
 
-All are bundled with IDEA Ultimate, except AI Assistant (licensed add-on).
+These configurations are shared across the team for consistent AI behavior:
 
-## 2) Interpreters and SDKs
-- Python: point IDEA to the project venv (.venv) or Conda env.
-- Node: use the project Node runtime (Volta/asdf recommended) and enable "Use project node interpreter".
+| Folder | Tool | Purpose |
+|--------|------|---------|
+| `.cursor/` | Cursor IDE | Plans, rules, agent configs |
+| `.continue/` | Continue | MCP server configs |
+| `.junie/` | Junie AI | Guidelines and context |
+| `.kilocode/` | Kilocode | MCP configs, ignore patterns |
 
-## 3) Environment variables
-Create .env files (not committed) or use macOS Keychain + direnv. Minimum:
-- MOTHERDUCK_DB
-- MOTHERDUCK_TOKEN
-- Data source keys used by Trigger.dev (e.g., DATABENTO_API_KEY, FRED_API_KEY)
+### Key Files
 
-## 4) Run Configurations
-Already provided under .idea/runConfigurations/:
-- Dev - Trigger.dev: runs `trigger.dev dev` at repo root
-- Dev - Dashboard: runs `next dev` inside dashboard/
-- Dev - All: compound that launches both
-- QA - All: shell task that runs Python + JS quality checks
+- `.cursor/rules.json` - Cursor agent behavior rules
+- `.cursor/plans/` - Implementation plans (ALL_PHASES_INDEX.md is master)
+- `.junie/guidelines.md` - Junie AI context
+- `.kilocode/mcp.json` - MCP server configuration
+- `AGENTS.md` - Master AI agent guidelines (root)
+- `AI_GUIDELINES.md` - AI behavior rules (root)
 
-Open Run/Debug Configurations and duplicate/tweak as needed. Provide env vars via the configuration Environment tab.
+## IDE Configs (Git Ignored)
 
-## 5) Databases (DuckDB + MotherDuck)
-- Add DuckDB data source pointed at data/duckdb/cbi_v15.duckdb.
-- Add MotherDuck via DuckDB driver using your MOTHERDUCK_TOKEN.
-- Save data sources in local IDE settings (do not commit secrets).
+Local IDE preferences not shared:
 
-## 6) Jupyter & Scientific
-- Enable Scientific Mode (View -> Appearance -> Scientific Mode).
-- Use the project interpreter for notebooks; variables and plots appear in the scientific tool window.
+| Folder | Tool | Purpose |
+|--------|------|---------|
+| `.vscode/` | VS Code | Workspace settings, launch configs |
+| `.idea/` | JetBrains | PyCharm/IntelliJ project settings |
 
-## 7) AI Assistant workflow
-- Use chat to explain unfamiliar files (database/macros/*, trigger/*).
-- Ask for quick test drafts or refactors. Use AI Diff Review on PRs.
+## Code Quality Tools
 
-## 8) Optional quality gates
-- Add pre-commit (Python) and husky/lint-staged (JS/TS) locally for auto-fix on commit.
-- In CI: run ESLint/TS typecheck, Ruff/Black, Pytest, Qodana.
+| Folder/File | Tool | Purpose |
+|-------------|------|---------|
+| `.qodana/` | Qodana | Code quality reports (JetBrains) |
+| `qodana.yaml` | Qodana | Configuration |
+| `.pre-commit-config.yaml` | pre-commit | Git hooks |
 
----
+## Build/Runtime (Git Ignored)
 
-Tips
-- Use a Compound configuration for one-click dev (Dev - All).
-- The HTTP Client (.http files) is great for exercising Trigger.dev webhooks.
-- Database tool window: pin consoles to schemas for faster macro iteration.
+| Folder | Purpose |
+|--------|---------|
+| `.venv/` | Python virtual environment |
+| `.pytest_cache/` | Pytest cache |
+| `.trigger/` | Trigger.dev local state |
+
+## Setup
+
+1. **Cursor**: Open project, rules auto-load from `.cursor/rules.json`
+2. **VS Code**: Install recommended extensions from `.vscode/extensions.json`
+3. **JetBrains**: Open as Python project, configs in `.idea/`
+4. **Continue**: MCP servers configured in `.continue/mcpServers/`

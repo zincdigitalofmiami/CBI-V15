@@ -19,6 +19,7 @@ The dashboard uses **native DuckDB** with MotherDuck's `md:` connection protocol
 **File**: `dashboard/lib/md.ts`
 
 **Implementation**:
+
 - Uses native `duckdb` Node.js package
 - Connection string: `md:cbi_v15?motherduck_token={token}`
 - Connection pooling: Reuses database instance, creates new connections per query
@@ -26,6 +27,7 @@ The dashboard uses **native DuckDB** with MotherDuck's `md:` connection protocol
 - Database: Configurable via `MOTHERDUCK_DB` (defaults to `cbi_v15`)
 
 **Usage**: All API routes use this method via `queryMotherDuck()`:
+
 - ✅ `app/api/forecasts/route.ts`
 - ✅ `app/api/live/zl/route.ts`
 - ✅ `app/api/shap/zl/route.ts`
@@ -34,6 +36,7 @@ The dashboard uses **native DuckDB** with MotherDuck's `md:` connection protocol
 **Status**: ✅ **Primary method - Vercel compatible**
 
 **Benefits**:
+
 - Full DuckDB SQL functionality
 - Works in Vercel serverless functions
 - No Worker API dependency (unlike WASM)
@@ -44,6 +47,7 @@ The dashboard uses **native DuckDB** with MotherDuck's `md:` connection protocol
 **File**: `dashboard/lib/motherduck.ts`
 
 **Implementation**:
+
 - Uses `@motherduck/wasm-client` package
 - Singleton pattern with `MDConnection`
 - Environment variable: `process.env.MOTHERDUCK_TOKEN`
@@ -54,6 +58,7 @@ The dashboard uses **native DuckDB** with MotherDuck's `md:` connection protocol
 **Status**: ✅ **Available for client-side use**
 
 **Benefits**:
+
 - Full DuckDB functionality in browser
 - Better performance for client-side queries
 - No server round-trip needed
@@ -74,9 +79,10 @@ The dashboard uses **native DuckDB** with MotherDuck's `md:` connection protocol
 
 **Status**: ✅ **Fixed** - Now uses `MOTHERDUCK_DB` environment variable
 
-**Current**: 
+**Current**:
+
 ```typescript
-const MOTHERDUCK_DB = process.env.MOTHERDUCK_DB || 'cbi_v15';
+const MOTHERDUCK_DB = process.env.MOTHERDUCK_DB || "cbi_v15";
 ```
 
 ---
@@ -94,10 +100,11 @@ const MOTHERDUCK_DB = process.env.MOTHERDUCK_DB || 'cbi_v15';
 **Problem**: HTTP API error handling doesn't provide detailed error information
 
 **Current**:
+
 ```typescript
 if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`MotherDuck query failed: ${error}`);
+  const error = await response.text();
+  throw new Error(`MotherDuck query failed: ${error}`);
 }
 ```
 
@@ -110,17 +117,20 @@ if (!response.ok) {
 ## Verification Results
 
 ### ✅ WASM Client Setup
+
 - **Package**: `@motherduck/wasm-client@^0.8.0` ✅ **Installed**
 - **Connection**: Singleton pattern ✅ **Implemented**
 - **Database**: Configurable via `MOTHERDUCK_DB` ✅ **Implemented**
 - **ATTACH**: Database attached on query ✅ **Implemented**
 
 ### ✅ Environment Variables
+
 - **Code expects**: `MOTHERDUCK_TOKEN` ✅ **Required**
 - **Code expects**: `MOTHERDUCK_DB` ✅ **Optional (defaults to cbi_v15)**
 - **Vercel setup**: Use `MOTHERDUCK_TOKEN` and optionally `MOTHERDUCK_DB`
 
 ### ✅ Next.js Configuration
+
 - **COOP/COEP headers**: ✅ Configured for WASM support
 - **DuckDB externals**: ✅ Configured (though not used with HTTP API)
 
@@ -170,6 +180,7 @@ if (!response.ok) {
 ## Connection Flow Diagram
 
 ### API Routes (Server-Side)
+
 ```
 Vercel Serverless Function (API Route)
     ↓
@@ -187,6 +198,7 @@ NextResponse.json({ data: rows })
 ```
 
 ### Client Components (Browser)
+
 ```
 Browser Component ('use client')
     ↓
@@ -210,11 +222,13 @@ Transform: result.data.toRows()
 ## Security Considerations
 
 ### ✅ Good Practices
+
 - Token stored in environment variables (not hardcoded)
 - HTTPS used for API calls
 - Bearer token authentication
 
 ### ⚠️ Recommendations
+
 - Ensure `MOTHERDUCK_TOKEN` is set as Vercel environment variable (not in code)
 - Consider using read-only token for dashboard if writes aren't needed
 - Rotate tokens periodically
@@ -241,18 +255,7 @@ The MotherDuck connection is **fully implemented using native DuckDB for API rou
 ✅ **Proper configuration** with environment variables  
 ✅ **WASM available** for client-side components  
 ✅ **Complete documentation** in README and VERCEL_CONNECTION.md  
-✅ **Tested and verified** - Connection working correctly  
+✅ **Tested and verified** - Connection working correctly
 
 **Overall Status**: ✅ **Production Ready - Native DuckDB for API Routes, WASM for Client Components**
-
-
-
-
-
-
-
-
-
-
-
 

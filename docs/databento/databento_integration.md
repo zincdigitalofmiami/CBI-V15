@@ -13,6 +13,7 @@ Databento provides institutional-grade market data from CME Globex MDP 3.0, the 
 ## Data Feed Details
 
 **CME Globex MDP 3.0** features:
+
 - Full order book with every order event
 - Event-driven messaging with Simple Binary Encoding (SBE)
 - Optimized for low latency and low bandwidth
@@ -22,11 +23,13 @@ Databento provides institutional-grade market data from CME Globex MDP 3.0, the 
 ## Python Client Setup
 
 ### Installation
+
 ```bash
 pip install databento
 ```
 
 ### Historical API (For Backfill)
+
 ```python
 import databento as db
 
@@ -47,6 +50,7 @@ df = data.to_df()
 ```
 
 ### Live API (For Real-Time)
+
 ```python
 import databento as db
 
@@ -124,6 +128,7 @@ CREATE TABLE big_8_drivers (
 ## Migration from Yahoo Finance
 
 ### Before (Yahoo Finance CSV)
+
 ```python
 url = f"https://query1.finance.yahoo.com/v7/finance/download/ZL=F?..."
 response = await fetch(url)
@@ -131,6 +136,7 @@ csvText = await response.text()
 ```
 
 ### After (Databento)
+
 ```python
 import databento as db
 

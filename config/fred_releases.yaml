@@ -1,0 +1,203 @@
+# ============================================================================
+# FRED Release IDs - Complete Historical Data Sources
+# ============================================================================
+# Source: https://fred.stlouisfed.org/docs/api/fred/v2/release_observations.html
+# Each release contains MULTIPLE series with COMPLETE historical data
+# ============================================================================
+
+# ============================================================================
+# BUCKET 4: FED (Monetary Policy)
+# ============================================================================
+fed_monetary_policy:
+  release_id: 62
+  name: "H.15 Selected Interest Rates"
+  url: "https://fred.stlouisfed.org/release?rid=62"
+  description: "Fed Funds, SOFR, IORB, Treasury Yields, Commercial Paper"
+  bucket: "fed"
+  key_series:
+    - DFEDTARU  # Fed Funds Target Upper
+    - DFEDTARL  # Fed Funds Target Lower
+    - DFF  # Fed Funds Effective Rate
+    - SOFR  # Secured Overnight Financing Rate
+    - IORB  # Interest on Reserve Balances
+    - DGS10  # 10-Year Treasury
+    - DGS2  # 2-Year Treasury
+    - T10Y2Y  # 10Y-2Y Spread
+
+fomc_projections:
+  release_id: 51
+  name: "FOMC Projections Materials"
+  url: "https://fred.stlouisfed.org/release?rid=51"
+  description: "Fed economic projections, dot plots"
+  bucket: "fed"
+
+# ============================================================================
+# BUCKET 8: VOLATILITY (Financial Stress)
+# ============================================================================
+financial_stress:
+  release_id: 469
+  name: "Financial Stress Index"
+  url: "https://fred.stlouisfed.org/release?rid=469"
+  description: "STLFSI, STLFSI4, Regional Financial Stress"
+  bucket: "volatility"
+  key_series:
+    - STLFSI  # St. Louis Fed Financial Stress Index
+    - STLFSI4  # 4-Week Moving Average
+    - VIXCLS  # VIX (separate release)
+
+chicago_fed_conditions:
+  release_id: 456
+  name: "Chicago Fed National Financial Conditions Index"
+  url: "https://fred.stlouisfed.org/release?rid=456"
+  description: "NFCI, Credit, Leverage, Risk indicators"
+  bucket: "volatility"
+  key_series:
+    - NFCI  # National Financial Conditions Index
+    - NFCILEVERAGE  # Leverage Subindex
+    - NFCICREDIT  # Credit Subindex
+
+# ============================================================================
+# BUCKET 3: FX (Exchange Rates)
+# ============================================================================
+fx_rates:
+  release_id: 17
+  name: "H.10 Foreign Exchange Rates"
+  url: "https://fred.stlouisfed.org/release?rid=17"
+  description: "Daily FX rates for all major currencies"
+  bucket: "fx"
+  key_series:
+    - DEXBZUS  # Brazil Real
+    - DEXCHUS  # China Yuan
+    - DEXMXUS  # Mexico Peso
+    - DEXUSEU  # Euro
+    - DTWEXBGS  # Dollar Index (Broad)
+
+# ============================================================================
+# BUCKET 7: ENERGY (Petroleum & Energy)
+# ============================================================================
+petroleum_prices:
+  release_id: 9
+  name: "Petroleum & Other Liquids"
+  url: "https://fred.stlouisfed.org/release?rid=9"
+  description: "WTI Crude, Gasoline, Diesel, Heating Oil"
+  bucket: "energy"
+  key_series:
+    - DCOILWTICO  # WTI Crude
+    - GASREGW  # Regular Gasoline
+    - DHOILNYH  # NY Harbor Heating Oil
+
+# ============================================================================
+# CROSS-CUTTING: Flow of Funds (Credit Markets)
+# ============================================================================
+z1_financial_accounts:
+  release_id: 52
+  name: "Z.1 Financial Accounts of the United States"
+  url: "https://fred.stlouisfed.org/release?rid=52"
+  description: "Flow of Funds, Household/Corporate Balance Sheets"
+  bucket: "fed"
+  note: "MASSIVE release - 10,000+ series, quarterly data"
+
+# ============================================================================
+# AGRICULTURE (USDA Data via FRED)
+# ============================================================================
+agricultural_prices:
+  release_id: 37
+  name: "Agricultural Prices"
+  url: "https://fred.stlouisfed.org/release?rid=37"
+  description: "Farm prices, crop prices, livestock"
+  bucket: "crush"
+
+# ============================================================================
+# EMPLOYMENT & INCOME (Macro Context)
+# ============================================================================
+employment_situation:
+  release_id: 50
+  name: "Employment Situation"
+  url: "https://fred.stlouisfed.org/release?rid=50"
+  description: "Unemployment, Payrolls, Labor Force"
+  bucket: "fed"
+  key_series:
+    - UNRATE  # Unemployment Rate
+    - PAYEMS  # Nonfarm Payrolls
+
+# ============================================================================
+# GDP & NATIONAL ACCOUNTS
+# ============================================================================
+gdp:
+  release_id: 53
+  name: "Gross Domestic Product"
+  url: "https://fred.stlouisfed.org/release?rid=53"
+  description: "GDP, Personal Consumption, Investment"
+  bucket: "fed"
+
+# ============================================================================
+# INFLATION (CPI, PCE)
+# ============================================================================
+cpi:
+  release_id: 10
+  name: "Consumer Price Index"
+  url: "https://fred.stlouisfed.org/release?rid=10"
+  description: "CPI, Core CPI, Food & Energy"
+  bucket: "fed"
+  key_series:
+    - CPIAUCSL  # CPI All Urban
+    - CPILFESL  # Core CPI
+
+pce:
+  release_id: 54
+  name: "Personal Income and Outlays"
+  url: "https://fred.stlouisfed.org/release?rid=54"
+  description: "PCE, Core PCE (Fed's preferred inflation measure)"
+  bucket: "fed"
+  key_series:
+    - PCEPI  # PCE Price Index
+    - PCEPILFE  # Core PCE
+
+# ============================================================================
+# INDUSTRIAL PRODUCTION
+# ============================================================================
+industrial_production:
+  release_id: 17
+  name: "Industrial Production and Capacity Utilization"
+  url: "https://fred.stlouisfed.org/release?rid=17"
+  description: "Manufacturing, Mining, Utilities"
+  bucket: "fed"
+
+# ============================================================================
+# TAGS FOR DISCOVERY (Use with /tags/series endpoint)
+# ============================================================================
+discovery_tags:
+  fed_policy:
+    - "monetary policy"
+    - "interest rate"
+    - "federal funds"
+    - "yield curve"
+  
+  financial_stress:
+    - "financial stress"
+    - "credit spread"
+    - "volatility"
+    - "vix"
+  
+  fx:
+    - "exchange rate"
+    - "dollar index"
+    - "currency"
+  
+  energy:
+    - "oil"
+    - "petroleum"
+    - "energy prices"
+    - "crude"
+  
+  agriculture:
+    - "agriculture"
+    - "farm"
+    - "crop"
+    - "soybean"
+  
+  inflation:
+    - "inflation"
+    - "cpi"
+    - "pce"
+    - "prices"

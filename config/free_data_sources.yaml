@@ -1,0 +1,249 @@
+# ============================================================================
+# FREE Data Sources - Zero Cost Intelligence Stack
+# ============================================================================
+# All sources: FREE APIs, government data, scrapeable
+# Total value: $2,000+/month if paid
+# Actual cost: $0/month
+# ============================================================================
+
+# ============================================================================
+# MISSING FROM CURRENT SETUP (Add These)
+# ============================================================================
+
+# BUCKET 2: CHINA - UN Comtrade (China Import Data)
+un_comtrade_china_imports:
+  api_url: "https://comtradeapi.un.org/data/v1/get/C/M/HS"
+  cost: FREE
+  rate_limit: "100 requests/hour"
+  registration: "Required (free)"
+  frequency: Monthly
+  bucket: china
+  what_you_get:
+    - China monthly soybean imports by origin (US, Brazil, Argentina)
+    - Historical data back to 2010
+    - Commodity codes: HS 1201 (soybeans), HS 1507 (soybean oil)
+  table: raw.un_comtrade_china_imports
+  priority: HIGH
+  status: NOT_IMPLEMENTED
+
+# BUCKET 1: CRUSH - NOPA Crush Report
+nopa_crush_report:
+  url: "https://nopa.org/nopa-crush-report/"
+  cost: FREE
+  format: PDF (scrapeable)
+  frequency: Monthly (15th of month)
+  bucket: crush
+  what_you_get:
+    - Soybean crush volume (million bushels)
+    - Soybean oil stocks (million lbs)
+    - Soybean meal production
+  table: raw.nopa_crush
+  priority: HIGH
+  status: NOT_IMPLEMENTED
+
+# BUCKET 1: CRUSH - Palm Oil Production (Malaysia)
+mpob_palm_oil:
+  url: "http://bepi.mpob.gov.my/index.php/en/statistics/sectoral-status.html"
+  cost: FREE
+  format: PDF bulletins (scrapeable)
+  frequency: Monthly (10th of month)
+  bucket: crush
+  what_you_get:
+    - Total production (thousand tonnes)
+    - Closing stock levels
+    - Exports to China/India
+  table: raw.mpob_palm_oil
+  priority: MEDIUM
+  status: NOT_IMPLEMENTED
+
+# BUCKET 1: CRUSH - Palm Oil Production (Indonesia)
+gapki_indonesia_palm:
+  url: "https://gapki.id/en/news/"
+  cost: FREE
+  format: Press releases (scrapeable)
+  frequency: Weekly
+  bucket: crush
+  what_you_get:
+    - B35 biodiesel mandate compliance
+    - Domestic CPO consumption
+    - Production updates
+  table: raw.gapki_palm_oil
+  priority: MEDIUM
+  status: NOT_IMPLEMENTED
+
+# BUCKET 2: CHINA - Brazil Weather (Soy Regions)
+inmet_brazil_weather:
+  api_url: "https://apitempo.inmet.gov.br/estacao/dados"
+  cost: FREE
+  registration: None
+  frequency: Daily
+  bucket: china
+  what_you_get:
+    - Precipitation, temperature for Mato Grosso (30% Brazil soy)
+    - Paraná (15% Brazil soy)
+    - Rio Grande do Sul (12% Brazil soy)
+  table: raw.weather_brazil_inmet
+  priority: HIGH
+  status: NOT_IMPLEMENTED
+  note: "Brazil weather affects global soy supply → China imports"
+
+# ALTERNATIVE: NASA POWER (Global Weather)
+nasa_power_weather:
+  api_url: "https://power.larc.nasa.gov/api/temporal/daily/point"
+  cost: FREE
+  rate_limit: "500 requests/day"
+  frequency: Daily
+  bucket: china
+  what_you_get:
+    - Global coverage (Brazil, Argentina, US)
+    - Precipitation, temperature, solar radiation
+  table: raw.nasa_power_weather
+  priority: MEDIUM
+  status: NOT_IMPLEMENTED
+
+# BUCKET 2: CHINA - Argentina Crops
+bage_argentina:
+  url: "https://www.bolsadecereales.com/estimaciones-de-produccion"
+  cost: FREE
+  format: Weekly PDFs (Spanish, scrapeable)
+  frequency: Weekly
+  bucket: china
+  what_you_get:
+    - Argentina soybean production estimates
+    - Crop condition reports
+    - Harvest progress
+  table: raw.bage_argentina_crops
+  priority: MEDIUM
+  status: NOT_IMPLEMENTED
+
+# BUCKET 2: CHINA - USDA FAS Argentina
+usda_fas_argentina:
+  api_url: "https://apps.fas.usda.gov/psdonline/psdDownload.aspx"
+  cost: FREE
+  frequency: Monthly
+  bucket: china
+  what_you_get:
+    - Argentina soybean production forecasts
+    - Export estimates
+  table: raw.usda_fas_argentina
+  priority: LOW
+  status: NOT_IMPLEMENTED
+  note: "Lower priority - BAGE has more timely data"
+
+# LOGISTICS - Freight Rates
+freightos_baltic_index:
+  url: "https://www.freightos.com/freight-resources/freightos-baltic-index/"
+  cost: FREE
+  format: Dashboard (scrapeable)
+  frequency: Weekly
+  bucket: crush
+  what_you_get:
+    - Container freight rates (US → China)
+    - Baltic Dry Index (bulk shipping)
+  table: raw.freight_rates
+  priority: LOW
+  status: NOT_IMPLEMENTED
+  note: "Nice-to-have, not critical"
+
+# ============================================================================
+# ALREADY IMPLEMENTED (Keep As-Is)
+# ============================================================================
+
+# FRED (252K+ observations)
+fred_economic:
+  status: IMPLEMENTED
+  rows: 339009
+  coverage: "1947-2025 (78 years)"
+  buckets: [fed, volatility, fx, energy, crush, china]
+  
+# Databento (218K+ observations)
+databento_futures:
+  status: IMPLEMENTED
+  rows: 218941
+  coverage: "2010-2025 (15 years)"
+  symbols: 56
+  buckets: [crush, energy, fx]
+  note: "NO OVERLAP with FRED - futures vs spot prices"
+
+# EPA RIN Prices
+epa_rin_prices:
+  status: IMPLEMENTED
+  rows: 208
+  coverage: "2024-2025 (3 weeks)"
+  bucket: biofuel
+  note: "NEEDS BACKFILL to 2010"
+
+# CFTC COT
+cftc_cot:
+  status: IMPLEMENTED
+  rows: 4506
+  coverage: "2020-2025 (5 years)"
+  bucket: volatility
+
+# USDA Export Sales
+usda_export_sales:
+  status: IMPLEMENTED
+  rows: 6412
+  coverage: "2020-2025 (5 years)"
+  bucket: china
+
+# USDA WASDE
+usda_wasde:
+  status: IMPLEMENTED
+  rows: 4320
+  coverage: "2020-2025 (5 years)"
+  bucket: crush
+
+# ScrapeCreators News
+scrapecreators_news:
+  status: IMPLEMENTED
+  rows: 28
+  coverage: "2025 (current)"
+  buckets: [tariff, biofuel, china]
+
+# NOAA Weather
+weather_noaa:
+  status: IMPLEMENTED
+  rows: 600
+  coverage: "2024-2025 (1 year)"
+  bucket: crush
+
+# ============================================================================
+# PRIORITY RANKING (What to Add First)
+# ============================================================================
+priority_order:
+  1_critical:
+    - un_comtrade_china_imports  # China trade data (monthly)
+    - nopa_crush_report          # US crush capacity (monthly)
+    - inmet_brazil_weather       # Brazil soy weather (daily)
+    
+  2_high:
+    - mpob_palm_oil              # Malaysia palm production (monthly)
+    - bage_argentina             # Argentina crops (weekly)
+    
+  3_medium:
+    - gapki_indonesia_palm       # Indonesia B35 mandate (weekly)
+    - nasa_power_weather         # Global weather alternative (daily)
+    
+  4_low:
+    - freightos_baltic_index     # Freight rates (weekly)
+    - usda_fas_argentina         # Argentina (BAGE is better)
+
+# ============================================================================
+# IMPLEMENTATION ESTIMATE
+# ============================================================================
+time_to_implement:
+  un_comtrade: "2 hours"
+  nopa_scraper: "3 hours"
+  inmet_weather: "2 hours"
+  mpob_scraper: "3 hours"
+  bage_scraper: "3 hours"
+  total: "13 hours"
+
+expected_data_volume:
+  un_comtrade: "180 rows (15 years × 12 months)"
+  nopa: "60 rows (5 years × 12 months)"
+  inmet_weather: "1,095 rows (3 stations × 365 days)"
+  mpob: "60 rows (5 years × 12 months)"
+  bage: "260 rows (5 years × 52 weeks)"
+  total: "1,655 new rows"

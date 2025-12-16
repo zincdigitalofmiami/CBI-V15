@@ -1,0 +1,312 @@
+# ============================================================================
+# ScrapeCreators Profile Lists - Big 8 Bucket Mapping
+# ============================================================================
+# Twitter accounts, Reddit subs, Google queries organized by Big 8 buckets
+# This is the ONLY working data feed besides FRED/NOAA/Databento
+# LOAD IT UP - maximize data collection
+# ============================================================================
+
+# ============================================================================
+# BUCKET 1: CRUSH (Soybean Processing Economics)
+# ============================================================================
+crush:
+  twitter_accounts:
+    - NOPA_Crushers  # National Oilseed Processors Association
+    - AgWeb
+    - ProFarmer
+    - GrainStats
+    - DTNCommodities
+    - CMEGroup  # Futures exchange
+    - Barchart
+    
+  google_queries:
+    - "soybean crush spread margins"
+    - "soybean oil meal ratio"
+    - "NOPA crush report"
+    - "soybean processing capacity"
+    - "crush margins Argentina Brazil"
+    - "soybean oil share biodiesel"
+    
+  reddit_subreddits:
+    - commodities
+    - farming
+
+
+# ============================================================================
+# BUCKET 2: CHINA (China Demand & Trade)
+# ============================================================================
+china:
+  twitter_accounts:
+    - USDAForeignAg  # USDA Foreign Ag Service
+    - USDA
+    - ChinaAg  # If exists
+    - ReutersAg
+    - BloombergAg
+    - AgriCensus  # Commodity news
+    -
+    - FarmFutures
+    
+  google_queries:
+    - "China soybean imports demand"
+    - "Sinograin COFCO soybean purchases"
+    - "China crushing margins soybean oil"
+    - "China vegetable oil stocks inventory"
+    - "China African swine fever hog feed"
+    - "China soybean meal demand"
+    - "NDRC China soybean policy"
+    - "China Brazil soybean trade"
+    - "China US soybean imports"
+    
+  reddit_subreddits:
+    - China
+    - geopolitics
+    - worldnews
+
+
+# ============================================================================
+# BUCKET 3: FX (Currency Effects)
+# ============================================================================
+fx:
+  twitter_accounts:
+    - federalreserve
+    - stlouisfed
+    - NewYorkFed
+    - IMFNews
+    - WorldBank
+    - ForexLive
+    - FXStreetNews
+    
+  google_queries:
+    - "Brazilian real currency soybeans"
+    - "dollar index commodities agriculture"
+    - "Argentina peso soybeans exports"
+    - "Mexico peso corn trade"
+    - "currency volatility commodities"
+    - "DXY dollar index agriculture"
+    
+  reddit_subreddits:
+    - forex
+    - economics
+
+
+# ============================================================================
+# BUCKET 4: FED (Monetary Policy)
+# ============================================================================
+fed:
+  twitter_accounts:
+    - federalreserve
+    - stlouisfed
+    - NewYorkFed
+    - ChicagoFed
+    - KansasCityFed
+    - AtlantaFed
+    - federalreserve
+    - WSJ
+    - FT
+    
+  google_queries:
+    - "Federal Reserve interest rates agriculture"
+    - "yield curve commodities impact"
+    - "financial conditions index NFCI"
+    - "STLFSI financial stress agriculture"
+    - "Fed policy commodities"
+    - "interest rates farm credit"
+    
+  reddit_subreddits:
+    - economics
+    - investing
+
+
+# ============================================================================
+# BUCKET 5: TARIFF (Trade Policy)
+# ============================================================================
+tariff:
+  twitter_accounts:
+    - realDonaldTrump  # PRIMARY
+    - POTUS
+    - USTradeRep  # USTR
+    - StateDept
+    - SecYellen  # Treasury
+    - SecRaimondo  # Commerce
+    - SpeakerJohnson
+    - SenSchumer
+    - FarmBureau  # Lobbying
+    - ASA_Soybeans
+    
+  google_queries:
+    - "Section 301 tariffs soybeans agriculture"
+    - "USTR trade policy agriculture China"
+    - "China retaliation tariffs soybeans"
+    - "WTO agriculture dispute soybeans"
+    - "Trump tariffs trade war agriculture"
+    - "trade negotiations China soybeans"
+    - "tariff exemptions agriculture"
+    - "trade deal China agriculture"
+    
+  reddit_subreddits:
+    - politics
+    - worldnews
+    - geopolitics
+
+
+# ============================================================================
+# BUCKET 6: BIOFUEL (RINs, Biodiesel, RFS)
+# ============================================================================
+biofuel:
+  twitter_accounts:
+    - EPAMichaelRegan  # EPA Administrator
+    - EPA
+    - ENERGY  # DOE
+    - GrowthEnergy  # Ethanol lobby
+    - BiodieselBoard  # NBB
+    - RFAEthanol  # Renewable Fuels Association
+    - ACEethanol
+    - CleanFuelsAlliance
+    
+  google_queries:
+    - "EPA RFS renewable fuel standard"
+    - "biodiesel RIN prices D4 D6"
+    - "LCFS California low carbon fuel"
+    - "45Z clean fuel production credit"
+    - "renewable diesel mandate"
+    - "EPA small refinery exemptions"
+    - "RIN market prices biodiesel"
+    - "soybean oil biodiesel demand"
+    
+  reddit_subreddits:
+    - renewable
+    - energy
+    - farming
+
+
+# ============================================================================
+# BUCKET 7: ENERGY (Crude, Diesel, Crack Spreads)
+# ============================================================================
+energy:
+  twitter_accounts:
+    - EIAgov  # Energy Information Administration
+    - ENERGY  # DOE
+    - OPEC
+    - IEA  # International Energy Agency
+    - ReutersOil
+    - OilPrice
+    - EnergyIntel
+    
+  google_queries:
+    - "crude oil prices soybeans correlation"
+    - "heating oil diesel prices"
+    - "crack spread refining margins"
+    - "OPEC production soybeans"
+    - "energy prices agriculture"
+    - "diesel fuel farm costs"
+    
+  reddit_subreddits:
+    - energy
+    - oil
+    - commodities
+
+
+# ============================================================================
+# BUCKET 8: VOLATILITY (VIX, Market Stress)
+# ============================================================================
+volatility:
+  twitter_accounts:
+    - VIXCentral
+    - CBOE  # VIX exchange
+    - stlouisfed  # STLFSI
+    - federalreserve
+    - WSJ
+    - FT
+    - BloombergTV
+    
+  google_queries:
+    - "VIX volatility commodities agriculture"
+    - "market stress agriculture prices"
+    - "STLFSI financial stress index"
+    - "commodity volatility soybeans"
+    - "risk-off agriculture"
+    - "flight to quality commodities"
+    
+  reddit_subreddits:
+    - wallstreetbets
+    - options
+    - investing
+
+
+# ============================================================================
+# CROSS-CUTTING: General Agriculture News
+# ============================================================================
+general_agriculture:
+  twitter_accounts:
+    - USDA
+    - USDAForeignAg
+    - USDAERS  # Economic Research Service
+    - USDA_NASS  # Statistics
+    - FarmBureau
+    - NationalCorn
+    - ASA_Soybeans
+    - WheatWorld
+    - AgWeb
+    - ProFarmer
+    - DTNCommodities
+    - GrainStats
+    - FarmFutures
+    - AgriPulse
+    - SuccessfulFarm
+    
+  google_queries:
+    - "USDA crop report soybeans"
+    - "WASDE report agriculture"
+    - "farm income outlook"
+    - "agricultural exports"
+    
+  reddit_subreddits:
+    - farming
+    - agriculture
+    - agribusiness
+
+
+# ============================================================================
+# WEATHER (Supplement to NOAA)
+# ============================================================================
+weather:
+  twitter_accounts:
+    - NWS  # National Weather Service
+    - NOAA
+    - NOAANCEIclimate
+    - DroughtGov
+    - USDAClimateHub
+    - WeatherNation
+    
+  google_queries:
+    - "drought US Corn Belt soybeans"
+    - "Brazil weather soybeans"
+    - "Argentina weather agriculture"
+    - "La Nina agriculture impact"
+    
+  reddit_subreddits:
+    - weather
+    - farming
+
+
+# ============================================================================
+# LOGISTICS & TRANSPORTATION
+# ============================================================================
+logistics:
+  twitter_accounts:
+    - SecretaryPete  # Transportation Secretary
+    - USDOT
+    - MARAD_DOT  # Maritime
+    - USACE  # Army Corps (rivers)
+    - PortNOLA  # New Orleans
+    - PortSeattle
+    
+  google_queries:
+    - "barge rates Mississippi River"
+    - "grain export logistics"
+    - "port congestion agriculture"
+    - "rail car shortages grain"
+    
+  reddit_subreddits:
+    - logistics
+    - supplychain

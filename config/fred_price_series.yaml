@@ -1,0 +1,308 @@
+# ============================================================================
+# FRED Price Series - Daily/Weekly/Monthly Time Series
+# ============================================================================
+# All series have COMPLETE historical data (1980s-present)
+# Daily series are GOLD for training - no gaps, official sources
+# ============================================================================
+
+# ============================================================================
+# BUCKET 7: ENERGY (Daily Prices)
+# ============================================================================
+energy_daily:
+  - series_id: DCOILWTICO
+    name: "WTI Crude Oil"
+    frequency: Daily
+    units: "Dollars per Barrel"
+    start_date: "1986-01-02"
+    observations: 10053
+    bucket: energy
+    
+  - series_id: DHHNGSP
+    name: "Henry Hub Natural Gas Spot Price"
+    frequency: Daily
+    units: "Dollars per Million BTU"
+    start_date: "1997-01-07"
+    observations: 7265
+    bucket: energy
+    
+  - series_id: DHOILNYH
+    name: "No. 2 Heating Oil NY Harbor"
+    frequency: Daily
+    units: "Dollars per Gallon"
+    start_date: "1986-01-02"
+    observations: 10000+
+    bucket: energy
+
+energy_weekly:
+  - series_id: GASDESW
+    name: "US Diesel Sales Price"
+    frequency: Weekly
+    units: "Dollars per Gallon"
+    start_date: "1994-03-21"
+    observations: 1656
+    bucket: energy
+    
+  - series_id: GASREGW
+    name: "US Regular Gasoline Price"
+    frequency: Weekly
+    units: "Dollars per Gallon"
+    start_date: "1990-08-20"
+    observations: 1800+
+    bucket: energy
+
+# ============================================================================
+# BUCKET 3: FX (Daily Exchange Rates)
+# ============================================================================
+fx_daily:
+  - series_id: DEXBZUS
+    name: "Brazil Real / USD"
+    frequency: Daily
+    units: "Brazilian Reals per USD"
+    start_date: "1995-01-02"
+    observations: 7762
+    bucket: fx
+    note: "CRITICAL for ZL - Brazil is major soy exporter"
+    
+  - series_id: DEXCHUS
+    name: "China Yuan / USD"
+    frequency: Daily
+    units: "Chinese Yuan per USD"
+    start_date: "1981-01-02"
+    observations: 11219
+    bucket: fx
+    note: "CRITICAL for China demand bucket"
+    
+  - series_id: DEXMXUS
+    name: "Mexico Peso / USD"
+    frequency: Daily
+    units: "Mexican Pesos per USD"
+    start_date: "1993-11-08"
+    observations: 8047
+    bucket: fx
+    
+  - series_id: DEXUSEU
+    name: "Euro / USD"
+    frequency: Daily
+    units: "USD per Euro"
+    start_date: "1999-01-04"
+    observations: 6800+
+    bucket: fx
+    
+  - series_id: DTWEXBGS
+    name: "Dollar Index (Broad, Goods & Services)"
+    frequency: Daily
+    units: "Index Jan 2006=100"
+    start_date: "2006-01-03"
+    observations: 5000+
+    bucket: fx
+    note: "Trade-weighted dollar index"
+
+# ============================================================================
+# BUCKET 8: VOLATILITY (Daily Indices)
+# ============================================================================
+volatility_daily:
+  - series_id: VIXCLS
+    name: "CBOE Volatility Index (VIX)"
+    frequency: Daily
+    units: "Index"
+    start_date: "1990-01-02"
+    observations: 9080
+    bucket: volatility
+    note: "PRIMARY volatility indicator"
+    
+  - series_id: STLFSI4
+    name: "St. Louis Fed Financial Stress (4-week MA)"
+    frequency: Weekly
+    units: "Index"
+    start_date: "1993-12-31"
+    observations: 1600+
+    bucket: volatility
+    note: "Financial stress indicator"
+
+# ============================================================================
+# BUCKET 4: FED (Daily Interest Rates)
+# ============================================================================
+fed_daily:
+  - series_id: DFEDTARU
+    name: "Fed Funds Target Upper Limit"
+    frequency: Daily
+    units: "Percent"
+    start_date: "2008-12-16"
+    observations: 6200+
+    bucket: fed
+    
+  - series_id: DFEDTARL
+    name: "Fed Funds Target Lower Limit"
+    frequency: Daily
+    units: "Percent"
+    start_date: "2008-12-16"
+    observations: 6200+
+    bucket: fed
+    
+  - series_id: DFF
+    name: "Fed Funds Effective Rate"
+    frequency: Daily
+    units: "Percent"
+    start_date: "1954-07-01"
+    observations: 18000+
+    bucket: fed
+    note: "GOLD - 70+ years of history"
+    
+  - series_id: SOFR
+    name: "Secured Overnight Financing Rate"
+    frequency: Daily
+    units: "Percent"
+    start_date: "2018-04-03"
+    observations: 1900+
+    bucket: fed
+    
+  - series_id: DGS10
+    name: "10-Year Treasury Constant Maturity"
+    frequency: Daily
+    units: "Percent"
+    start_date: "1962-01-02"
+    observations: 16000+
+    bucket: fed
+    note: "GOLD - 60+ years of history"
+    
+  - series_id: DGS2
+    name: "2-Year Treasury Constant Maturity"
+    frequency: Daily
+    units: "Percent"
+    start_date: "1976-06-01"
+    observations: 12500+
+    bucket: fed
+    
+  - series_id: T10Y2Y
+    name: "10Y-2Y Treasury Spread"
+    frequency: Daily
+    units: "Percent"
+    start_date: "1976-06-01"
+    observations: 12500+
+    bucket: fed
+    note: "Yield curve - recession predictor"
+
+# ============================================================================
+# AGRICULTURE (Monthly - Supplement to Databento)
+# ============================================================================
+agriculture_monthly:
+  - series_id: PSOYBUSDM
+    name: "Global Soybean Price"
+    frequency: Monthly
+    units: "USD per Metric Ton"
+    start_date: "1990-01-01"
+    observations: 426
+    bucket: crush
+    note: "Cross-check with Databento ZS"
+    
+  - series_id: PMAIZMTUSDM
+    name: "Global Corn Price"
+    frequency: Monthly
+    units: "USD per Metric Ton"
+    start_date: "1990-01-01"
+    observations: 426
+    bucket: crush
+    
+  - series_id: PCOPPUSDM
+    name: "Global Copper Price"
+    frequency: Monthly
+    units: "USD per Metric Ton"
+    start_date: "1990-01-01"
+    observations: 426
+    bucket: china
+    note: "China demand proxy"
+
+# ============================================================================
+# MACRO CONTEXT (Monthly/Quarterly)
+# ============================================================================
+macro_monthly:
+  - series_id: UNRATE
+    name: "Unemployment Rate"
+    frequency: Monthly
+    units: "Percent"
+    start_date: "1948-01-01"
+    observations: 900+
+    bucket: fed
+    
+  - series_id: CPIAUCSL
+    name: "Consumer Price Index"
+    frequency: Monthly
+    units: "Index 1982-84=100"
+    start_date: "1947-01-01"
+    observations: 950+
+    bucket: fed
+    
+  - series_id: PCEPI
+    name: "Personal Consumption Expenditures Price Index"
+    frequency: Monthly
+    units: "Index 2017=100"
+    start_date: "1959-01-01"
+    observations: 800+
+    bucket: fed
+    note: "Fed's preferred inflation measure"
+
+# ============================================================================
+# FINANCIAL CONDITIONS (Weekly)
+# ============================================================================
+financial_conditions_weekly:
+  - series_id: NFCI
+    name: "Chicago Fed National Financial Conditions Index"
+    frequency: Weekly
+    units: "Index"
+    start_date: "1971-01-08"
+    observations: 2800+
+    bucket: volatility
+    note: "GOLD - 50+ years of financial conditions"
+    
+  - series_id: STLFSI
+    name: "St. Louis Fed Financial Stress Index"
+    frequency: Weekly
+    units: "Index"
+    start_date: "1993-12-31"
+    observations: 1600+
+    bucket: volatility
+
+# ============================================================================
+# PRIORITY SERIES FOR IMMEDIATE COLLECTION
+# ============================================================================
+priority_daily:
+  # Energy (Bucket 7)
+  - DCOILWTICO  # WTI Crude (40 years)
+  - DHHNGSP     # Natural Gas (28 years)
+  
+  # FX (Bucket 3)
+  - DEXBZUS     # Brazil Real (30 years) - CRITICAL
+  - DEXCHUS     # China Yuan (44 years) - CRITICAL
+  - DEXMXUS     # Mexico Peso (32 years)
+  - DTWEXBGS    # Dollar Index (19 years)
+  
+  # Fed (Bucket 4)
+  - DFF         # Fed Funds (70 years) - GOLD
+  - DGS10       # 10Y Treasury (62 years) - GOLD
+  - DGS2        # 2Y Treasury (48 years)
+  - T10Y2Y      # Yield Curve (48 years)
+  - SOFR        # SOFR (7 years)
+  
+  # Volatility (Bucket 8)
+  - VIXCLS      # VIX (35 years)
+
+priority_weekly:
+  # Energy
+  - GASDESW     # Diesel (31 years)
+  - GASREGW     # Gasoline (35 years)
+  
+  # Financial Conditions
+  - NFCI        # NFCI (54 years) - GOLD
+  - STLFSI      # STLFSI (32 years)
+  - STLFSI4     # STLFSI 4-week MA (32 years)
+
+priority_monthly:
+  # Agriculture (cross-check with Databento)
+  - PSOYBUSDM   # Soybeans (35 years)
+  - PMAIZMTUSDM # Corn (35 years)
+  - PCOPPUSDM   # Copper (35 years) - China proxy
+  
+  # Macro
+  - UNRATE      # Unemployment (77 years) - GOLD
+  - CPIAUCSL    # CPI (78 years) - GOLD
+  - PCEPI       # PCE (66 years)

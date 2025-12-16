@@ -16,6 +16,7 @@ Ingests weekly Commitment of Traders (COT) reports from the CFTC for all 38 futu
 The CFTC publishes weekly reports showing the positions of different trader categories in futures markets:
 
 ### **Disaggregated Report (Commodities):**
+
 - **Producer/Merchant/Processor/User** - Commercial hedgers
 - **Swap Dealers** - Banks and dealers
 - **Managed Money** - Hedge funds, CTAs (speculators)
@@ -23,6 +24,7 @@ The CFTC publishes weekly reports showing the positions of different trader cate
 - **Non-Reportable** - Small traders
 
 ### **Traders in Financial Futures (TFF) Report (FX & Treasuries):**
+
 - **Dealer/Intermediary** - Banks and dealers
 - **Asset Manager/Institutional** - Pension funds, endowments
 - **Leveraged Funds** - Hedge funds, CTAs (speculators)
@@ -34,18 +36,21 @@ The CFTC publishes weekly reports showing the positions of different trader cate
 ## 🚀 Usage
 
 ### **Quick Start (Recent Data):**
+
 ```bash
 # Download last 5 years
 python trigger/CFTC/Scripts/ingest_cot.py --start-year 2020 --end-year 2025
 ```
 
 ### **Backfill All Historical Data:**
+
 ```bash
 # Download all data from 2006 to present
 python trigger/CFTC/Scripts/ingest_cot.py --backfill
 ```
 
 ### **Custom Date Range:**
+
 ```bash
 # Download specific years
 python trigger/CFTC/Scripts/ingest_cot.py --start-year 2015 --end-year 2020
@@ -55,20 +60,22 @@ python trigger/CFTC/Scripts/ingest_cot.py --start-year 2015 --end-year 2020
 
 ## 📋 Command Line Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--start-year` | Start year for data download | 2020 |
-| `--end-year` | End year for data download | Current year |
-| `--backfill` | Download all historical data (2006-present) | False |
+| Option         | Description                                 | Default      |
+| -------------- | ------------------------------------------- | ------------ |
+| `--start-year` | Start year for data download                | 2020         |
+| `--end-year`   | End year for data download                  | Current year |
+| `--backfill`   | Download all historical data (2006-present) | False        |
 
 ---
 
 ## 📊 Data Tables
 
 ### **raw.cftc_cot_disaggregated**
+
 Commodity futures (ZL, ZS, ZM, ZC, CL, HO, HG, GC, etc.)
 
 **Columns:**
+
 - `report_date` - Report date (Tuesday)
 - `symbol` - Our symbol (ZL, ZS, etc.)
 - `open_interest` - Total open interest
@@ -80,9 +87,11 @@ Commodity futures (ZL, ZS, ZM, ZC, CL, HO, HG, GC, etc.)
 - `nonrept_long/short/net` - Small trader positions
 
 ### **raw.cftc_cot_tff**
+
 FX and Treasury futures (6E, 6J, 6B, ZF, ZN, ZB, etc.)
 
 **Columns:**
+
 - `report_date` - Report date (Tuesday)
 - `symbol` - Our symbol (6E, 6J, etc.)
 - `open_interest` - Total open interest
@@ -98,17 +107,19 @@ FX and Treasury futures (6E, 6J, 6B, ZF, ZN, ZB, etc.)
 ## 🔍 Example Queries
 
 ### **Get Latest COT Data for ZL:**
+
 ```sql
-SELECT * 
-FROM raw.cftc_cot_disaggregated 
-WHERE symbol = 'ZL' 
-ORDER BY report_date DESC 
+SELECT *
+FROM raw.cftc_cot_disaggregated
+WHERE symbol = 'ZL'
+ORDER BY report_date DESC
 LIMIT 10;
 ```
 
 ### **Get Managed Money Net Positions (All Commodities):**
+
 ```sql
-SELECT 
+SELECT
     symbol,
     report_date,
     managed_money_net,
@@ -119,6 +130,7 @@ ORDER BY managed_money_net_pct_oi DESC;
 ```
 
 ### **Week-over-Week Change in Positions:**
+
 ```sql
 WITH current_week AS (
     SELECT * FROM raw.cftc_cot_disaggregated
@@ -127,12 +139,12 @@ WITH current_week AS (
 prior_week AS (
     SELECT * FROM raw.cftc_cot_disaggregated
     WHERE report_date = (
-        SELECT MAX(report_date) 
-        FROM raw.cftc_cot_disaggregated 
+        SELECT MAX(report_date)
+        FROM raw.cftc_cot_disaggregated
         WHERE report_date < (SELECT MAX(report_date) FROM raw.cftc_cot_disaggregated)
     )
 )
-SELECT 
+SELECT
     c.symbol,
     c.managed_money_net AS current_net,
     p.managed_money_net AS prior_net,
@@ -168,7 +180,9 @@ cftc_ZL_managed_money_extreme_short
 ## ⚠️ Important Notes
 
 ### **Symbol Mapping:**
+
 CFTC uses different contract names than our symbols. The script automatically maps:
+
 - "SOYBEAN OIL" → ZL
 - "SOYBEANS" → ZS
 - "CRUDE OIL, LIGHT SWEET" → CL
@@ -176,12 +190,15 @@ CFTC uses different contract names than our symbols. The script automatically ma
 - etc.
 
 ### **Data Lag:**
+
 - COT data is released every Friday at 3:30 PM ET
 - Data is as of the prior Tuesday (3-day lag)
 - Example: Friday Dec 8 release contains Tuesday Dec 5 data
 
 ### **Missing Symbols:**
+
 Some symbols may not appear in COT reports if:
+
 - Fewer than 20 reportable traders
 - Contract is too new
 - Contract is not traded on CME/NYMEX/COMEX
@@ -191,6 +208,7 @@ Some symbols may not appear in COT reports if:
 ## 🔄 Automation
 
 ### **Weekly Cron Job:**
+
 ```bash
 # Run every Friday at 4:00 PM ET (after 3:30 PM release)
 0 16 * * 5 cd /path/to/CBI-V15 && python trigger/CFTC/Scripts/ingest_cot.py --start-year 2024 --end-year 2025
