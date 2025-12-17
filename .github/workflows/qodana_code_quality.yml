@@ -5,7 +5,7 @@ on:
   push:
     branches: # Specify your branches here
       - main # The 'main' branch
-      - 'releases/*' # The release branches
+      - "releases/*" # The release branches
 
 jobs:
   qodana:
@@ -18,9 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-          fetch-depth: 0  # a full history is required for pull request analysis
-      - name: 'Qodana Scan (Ultimate — single Cloud project)'
+          ref: ${{ github.event.pull_request.head.sha }} # to check out the actual pull request commit, not the merge commit
+          fetch-depth: 0 # a full history is required for pull request analysis
+      - name: "Qodana Scan (Ultimate — single Cloud project)"
         uses: JetBrains/qodana-action@v2025.2
         with:
           linter: jetbrains/qodana-ultimate:2025.2
@@ -29,9 +29,9 @@ jobs:
           project-id: zincdigitalofmiami/CBI-V15
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1004761266 }}
-          QODANA_ENDPOINT: 'https://qodana.cloud'
+          QODANA_ENDPOINT: "https://qodana.cloud"
 
-      - name: 'Upload SARIF to GitHub Code Scanning (Ultimate)'
+      - name: "Upload SARIF to GitHub Code Scanning (Ultimate)"
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: qodana.sarif.json

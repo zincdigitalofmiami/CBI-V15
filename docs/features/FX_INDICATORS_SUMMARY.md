@@ -8,6 +8,7 @@
 ## ✅ Industry Standards Identified
 
 ### 1. Carry Trade Indicators
+
 - ✅ **BRL-US Rate Differential**: `(BRL_Rate - US_Rate) / US_Rate`
 - ⏳ Forward Premium/Discount: `(Forward - Spot) / Spot`
 - ⏳ Carry Risk-Adjusted: `Carry / Volatility`
@@ -17,6 +18,7 @@
 ---
 
 ### 2. Momentum Indicators
+
 - ✅ **BRL Momentum**: 21d, 63d, 252d horizons
 - ✅ **DXY Momentum**: 21d, 63d, 252d horizons
 - ⏳ Momentum Persistence: How long momentum persists
@@ -27,6 +29,7 @@
 ---
 
 ### 3. Volatility Indicators
+
 - ✅ **BRL Volatility**: 21d, 63d realized volatility
 - ⏳ Volatility Term Structure: Short/Long term ratio
 - ⏳ Volatility Regime: High/Medium/Low classification
@@ -36,6 +39,7 @@
 ---
 
 ### 4. Correlation Indicators
+
 - ✅ **ZL-BRL Correlation**: 30d, 60d, 90d horizons ✅
 - ✅ **ZL-DXY Correlation**: 30d, 60d, 90d horizons ✅
 - ✅ **Correlation Regime**: High/Medium/Low classification ✅
@@ -45,6 +49,7 @@
 ---
 
 ### 5. Cross-Asset Indicators
+
 - ✅ **Terms of Trade**: `ZL_Price / BRL_Price` ✅
 - ⏳ Real Exchange Rate: Inflation-adjusted BRL
 - ⏳ Trade-Weighted BRL: Weighted vs trading partners
@@ -56,6 +61,7 @@
 ## 📊 Implementation Status
 
 ### Phase 1: Core FX Features (16 indicators)
+
 - ✅ BRL Momentum (21d, 63d, 252d) - 3 features
 - ✅ DXY Momentum (21d, 63d, 252d) - 3 features
 - ✅ BRL Volatility (21d, 63d) - 2 features
@@ -67,6 +73,7 @@
 **Total**: **16 FX features** ✅
 
 ### Phase 2: Advanced FX Features (3 indicators)
+
 - ⏳ BRL-US Rate Differential (Carry)
 - ⏳ Forward Premium/Discount
 - ⏳ Volatility Term Structure
@@ -98,4 +105,3 @@
 ---
 
 **Last Updated**: November 28, 2025
-

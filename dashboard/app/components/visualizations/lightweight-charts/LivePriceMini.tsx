@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from "react";
 
 interface LivePriceMiniProps {
   data: { time: number; value: number }[];
@@ -12,7 +12,7 @@ interface LivePriceMiniProps {
 export default function LivePriceMini({
   data,
   height = 80,
-  lineColor = '#22c55e',
+  lineColor = "#22c55e",
   showAxis = false,
 }: LivePriceMiniProps) {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
@@ -28,13 +28,13 @@ export default function LivePriceMini({
     let chart: any;
     let lineSeries: any;
 
-    import('lightweight-charts').then(({ createChart }) => {
+    import("lightweight-charts").then(({ createChart }) => {
       if (!chartContainerRef.current) return;
 
       chart = createChart(chartContainerRef.current, {
         layout: {
-          background: { color: 'transparent' },
-          textColor: '#6b7280',
+          background: { color: "transparent" },
+          textColor: "#6b7280",
         },
         grid: {
           vertLines: { visible: false },
@@ -78,10 +78,10 @@ export default function LivePriceMini({
       };
 
       handleResize();
-      window.addEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
 
       return () => {
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener("resize", handleResize);
         chart?.remove();
       };
     });
@@ -93,10 +93,7 @@ export default function LivePriceMini({
 
   if (sortedData.length === 0) {
     return (
-      <div
-        style={{ height }}
-        className="flex items-center justify-center text-gray-500 text-xs"
-      >
+      <div style={{ height }} className="flex items-center justify-center text-gray-500 text-xs">
         No data
       </div>
     );
@@ -105,7 +102,7 @@ export default function LivePriceMini({
   return (
     <div
       ref={chartContainerRef}
-      style={{ height, width: '100%' }}
+      style={{ height, width: "100%" }}
       className="rounded overflow-hidden"
     />
   );

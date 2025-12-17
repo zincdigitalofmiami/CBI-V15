@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from "react";
 
 interface TradingViewWidgetProps {
   scriptSrc: string;
@@ -19,7 +19,7 @@ function TradingViewWidget({
   config,
   containerId,
   height = 400,
-  width = '100%',
+  width = "100%",
 }: TradingViewWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
@@ -28,28 +28,28 @@ function TradingViewWidget({
     if (!containerRef.current) return;
 
     // Clear any existing content
-    containerRef.current.innerHTML = '';
+    containerRef.current.innerHTML = "";
 
     // Create the widget container div that TradingView expects
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container__widget';
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
     containerRef.current.appendChild(widgetContainer);
 
     // Create and inject the script
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = scriptSrc;
     script.async = true;
-    script.type = 'text/javascript';
-    
+    script.type = "text/javascript";
+
     // Merge default dark theme with provided config
     const mergedConfig = {
-      colorTheme: 'dark',
+      colorTheme: "dark",
       isTransparent: false,
-      width: '100%',
-      height: '100%',
+      width: "100%",
+      height: "100%",
       ...config,
     };
-    
+
     script.innerHTML = JSON.stringify(mergedConfig);
     containerRef.current.appendChild(script);
     scriptRef.current = script;
@@ -57,7 +57,7 @@ function TradingViewWidget({
     return () => {
       // Cleanup on unmount
       if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+        containerRef.current.innerHTML = "";
       }
     };
   }, [scriptSrc, config]);
@@ -68,8 +68,8 @@ function TradingViewWidget({
       id={containerId}
       className="tradingview-widget-container rounded-lg overflow-hidden"
       style={{
-        height: typeof height === 'number' ? `${height}px` : height,
-        width: typeof width === 'number' ? `${width}px` : width,
+        height: typeof height === "number" ? `${height}px` : height,
+        width: typeof width === "number" ? `${width}px` : width,
       }}
     />
   );

@@ -1,1 +1,1 @@
-export { default as LivePriceMini } from './LivePriceMini';
+export { default as LivePriceMini } from "./LivePriceMini";

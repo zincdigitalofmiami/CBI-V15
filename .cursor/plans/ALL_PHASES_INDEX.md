@@ -9,12 +9,14 @@
 ## 📚 PHASE DOCUMENTS
 
 ### Individual Phase Files (Detailed)
+
 1. **[PHASE_0_DETAILED.md](./PHASE_0_DETAILED.md)** — Critical Infrastructure & Bug Fixes (13 tasks, 8-12 hours)
 2. **[PHASE_1_DETAILED.md](./PHASE_1_DETAILED.md)** — Critical Data Feeds (7 tasks, 12-16 hours)
 3. **[PHASE_2_TO_5_DETAILED_PLAN.md](./PHASE_2_TO_5_DETAILED_PLAN.md)** — AutoGluon Integration (9 tasks, 8-10 hours)
 4. **[PHASE_3_TO_5_CONTINUED.md](./PHASE_3_TO_5_CONTINUED.md)** — Bucket Specialists + Ensemble + Orchestration (20 tasks, 30-44 hours)
 
 ### Summary Documents
+
 - **[IMPLEMENTATION_PLAN_SUMMARY.md](./IMPLEMENTATION_PLAN_SUMMARY.md)** — Executive summary, timeline, critical success factors
 - **[ALL_PHASES_INDEX.md](./ALL_PHASES_INDEX.md)** — This file (complete index)
 
@@ -23,10 +25,12 @@
 ## 🎯 QUICK REFERENCE
 
 ### Phase 0: Critical Infrastructure (13 tasks)
+
 **Status:** IN PROGRESS  
 **File:** [PHASE_0_DETAILED.md](./PHASE_0_DETAILED.md)
 
 **Key Tasks:**
+
 - Fix Databento column name (`date` → `as_of_date`)
 - Fix FRED table reference (`fred_observations` → `fred_economic`)
 - Fix EIA table reference
@@ -40,10 +44,12 @@
 ---
 
 ### Phase 1: Critical Data Feeds (7 tasks)
+
 **Status:** NOT STARTED  
 **File:** [PHASE_1_DETAILED.md](./PHASE_1_DETAILED.md)
 
 **Key Tasks:**
+
 - EPA RIN Prices Trigger job (FREE, weekly)
 - Remove mock USDA data
 - CFTC COT Trigger job
@@ -56,10 +62,12 @@
 ---
 
 ### Phase 2: AutoGluon Integration (9 tasks)
+
 **Status:** NOT STARTED  
 **File:** [PHASE_2_TO_5_DETAILED_PLAN.md](./PHASE_2_TO_5_DETAILED_PLAN.md)
 
 **Key Tasks:**
+
 - Install AutoGluon 1.4 on Mac M4 (libomp fix)
 - Create TabularPredictor wrapper (quantile regression)
 - Create TimeSeriesPredictor wrapper (Chronos-Bolt)
@@ -71,10 +79,12 @@
 ---
 
 ### Phase 3: Bucket Specialist Infrastructure (5 tasks)
+
 **Status:** NOT STARTED  
 **File:** [PHASE_3_TO_5_CONTINUED.md](./PHASE_3_TO_5_CONTINUED.md) (lines 1-150)
 
 **Key Tasks:**
+
 - Create `bucket_feature_selectors.yaml` config
 - Create 8 bucket training configs
 - Create `bucket_specialist.py` trainer
@@ -85,16 +95,19 @@
 ---
 
 ### Phase 4: AutoGluon Stacking & Monte Carlo (7 tasks)
+
 **Status:** NOT STARTED  
 **File:** [PHASE_3_TO_5_CONTINUED.md](./PHASE_3_TO_5_CONTINUED.md) (lines 253-619)
 
 **Key Tasks:**
+
 - Create L1 stacking layer
 - Create L2.5 greedy weighted ensemble (UPGRADED FEATURE)
 - Create L3 Monte Carlo simulation (VaR/CVaR)
 - Create full pipeline orchestrator
 
 **Architecture:**
+
 ```
 L0: 10 models → training.bucket_predictions
 L1: AutoGluon stacking layer
@@ -107,10 +120,12 @@ Final: forecasts.zl_predictions
 ---
 
 ### Phase 5: Trigger.dev Orchestration (7 tasks)
+
 **Status:** NOT STARTED  
 **File:** [PHASE_3_TO_5_CONTINUED.md](./PHASE_3_TO_5_CONTINUED.md) (lines 621-1060)
 
 **Key Tasks:**
+
 - Daily training job (2 AM UTC)
 - Daily forecast job (10 AM UTC)
 - Model monitoring job (6 PM UTC)
@@ -125,6 +140,7 @@ Final: forecasts.zl_predictions
 ## 🗂️ DATABASE ARCHITECTURE UPDATES
 
 ### New Tables Created
+
 1. **`database/models/04_training/bucket_predictions.sql`**
    - L0 bucket specialist OOF predictions
    - Used by L1 stacking layer
@@ -136,6 +152,7 @@ Final: forecasts.zl_predictions
    - Columns: as_of_date, forecast_date, q10, q50, q90, var_95, var_99, cvar_95, cvar_99, Big 8 scores
 
 ### Updated Files
+
 - **`database/models/MANIFEST.md`** — Updated to 25 SQL files (was 23)
 - Added 07_forecasts/ folder
 - Added AutoGluon architecture documentation
@@ -144,15 +161,15 @@ Final: forecasts.zl_predictions
 
 ## ⏱️ TIMELINE
 
-| Phase | Tasks | Hours | Risk | Status |
-|-------|-------|-------|------|--------|
-| Phase -1 | 6 | 1 | LOW | IN PROGRESS |
-| Phase 0 | 13 | 8-12 | HIGH | IN PROGRESS |
-| Phase 1 | 7 | 12-16 | MEDIUM | NOT STARTED |
-| Phase 2 | 9 | 8-10 | HIGH | NOT STARTED |
-| Phase 3 | 5 | 10-14 | MEDIUM | NOT STARTED |
-| Phase 4 | 7 | 12-16 | HIGH | NOT STARTED |
-| Phase 5 | 7 | 8-12 | MEDIUM | NOT STARTED |
+| Phase     | Tasks  | Hours     | Risk     | Status          |
+| --------- | ------ | --------- | -------- | --------------- |
+| Phase -1  | 6      | 1         | LOW      | IN PROGRESS     |
+| Phase 0   | 13     | 8-12      | HIGH     | IN PROGRESS     |
+| Phase 1   | 7      | 12-16     | MEDIUM   | NOT STARTED     |
+| Phase 2   | 9      | 8-10      | HIGH     | NOT STARTED     |
+| Phase 3   | 5      | 10-14     | MEDIUM   | NOT STARTED     |
+| Phase 4   | 7      | 12-16     | HIGH     | NOT STARTED     |
+| Phase 5   | 7      | 8-12      | MEDIUM   | NOT STARTED     |
 | **TOTAL** | **49** | **59-81** | **HIGH** | **IN PROGRESS** |
 
 **Calendar Time:** 2-3 weeks (assuming 4-6 hours/day)
@@ -162,7 +179,7 @@ Final: forecasts.zl_predictions
 ## 🚨 CRITICAL PATH
 
 ```
-Phase 0 (Infrastructure) → Phase 1 (Data) → Phase 2 (AutoGluon) → 
+Phase 0 (Infrastructure) → Phase 1 (Data) → Phase 2 (AutoGluon) →
 Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ```
 
@@ -182,5 +199,3 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 **🎯 GOAL:** Production-ready AutoGluon hybrid forecasting system for ZL (soybean oil) futures
-
-

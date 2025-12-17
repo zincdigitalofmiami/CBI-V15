@@ -19,6 +19,7 @@ This implementation plan is split across 3 documents for clarity:
 ## 🎯 EXECUTIVE SUMMARY
 
 ### Total Scope
+
 - **49 tasks** across **6 phases** (Phase -1 through Phase 5)
 - **10 ML models** (8 bucket specialists + 1 main predictor + 1 Chronos baseline)
 - **5-layer ensemble** (L0 → L1 → L2 → L2.5 greedy → L3 Monte Carlo)
@@ -26,8 +27,9 @@ This implementation plan is split across 3 documents for clarity:
 - **5 Trigger.dev jobs** (daily training, daily forecast, monitoring, weekly retraining, data quality)
 
 ### Critical Path
+
 ```
-Phase 0 (Infrastructure) → Phase 1 (Data) → Phase 2 (AutoGluon) → 
+Phase 0 (Infrastructure) → Phase 1 (Data) → Phase 2 (AutoGluon) →
 Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ```
 
@@ -38,9 +40,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ## 📊 PHASE BREAKDOWN
 
 ### Phase -1: Repo Scaffolding (6 tasks)
+
 **Status:** IN PROGRESS  
 **Goal:** Create missing directories and scaffolding  
 **Key Tasks:**
+
 - Create `docs/_archive/` directory
 - Create missing `src/` directories
 - Create `pyproject.toml`
@@ -51,9 +55,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 ### Phase 0: Critical Infrastructure & Bug Fixes (13 tasks)
+
 **Status:** NOT STARTED  
 **Goal:** Fix critical data pipeline bugs and establish local DuckDB mirror  
 **Key Tasks:**
+
 - Fix Databento column name (`date` → `as_of_date`)
 - Fix FRED table reference (`fred_observations` → `fred_economic`)
 - Fix EIA table reference (`eia_biofuels` → `eia_petroleum`)
@@ -72,9 +78,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 ### Phase 1: Critical Data Feeds (7 tasks)
+
 **Status:** NOT STARTED  
 **Goal:** Implement missing data sources for Big 8 bucket coverage  
 **Key Tasks:**
+
 - Create EPA RIN Prices Trigger job (FREE, weekly data)
 - Remove mock data from USDA Export Sales
 - Create CFTC COT Trigger job
@@ -86,6 +94,7 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 **Risk Level:** MEDIUM (data availability dependent)
 
 **Big 8 Coverage:**
+
 - ✅ Crush: Databento (ZL/ZS/ZM), NOPA, farmdoc Grain Outlook
 - ✅ China: Farm Policy News Trade, USDA Export Sales, farmdoc Trade
 - ✅ FX: FRED FX series, Databento (6L/DX)
@@ -98,9 +107,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 ### Phase 2: AutoGluon Integration (9 tasks)
+
 **Status:** NOT STARTED  
 **Goal:** Integrate AutoGluon 1.4 with Mac M4 compatibility  
 **Key Tasks:**
+
 - Install AutoGluon 1.4 on Mac M4 (libomp fix)
 - Create TabularPredictor wrapper (quantile regression)
 - Create TimeSeriesPredictor wrapper (Chronos-Bolt)
@@ -112,6 +123,7 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 **Risk Level:** HIGH (Mac M4 compatibility issues)
 
 **Foundation Models (CPU-compatible):**
+
 - Mitra (tabular foundation model)
 - TabPFNv2 (prior-fitted network)
 - TabICL (in-context learning)
@@ -121,9 +133,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 ### Phase 3: Bucket Specialist Infrastructure (5 tasks)
+
 **Status:** NOT STARTED  
 **Goal:** Build 8 bucket specialist trainers with feature selection  
 **Key Tasks:**
+
 - Create `bucket_feature_selectors.yaml` config
 - Create 8 bucket training configs (crush, china, fx, fed, tariff, biofuel, energy, volatility)
 - Create `bucket_specialist.py` trainer
@@ -138,9 +152,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 ### Phase 4: AutoGluon Stacking & Monte Carlo (7 tasks)
+
 **Status:** NOT STARTED  
 **Goal:** Build L1 stacking, L2.5 greedy ensemble, L3 Monte Carlo  
 **Key Tasks:**
+
 - Create L1 stacking layer (AutoGluon automatic)
 - Create L2.5 greedy weighted ensemble (UPGRADED FEATURE)
 - Create L3 Monte Carlo simulation (VaR/CVaR)
@@ -151,6 +167,7 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 **Risk Level:** HIGH (ensemble optimization complexity)
 
 **Architecture:**
+
 - **L0:** 10 models (8 buckets + main + Chronos)
 - **L1:** AutoGluon stacking layer (trains on L0 OOF predictions)
 - **L2:** WeightedEnsemble_L2 (automatically created by AutoGluon)
@@ -160,9 +177,11 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 ### Phase 5: Trigger.dev Orchestration (7 tasks)
+
 **Status:** NOT STARTED  
 **Goal:** Automate daily training, forecasting, and monitoring  
 **Key Tasks:**
+
 - Create daily training Trigger job (2 AM UTC)
 - Create daily forecast generation job (10 AM UTC)
 - Create model performance monitoring job (6 PM UTC)
@@ -174,6 +193,7 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 **Risk Level:** MEDIUM (Trigger.dev deployment complexity)
 
 **Trigger.dev Jobs:**
+
 1. `daily-training` — Full pipeline training (2 AM UTC)
 2. `daily-forecast` — Generate forecasts (10 AM UTC)
 3. `model-monitoring` — Performance + drift detection (6 PM UTC)
@@ -184,15 +204,15 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 
 ## ⏱️ TOTAL ESTIMATED TIME
 
-| Phase | Tasks | Hours | Risk |
-|-------|-------|-------|------|
-| Phase -1 | 6 | 1 | LOW |
-| Phase 0 | 13 | 8-12 | HIGH |
-| Phase 1 | 7 | 12-16 | MEDIUM |
-| Phase 2 | 9 | 8-10 | HIGH |
-| Phase 3 | 5 | 10-14 | MEDIUM |
-| Phase 4 | 7 | 12-16 | HIGH |
-| Phase 5 | 7 | 8-12 | MEDIUM |
+| Phase     | Tasks  | Hours     | Risk     |
+| --------- | ------ | --------- | -------- |
+| Phase -1  | 6      | 1         | LOW      |
+| Phase 0   | 13     | 8-12      | HIGH     |
+| Phase 1   | 7      | 12-16     | MEDIUM   |
+| Phase 2   | 9      | 8-10      | HIGH     |
+| Phase 3   | 5      | 10-14     | MEDIUM   |
+| Phase 4   | 7      | 12-16     | HIGH     |
+| Phase 5   | 7      | 8-12      | MEDIUM   |
 | **TOTAL** | **49** | **59-81** | **HIGH** |
 
 **Estimated Calendar Time:** 2-3 weeks (assuming 4-6 hours/day)
@@ -222,5 +242,3 @@ Phase 3 (Buckets) → Phase 4 (Ensemble) → Phase 5 (Orchestration)
 ---
 
 **🎯 GOAL:** Production-ready AutoGluon hybrid forecasting system for ZL (soybean oil) futures
-
-

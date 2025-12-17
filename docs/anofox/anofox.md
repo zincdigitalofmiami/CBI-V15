@@ -8,6 +8,7 @@
 ## AnoFox Full Suite (What We'll Exploit)
 
 ### 1. **Tabular Extension** (Data Quality & Anomalies)
+
 - Auto anomaly detection
 - Data quality validation
 - Schema inference
@@ -15,6 +16,7 @@
 - **USE CASE**: Validate incoming Databento data, flag regime shifts
 
 ### 2. **Forecast Extension** (31 Models)
+
 - AutoETS (auto seasonality)
 - ARIMA variants
 - Prophet
@@ -22,23 +24,27 @@
 - **USE CASE**: Main price forecasting pipeline
 
 ### 3. **Statistics Extension** (Regression & Inference)
+
 - Regression analysis
 - Price elasticity
 - Factor attribution
 - **USE CASE**: SHAP-like attribution for Big 8 Drivers
 
 ### 4. **Shock Detection** (undocumented, need to verify)
+
 - Volatility spikes
 - Regime changes
 - **USE CASE**: Trigger bucket reweighting
 
 ### 5. **Sentiment Analysis** (if available)
+
 - News sentiment scoring
 - **USE CASE**: Feed your 7 news buckets
 
 ## Your 7 News Buckets (Preserved as Regime Enhancers)
 
 Based on CBI-V15, you have buckets for:
+
 1. **Biofuel Policy** (RFS, 45Z, LCFS)
 2. **China Demand** (Import volumes, trade tensions)
 3. **Tariffs/Trade Policy** (Trump actions, trade wars)
@@ -88,21 +94,21 @@ Based on CBI-V15, you have buckets for:
 
 -- This EXACT SQL runs on both historical and ongoing data
 CREATE OR REPLACE FUNCTION calculate_features(input_table STRING) AS (
-    SELECT 
+    SELECT
         date,
         close AS price_current,
-        
+
         -- Moving Averages (EXACT same formula)
         AVG(close) OVER (ORDER BY date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS sma_5,
         AVG(close) OVER (ORDER BY date ROWS BETWEEN 9 PRECEDING AND CURRENT ROW) AS sma_10,
         AVG(close) OVER (ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS sma_21,
-        
+
         -- Volatility (EXACT same window)
-        STDDEV(LN(close / LAG(close, 1) OVER (ORDER BY date))) 
+        STDDEV(LN(close / LAG(close, 1) OVER (ORDER BY date)))
             OVER (ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) * SQRT(252) AS volatility_21d,
-        
+
         -- ... ALL 276 features
-        
+
     FROM query_table(input_table)
 );
 
@@ -132,6 +138,7 @@ SELECT TS_FORECAST(
 ## AnoFox Auto-Scoping (Your Question)
 
 **YES** - AnoFox's `Tabular` extension can auto-detect:
+
 - Data types
 - Anomalies
 - Schema
@@ -139,7 +146,8 @@ SELECT TS_FORECAST(
 
 **BUT** - You still need to tell it which features to use for forecasting.
 
-**RECOMMENDATION**: 
+**RECOMMENDATION**:
+
 1. Let AnoFox validate data quality (Tabular)
 2. You define feature set (your 276 features)
 3. AnoFox trains models (Forecast)
@@ -148,23 +156,27 @@ SELECT TS_FORECAST(
 ## Implementation Phases
 
 ### Phase 1: Data Foundation (Week 1)
+
 - [ ] Migrate CBI-V15 → Local DuckDB
 - [ ] Install AnoFox extensions
 - [ ] Create single-source feature calculator
 - [ ] Validate historical = ongoing calculations
 
 ### Phase 2: Specialized Models (Week 2)
+
 - [ ] Train 7 bucket-specific AnoFox models
 - [ ] Backtest each bucket independently
 - [ ] Store bucket forecasts in MotherDuck
 
 ### Phase 3: Ensemble Pipeline (Week 3)
+
 - [ ] Build regime detector (which bucket is active)
 - [ ] Create ensemble combiner
 - [ ] Generate P10/P50/P90 bands
 - [ ] Push to MotherDuck
 
 ### Phase 4: Dashboard Integration (Week 4)
+
 - [ ] Update Vercel to query MotherDuck
 - [ ] Display bucket weights
 - [ ] Show specialized model outputs

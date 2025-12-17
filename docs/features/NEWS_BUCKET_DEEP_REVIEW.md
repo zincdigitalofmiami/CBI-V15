@@ -39,6 +39,7 @@
 **Why**: Prevents brittleness, enables proper feature engineering
 
 **Structure**:
+
 1. **Thematic buckets** (7 buckets) - What the news is about
 2. **Time-horizon buckets** (3 buckets) - How long it matters
 3. **Impact/sentiment buckets** (Direction × Intensity) - How it moves ZL
@@ -47,12 +48,14 @@
 
 ### ✅ NEED: Trump-Specific Bucket Integration
 
-**Why**: 
+**Why**:
+
 - Existing Trump predictor/ZL effects engine REQUIRES news bucket input
 - Legislative page needs news flow to show context around events
 - Regime system needs Trump news sentiment to modulate weights
 
 **Integration Points**:
+
 1. **Trump Predictor Engine** → Uses Trump news bucket features
 2. **ZL Effects Engine** → Uses Trump news bucket sentiment
 3. **Legislative Page** → Shows news flow around discrete events
@@ -63,6 +66,7 @@
 ### ⚠️ DON'T NEED: Redundant Buckets
 
 **Analysis**:
+
 - We already have `trump_policy_intelligence` table
 - We don't need a SEPARATE Trump bucket IF we can tag Trump items within thematic buckets
 - **Solution**: Add `is_trump_related` flag + `policy_axis` to existing news buckets
@@ -77,27 +81,27 @@
 CREATE TABLE `raw.scrapecreators_news_buckets` (
   date DATE,
   article_id STRING,
-  
+
   -- Thematic Bucket (PRIMARY - forced)
   theme_primary STRING,  -- One of: SUPPLY_WEATHER, DEMAND_BIOFUELS, TRADE_GEO, MACRO_FX, LOGISTICS, POSITIONING, IDIOSYNCRATIC
-  
+
   -- Trump-Specific Tags (if theme_primary = TRADE_GEO or related)
   is_trump_related BOOL,
   policy_axis STRING,  -- If is_trump_related: TRADE_CHINA, TRADE_TARIFFS, BIOFUELS_RFS, EPA_REGS, AGRICULTURE_SUBSIDY, GEOPOLITICS_SOY_ROUTE
-  
+
   -- Time-Horizon Bucket
   horizon STRING,  -- One of: FLASH, TACTICAL, STRUCTURAL
-  
+
   -- Impact & Sentiment (ZL-specific)
   zl_sentiment STRING,  -- BULLISH_ZL, BEARISH_ZL, NEUTRAL
   impact_magnitude STRING,  -- HIGH, MEDIUM, LOW
-  
+
   -- Raw Content
   headline STRING,
   content STRING,
   source STRING,
   source_trust_score FLOAT64,
-  
+
   -- Metadata
   created_at TIMESTAMP
 )
@@ -112,6 +116,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### How News Buckets Feed Trump Predictor:
 
 **Input Features** (from news buckets):
+
 1. `news_trump_trade_china_net_7d` - Net sentiment (bullish - bearish) about Trump/China/trade
 2. `news_trump_biofuels_net_7d` - Net sentiment about Trump/RFS/biofuels
 3. `news_trump_tariffs_net_30d` - 30-day structural trade stance
@@ -120,6 +125,7 @@ CLUSTER BY theme_primary, is_trump_related;
 6. `trump_zl_net_score_7d` - Bull score - Bear score
 
 **Derived Features** (for `daily_ml_matrix`):
+
 - `policy_trump_trade_china_net_7d`
 - `policy_trump_trade_china_net_30d`
 - `policy_trump_biofuels_net_7d`
@@ -128,6 +134,7 @@ CLUSTER BY theme_primary, is_trump_related;
 - `policy_trump_zl_net_30d`
 
 **Regime Modulation**:
+
 - `regime_trump_anticipation_weight` - Adjusted by `news_trump_trade_china_net_30d`
 - `regime_trump_second_term_weight` - Adjusted by `news_trump_biofuels_net_30d`
 
@@ -138,6 +145,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### For Baselines (LightGBM):
 
 **Coarse Aggregates** (3-5 rolling sentiment scores per theme):
+
 - `news_supply_tact_net_7d` - Supply-side tactical news (7-day net)
 - `news_biofuel_tact_net_7d` - Biofuel tactical news (7-day net)
 - `news_trade_struct_net_30d` - Trade structural news (30-day net)
@@ -146,6 +154,7 @@ CLUSTER BY theme_primary, is_trump_related;
 - `news_zl_pulse_7d` - Overall ZL pulse (Red/Yellow/Green score)
 
 **Trump-Specific** (6-10 features):
+
 - `policy_trump_trade_china_net_7d`
 - `policy_trump_trade_china_net_30d`
 - `policy_trump_biofuels_net_7d`
@@ -160,6 +169,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### For Advanced Models (TFT/LSTM):
 
 **Segmented Time-Series** (per-day counts/intensity per bucket):
+
 - Daily counts per theme × horizon × sentiment
 - Daily intensity scores per theme × horizon × sentiment
 - Daily Trump-specific features (per policy_axis)
@@ -191,6 +201,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### 1. Enhanced News Bucket Schema ✅
 
 **Add to `raw.scrapecreators_news_buckets`**:
+
 - `is_trump_related` BOOL
 - `policy_axis` STRING (if Trump-related)
 - `horizon` STRING (FLASH, TACTICAL, STRUCTURAL)
@@ -202,6 +213,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### 2. Trump-Specific Feature Engineering ✅
 
 **Create `features.trump_news_features_daily`**:
+
 - Aggregates Trump news bucket data into ML-ready features
 - Calculates net sentiment per policy axis
 - Calculates ZL impact scores
@@ -212,6 +224,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### 3. Integration with Legislative Page ✅
 
 **Dashboard Features**:
+
 - Show `news_trump_trade_china_net_7d` before/after discrete events
 - Show `trump_zl_net_score_7d` and 30d context
 - Mini time-series chart behind event dots
@@ -222,6 +235,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ### 4. Regime Weight Modulation ✅
 
 **Update `reference.regime_weights`**:
+
 - Modulate `trump_anticipation_2024` weight by `news_trump_trade_china_net_30d`
 - Modulate `trump_second_term` weight by `news_trump_biofuels_net_30d`
 - Adjust trade-war-style regime weight based on Trump news sentiment
@@ -231,6 +245,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ## 📊 Final Feature Count
 
 ### News Features for Baselines:
+
 - **Thematic Aggregates**: 5 features (supply, biofuel, trade, macro, logistics)
 - **Trump-Specific**: 6 features (trade_china 7d/30d, biofuels 7d/30d, zl_net 7d/30d)
 - **Overall Pulse**: 1 feature (zl_pulse_7d)
@@ -240,6 +255,7 @@ CLUSTER BY theme_primary, is_trump_related;
 ---
 
 ### News Features for Advanced Models:
+
 - **Segmented Time-Series**: ~50-100 features (per-day counts/intensity)
 - **Trump-Specific**: ~20 features (per policy_axis, per horizon)
 
@@ -269,12 +285,14 @@ CLUSTER BY theme_primary, is_trump_related;
 ## 🎯 Summary
 
 ### What We NEED:
+
 1. ✅ Enhanced news bucket schema with Trump tags
 2. ✅ Trump-specific feature engineering
 3. ✅ Integration with Legislative page
 4. ✅ Regime weight modulation
 
 ### What We DON'T NEED:
+
 1. ❌ Separate Trump bucket table (use flags)
 2. ❌ Duplicate sentiment calculation
 3. ❌ Redundant regime flags
@@ -289,4 +307,3 @@ CLUSTER BY theme_primary, is_trump_related;
 ---
 
 **Last Updated**: November 28, 2025
-

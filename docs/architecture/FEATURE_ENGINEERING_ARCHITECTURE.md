@@ -5,7 +5,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  RAW DATA LAYER (DuckDB/MotherDuck)                             │
-│  • raw.databento_ohlcv_daily (30+ symbols, 2000-present)       │
+│  • raw.databento_futures_ohlcv_1d (38 symbols, 2010-present)   │
 │  • raw.fred_daily (60+ macro series)                            │
 │  • raw.eia_biofuels (biodiesel, RIN prices)                     │
 │  • raw.scrapecreators_trump_posts (sentiment)                   │
@@ -108,17 +108,17 @@
 
 ## 📊 Feature Count Breakdown
 
-| Category | Features | Source |
-|----------|----------|--------|
-| **Technical Indicators** | 40 | `calc_all_technical_indicators()` |
-| **Cross-Asset Correlations** | 11 | `calc_correlation_matrix()` |
-| **Fundamental Spreads** | 6 | `calc_fundamental_spreads()` |
-| **Big 8 Bucket Scores** | 8 | `calc_all_bucket_scores()` |
-| **Big 8 Key Metrics** | 8 | `calc_all_bucket_scores()` |
-| **Neural Scores** | 9 | Populated by ML models |
-| **Targets** | 8 | `feat_targets_block()` |
-| **Metadata** | 3 | as_of_date, symbol, regime |
-| **TOTAL** | **93** | Per symbol |
+| Category                     | Features | Source                            |
+| ---------------------------- | -------- | --------------------------------- |
+| **Technical Indicators**     | 40       | `calc_all_technical_indicators()` |
+| **Cross-Asset Correlations** | 11       | `calc_correlation_matrix()`       |
+| **Fundamental Spreads**      | 6        | `calc_fundamental_spreads()`      |
+| **Big 8 Bucket Scores**      | 8        | `calc_all_bucket_scores()`        |
+| **Big 8 Key Metrics**        | 8        | `calc_all_bucket_scores()`        |
+| **Neural Scores**            | 9        | Populated by ML models            |
+| **Targets**                  | 8        | `feat_targets_block()`            |
+| **Metadata**                 | 3        | as_of_date, symbol, regime        |
+| **TOTAL**                    | **93**   | Per symbol                        |
 
 ---
 
@@ -148,26 +148,31 @@ python src/engines/anofox/build_all_features.py
 ## 🎯 Key Design Principles
 
 ### 1. **100% SQL-Native**
+
 - All feature engineering in DuckDB SQL
 - No pandas/numpy dependencies for features
 - Portable across Mac/Linux/Windows
 
 ### 2. **Lag-Safe**
+
 - No look-ahead bias
 - All features use LAG/LEAD properly
 - Targets use LEAD (future values)
 
 ### 3. **Reusable Macros**
+
 - Parameterized functions
 - Apply to any symbol
 - Easy to extend
 
 ### 4. **Incremental Updates**
+
 - INSERT OR REPLACE pattern
 - Only compute new dates
 - Fast daily updates
 
 ### 5. **Mac-Native**
+
 - No cloud compute required
 - Runs on Mac M4
 - MotherDuck for storage only

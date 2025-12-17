@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { memo, useMemo } from 'react';
-import TradingViewWidget from './TradingViewWidget';
+import { memo, useMemo } from "react";
+import TradingViewWidget from "./TradingViewWidget";
 
 interface EconomicCalendarWidgetProps {
   width?: number | string;
@@ -15,22 +15,22 @@ interface EconomicCalendarWidgetProps {
  * Shows upcoming macro events with impact ratings.
  */
 function EconomicCalendarWidget({
-  width = '100%',
+  width = "100%",
   height = 400,
-  countryFilter = ['US', 'CA', 'BR', 'CN'],
-  importanceFilter = '-1,0,1', // low, medium, high
+  countryFilter = ["US", "CA", "BR", "CN"],
+  importanceFilter = "-1,0,1", // low, medium, high
 }: EconomicCalendarWidgetProps) {
   const config = useMemo(
     () => ({
-      width: '100%',
-      height: '100%',
+      width: "100%",
+      height: "100%",
       isTransparent: false,
-      locale: 'en',
-      colorTheme: 'dark',
+      locale: "en",
+      colorTheme: "dark",
       importanceFilter,
-      countryFilter: countryFilter.join(','),
+      countryFilter: countryFilter.join(","),
     }),
-    [countryFilter, importanceFilter]
+    [countryFilter, importanceFilter],
   );
 
   return (

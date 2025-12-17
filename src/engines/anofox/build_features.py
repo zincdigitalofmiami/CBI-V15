@@ -7,21 +7,16 @@ import duckdb
 
 # Paths
 ROOT_DIR = Path(__file__).resolve().parents[2]
-DB_PATH = ROOT_DIR / "data" / "duckdb" / "cbi_v15.duckdb"
 MACROS_PATH = ROOT_DIR / "database" / "macros" / "features.sql"
 
 
 def run():
     motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
-
-    if motherduck_token:
-        print("Connecting to MotherDuck (md:cbi_v15)...")
-        con = duckdb.connect(f"md:cbi_v15?motherduck_token={motherduck_token}")
-    else:
-        print(f"Connecting to Local DuckDB at {DB_PATH}...")
-        # Ensure directory exists
-        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        con = duckdb.connect(str(DB_PATH))
+    if not motherduck_token:
+        raise ValueError("MOTHERDUCK_TOKEN required - no local fallback")
+    
+    print("Connecting to MotherDuck (md:cbi_v15)...")
+    con = duckdb.connect(f"md:cbi_v15?motherduck_token={motherduck_token}")
 
     # 1. Load SQL Macros
     print(f"Loading macros from {MACROS_PATH}...")

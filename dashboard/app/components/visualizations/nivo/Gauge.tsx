@@ -30,21 +30,19 @@ export function Gauge({
     clamped <= 0.2
       ? "Strong sell"
       : clamped <= 0.4
-      ? "Sell"
-      : clamped < 0.6
-      ? "Neutral"
-      : clamped < 0.8
-      ? "Buy"
-      : "Strong buy";
+        ? "Sell"
+        : clamped < 0.6
+          ? "Neutral"
+          : clamped < 0.8
+            ? "Buy"
+            : "Strong buy";
 
   return (
     <div className="rounded-2xl bg-black/80 border border-slate-800 p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs font-medium text-slate-300">{label}</div>
         {subtitle && (
-          <div className="text-[10px] uppercase tracking-wide text-slate-500">
-            {subtitle}
-          </div>
+          <div className="text-[10px] uppercase tracking-wide text-slate-500">{subtitle}</div>
         )}
       </div>
       <svg width={200} height={120} viewBox="0 0 200 120">
@@ -93,17 +91,10 @@ export function Gauge({
         />
         <circle cx={centerX} cy={centerY} r={4} fill="#e5e7eb" />
 
-        <text
-          x={centerX}
-          y={centerY - 4}
-          fontSize={11}
-          fill="#e5e7eb"
-          textAnchor="middle"
-        >
+        <text x={centerX} y={centerY - 4} fontSize={11} fill="#e5e7eb" textAnchor="middle">
           {labelText}
         </text>
       </svg>
     </div>
   );
 }
-

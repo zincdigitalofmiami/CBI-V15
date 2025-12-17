@@ -3,9 +3,11 @@
 > Fast-moving workspace: always read the latest `docs/architecture/MASTER_PLAN.md`, `AGENTS.md`, `DATA_LINKS_MASTER.md`, and the active master plan `.cursor/plans/ALL_PHASES_INDEX.md` before editing docs. Verify current files; avoid duplicating or scattering markdown—keep placement correct.
 
 ## Purpose
+
 All project documentation - architecture, operations, feature specs.
 
 ## Structure
+
 ```
 docs/
 ├── architecture/    # System design, MASTER_PLAN, meta-learning
@@ -14,21 +16,25 @@ docs/
 ```
 
 ## What Belongs Here
+
 - Markdown docs only (architecture, ops, research)
 - Diagrams/images supporting docs
 
 ## What Does NOT Belong Here
+
 - Code → `src/`
 - Config → `config/`
 - SQL → `database/`
 - Trigger jobs → `trigger/`
 
 ## Key Documents (read-first)
+
 - `architecture/MASTER_PLAN.md` — V15.1 source of truth
 - `architecture/META_LEARNING_FRAMEWORK.md` — meta-learning/ensemble approach
 - `.cursor/plans/ALL_PHASES_INDEX.md` — active master implementation plan (Phases 0–5)
 
 ## Hygiene
+
 - Update existing docs; do not add new markdown unless permanent and properly placed.
 - Keep filenames and paths aligned with the current repo structure (Trigger-based ingestion, DuckDB/MotherDuck).
 

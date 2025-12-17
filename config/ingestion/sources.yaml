@@ -3,35 +3,35 @@
 
 databento:
   api_key_env: DATABENTO_API_KEY
-  rate_limit: 1000  # requests per minute
+  rate_limit: 1000 # requests per minute
   # ZL-only: 1 hour for price, 4 hours for all else
-  price_schedule: "0 * * * *"  # Every hour for ZL price
-  other_schedule: "0 */4 * * *"  # Every 4 hours for ZS, ZM, CL, HO, FCPO
-  symbols: 
-    primary: [ZL]  # ZL only - primary focus
-    secondary: [ZS, ZM, CL, HO, FCPO]  # Pulled every 4 hours
-  
+  price_schedule: "0 * * * *" # Every hour for ZL price
+  other_schedule: "0 */4 * * *" # Every 4 hours for ZS, ZM, CL, HO, FCPO
+  symbols:
+    primary: [ZL] # ZL only - primary focus
+    secondary: [ZS, ZM, CL, HO, FCPO] # Pulled every 4 hours
+
 fred:
   api_key_env: FRED_API_KEY
   rate_limit: 120
-  schedule: "0 1 * * *"  # Daily at 1 AM UTC
+  schedule: "0 1 * * *" # Daily at 1 AM UTC
   series_count: 60
-  
+
 scrapecreators:
   api_key_env: SCRAPECREATORS_API_KEY
   rate_limit: 60
-  schedule: "*/15 * * * *"  # Every 15 minutes
+  schedule: "*/15 * * * *" # Every 15 minutes
   buckets: [biofuel_policy, china_demand, tariffs_trade_policy]
-  
+
 glide:
   api_key_env: GLIDE_API_KEY
   rate_limit: 100
-  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  schedule: "0 2 * * *" # Daily at 2 AM UTC
   endpoints: [restaurants, casinos, shifts]
-  
+
 vegas_events:
   api_key_env: GLIDE_API_KEY
   rate_limit: 100
-  schedule: "0 3 * * *"  # Daily at 3 AM UTC (after Glide)
-  endpoints: [events]  # Vegas events only
+  schedule: "0 3 * * *" # Daily at 3 AM UTC (after Glide)
+  endpoints: [events] # Vegas events only
 

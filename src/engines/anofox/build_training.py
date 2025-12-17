@@ -18,16 +18,11 @@ def build_training(con: duckdb.DuckDBPyConnection = None) -> None:
     """
     if con is None:
         motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
-        if motherduck_token:
-            con = duckdb.connect(
-                f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}"
-            )
-        else:
-            # Fallback to local or error
-            # For now, let's assume local if no token, consistent with build_features
-            ROOT_DIR = Path(__file__).resolve().parents[3]
-            DB_PATH = ROOT_DIR / "data" / "duckdb" / "cbi_v15.duckdb"
-            con = duckdb.connect(str(DB_PATH))
+        if not motherduck_token:
+            raise ValueError("MOTHERDUCK_TOKEN required - no local fallback")
+        con = duckdb.connect(
+            f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}"
+        )
 
     print("Building training matrix...")
 

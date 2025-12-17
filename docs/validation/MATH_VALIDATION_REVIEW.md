@@ -8,6 +8,7 @@
 ## 🎯 Validation Scope
 
 ### Areas to Validate:
+
 1. ✅ Technical Indicators (19 features)
 2. ✅ FX Indicators (16 features)
 3. ✅ Fundamental Spreads (5 features)
@@ -27,11 +28,13 @@
 **Formula**: `(Price / MA) - 1`
 
 **Validation**:
+
 - ✅ Correct: Percentage distance from moving average
 - ✅ Stationary: Normalized by price level
 - ✅ Institutional Standard: GS Quant, JPM use this exact formula
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (MA = 0) → NULL
 - ✅ Handles negative prices → NULL (futures can't be negative)
 
@@ -42,11 +45,13 @@
 **Formula**: `(Price - Lower) / (Upper - Lower)`
 
 **Validation**:
+
 - ✅ Correct: Standard Bollinger %B formula
 - ✅ Range: [0, 1] when price within bands, can exceed for outliers
 - ✅ Institutional Standard: Industry standard (Bollinger, 1992)
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (Upper = Lower) → NULL
 - ✅ Handles price outside bands → Can be <0 or >1 (correct behavior)
 
@@ -57,11 +62,13 @@
 **Formula**: `(Upper - Lower) / MA`
 
 **Validation**:
+
 - ✅ Correct: Standard bandwidth formula
 - ✅ Stationary: Normalized by MA
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (MA = 0) → NULL
 
 ---
@@ -71,11 +78,13 @@
 **Formula**: `(EMA_12 - EMA_26) / EMA_26 * 100`
 
 **Validation**:
+
 - ✅ Correct: Standard PPO formula (MACD as percentage)
 - ✅ Stationary: Normalized by EMA_26
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (EMA_26 = 0) → NULL
 
 ---
@@ -85,11 +94,13 @@
 **Formula**: `(Close / VWAP_21) - 1`
 
 **Validation**:
+
 - ✅ Correct: Percentage distance from VWAP
 - ✅ Stationary: Normalized by VWAP
 - ✅ Institutional Standard: GS Quant uses this exact formula
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (VWAP = 0) → NULL
 
 ---
@@ -99,11 +110,13 @@
 **Formula**: `SQRT(252) * SQRT(SUM(LN(High/Low)^2 / 2 - (2*LN(2)-1)*LN(Close/Open)^2) / N)`
 
 **Validation**:
+
 - ✅ Correct: Garman-Klass (1980) formula
 - ✅ Annualized: Multiplied by √252 (trading days)
 - ✅ Institutional Standard: Industry standard for high-frequency volatility
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing OHLC → NULL
 
@@ -114,11 +127,13 @@
 **Formula**: `SQRT(252) * SQRT(SUM(LN(High/Low)^2 / (4*LN(2))) / N)`
 
 **Validation**:
+
 - ✅ Correct: Parkinson (1980) formula
 - ✅ Annualized: Multiplied by √252
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing High/Low → NULL
 
@@ -129,12 +144,14 @@
 **Formula**: `SQRT(252) * STDDEV(LN(Close/LAG(Close)), N)`
 
 **Validation**:
+
 - ✅ Correct: Standard realized volatility
 - ✅ Annualized: Multiplied by √252
 - ✅ Log returns: Uses LN(Close/LAG(Close)) (correct for time series)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing Close → NULL
 
@@ -145,11 +162,13 @@
 **Formula**: `ABS(Return) / (Volume * Price)`
 
 **Validation**:
+
 - ✅ Correct: Amihud (2002) illiquidity measure
 - ✅ Stationary: Normalized by volume and price
 - ✅ Institutional Standard: Academic standard (Amihud, 2002)
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (Volume = 0 or Price = 0) → NULL
 - ✅ Handles negative prices → NULL
 
@@ -160,11 +179,13 @@
 **Formula**: `Open_Interest / Volume`
 
 **Validation**:
+
 - ✅ Correct: Standard OI/Volume ratio
 - ✅ Stationary: Ratio metric
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (Volume = 0) → NULL
 - ✅ Handles missing OI → NULL
 
@@ -177,12 +198,14 @@
 **Formula**: `(BRL_t / BRL_{t-N}) - 1` where N = 21, 63, 252
 
 **Validation**:
+
 - ✅ Correct: Standard momentum formula
 - ✅ Stationary: Percentage change
 - ✅ Institutional Standard: GS Quant uses this exact formula
 
 **Edge Cases**:
-- ✅ Handles division by zero (BRL_{t-N} = 0) → NULL
+
+- ✅ Handles division by zero (BRL\_{t-N} = 0) → NULL
 - ✅ Handles missing BRL → NULL
 
 ---
@@ -192,12 +215,14 @@
 **Formula**: `SQRT(252) * STDDEV(LN(BRL_t / BRL_{t-1}), N)` where N = 21, 63
 
 **Validation**:
+
 - ✅ Correct: Standard realized volatility
 - ✅ Annualized: Multiplied by √252
-- ✅ Log returns: Uses LN(BRL_t / BRL_{t-1}) (correct)
+- ✅ Log returns: Uses LN(BRL*t / BRL*{t-1}) (correct)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative BRL → NULL
 - ✅ Handles missing BRL → NULL
 
@@ -208,11 +233,13 @@
 **Formula**: `CORR(LN(ZL_t / ZL_{t-1}), LN(BRL_t / BRL_{t-1}), N)` where N = 30, 60, 90
 
 **Validation**:
+
 - ✅ Correct: Pearson correlation of log returns
-- ✅ Log returns: Uses LN(Price_t / Price_{t-1}) (correct)
+- ✅ Log returns: Uses LN(Price*t / Price*{t-1}) (correct)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing data → NULL
 - ✅ Handles constant series (stddev = 0) → NULL
@@ -224,11 +251,13 @@
 **Formula**: `ZL_Price / BRL_Price`
 
 **Validation**:
+
 - ✅ Correct: Terms of trade ratio
 - ✅ Stationary: Ratio metric
 - ✅ Institutional Standard: Academic standard
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (BRL_Price = 0) → NULL
 - ✅ Handles missing prices → NULL
 
@@ -241,12 +270,14 @@
 **Formula**: `(ZM × 0.022 + ZL × 11) - ZS`
 
 **Validation**:
+
 - ✅ Correct: Standard crush margin formula
 - ✅ Units: ZM (meal) in $/bushel, ZL (oil) in cents/lb, ZS (beans) in $/bushel
 - ✅ Conversion: 0.022 = meal yield, 11 = oil yield (standard CBOT)
 - ✅ Institutional Standard: Industry standard (CBOT crush calculator)
 
 **Edge Cases**:
+
 - ✅ Handles missing ZM, ZL, or ZS → NULL
 - ✅ Handles negative crush → Valid (inverted crush)
 
@@ -257,11 +288,13 @@
 **Formula**: `(ZL × 11) / Board_Crush_Value`
 
 **Validation**:
+
 - ✅ Correct: Oil share of crush value
 - ✅ Range: [0, 1] typically (can exceed if crush negative)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles division by zero (Board_Crush_Value = 0) → NULL
 - ✅ Handles negative crush → Can be negative (correct behavior)
 
@@ -272,12 +305,14 @@
 **Formula**: `HE - (0.8 × ZC + 0.2 × ZM)`
 
 **Validation**:
+
 - ✅ Correct: Hog feeder margin formula
 - ✅ Units: HE (hogs) in $/cwt, ZC (corn) in $/bushel, ZM (meal) in $/bushel
 - ✅ Conversion: 0.8 = corn feed ratio, 0.2 = meal feed ratio (standard)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles missing HE, ZC, or ZM → NULL
 - ✅ Handles negative spread → Valid (inverted margin)
 
@@ -288,12 +323,14 @@
 **Formula**: `(ZL/100 × 7.5) - HO`
 
 **Validation**:
+
 - ✅ Correct: Biodiesel-heating oil spread
 - ✅ Units: ZL in cents/lb, HO in $/gallon
 - ✅ Conversion: ZL/100 = $/lb, × 7.5 = $/gallon (standard conversion)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles missing ZL or HO → NULL
 - ✅ Handles negative spread → Valid (inverted spread)
 
@@ -304,12 +341,14 @@
 **Formula**: `CORR(LN(HG_t / HG_{t-1}), LN(ZS_t / ZS_{t-1}), 60d)`
 
 **Validation**:
+
 - ✅ Correct: Correlation of log returns
-- ✅ Log returns: Uses LN(Price_t / Price_{t-1}) (correct)
+- ✅ Log returns: Uses LN(Price*t / Price*{t-1}) (correct)
 - ✅ Horizon: 60d rolling window (standard)
 - ✅ Institutional Standard: Academic standard
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing data → NULL
 - ✅ Handles constant series → NULL
@@ -323,12 +362,14 @@
 **Formula**: `CORR(LN(Asset1_t / Asset1_{t-1}), LN(Asset2_t / Asset2_{t-1}), N)` where N = 30, 60, 90, 252
 
 **Validation**:
+
 - ✅ Correct: Pearson correlation of log returns
-- ✅ Log returns: Uses LN(Price_t / Price_{t-1}) (correct)
+- ✅ Log returns: Uses LN(Price*t / Price*{t-1}) (correct)
 - ✅ Horizons: 30d (tactical), 60d (medium), 90d (structural), 252d (annual)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing data → NULL
 - ✅ Handles constant series → NULL
@@ -345,12 +386,14 @@
 **Formula**: `COV(ZL, Asset) / VAR(Asset)` over rolling window N
 
 **Validation**:
+
 - ✅ Correct: Standard beta formula (CAPM)
-- ✅ Log returns: Uses LN(Price_t / Price_{t-1}) (correct)
+- ✅ Log returns: Uses LN(Price*t / Price*{t-1}) (correct)
 - ✅ Horizons: 30d, 60d, 90d, 252d
 - ✅ Institutional Standard: Industry standard (CAPM)
 
 **Edge Cases**:
+
 - ✅ Handles zero/negative prices → NULL
 - ✅ Handles missing data → NULL
 - ✅ Handles VAR(Asset) = 0 → NULL (constant asset)
@@ -367,12 +410,14 @@
 **Formula**: `LAG(Price, N)` and `LAG(LN(Price / LAG(Price)), N)` where N = 1, 2, 3, 5, 10, 21
 
 **Validation**:
+
 - ✅ Correct: Standard lagged features
 - ✅ Log returns: Uses LN(Price / LAG(Price)) (correct)
 - ✅ Lags: 1d, 2d, 3d, 5d, 10d, 21d (standard AR terms)
 - ✅ Institutional Standard: Industry standard (AR models)
 
 **Edge Cases**:
+
 - ✅ Handles missing data → NULL
 - ✅ Handles insufficient history → NULL
 
@@ -387,11 +432,13 @@
 **Formula**: `COUNT(IF(zl_sentiment = 'BULLISH_ZL', 1, NULL)) - COUNT(IF(zl_sentiment = 'BEARISH_ZL', 1, NULL)) WHERE date BETWEEN CURRENT_DATE() - 7 AND CURRENT_DATE()`
 
 **Validation**:
+
 - ✅ Correct: Net sentiment count (bullish - bearish)
 - ✅ Window: 7-day rolling (tactical)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles no news → 0 (neutral)
 - ✅ Handles missing sentiment → Excluded
 
@@ -402,6 +449,7 @@
 **Formula**: Same as above, but `date BETWEEN CURRENT_DATE() - 30 AND CURRENT_DATE()`
 
 **Validation**:
+
 - ✅ Correct: Net sentiment count (structural)
 - ✅ Window: 30-day rolling (structural)
 - ✅ Institutional Standard: Industry standard
@@ -413,11 +461,13 @@
 **Formula**: `SUM(CASE WHEN impact_magnitude = 'HIGH' THEN 3 WHEN impact_magnitude = 'MEDIUM' THEN 2 WHEN impact_magnitude = 'LOW' THEN 1 ELSE 0 END) WHERE zl_sentiment = 'BULLISH_ZL'`
 
 **Validation**:
+
 - ✅ Correct: Weighted sum by impact magnitude
 - ✅ Weights: HIGH=3, MEDIUM=2, LOW=1 (standard weighting)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles missing impact_magnitude → 0
 - ✅ Handles missing sentiment → Excluded
 
@@ -430,12 +480,14 @@
 **Formula**: `COUNT(IF(zl_sentiment = 'BULLISH_ZL' AND policy_axis = 'TRADE_CHINA', 1, NULL)) - COUNT(IF(zl_sentiment = 'BEARISH_ZL' AND policy_axis = 'TRADE_CHINA', 1, NULL)) WHERE is_trump_related = TRUE AND date BETWEEN CURRENT_DATE() - 7 AND CURRENT_DATE()`
 
 **Validation**:
+
 - ✅ Correct: Net sentiment filtered by policy axis
 - ✅ Filter: `is_trump_related = TRUE` (correct)
 - ✅ Filter: `policy_axis = 'TRADE_CHINA'` (correct)
 - ✅ Window: 7-day rolling (tactical)
 
 **Edge Cases**:
+
 - ✅ Handles no Trump news → 0 (neutral)
 - ✅ Handles missing policy_axis → Excluded
 
@@ -446,11 +498,13 @@
 **Formula**: `trump_zl_bull_score_7d - trump_zl_bear_score_7d`
 
 **Validation**:
+
 - ✅ Correct: Net weighted impact score
 - ✅ Weights: HIGH=3, MEDIUM=2, LOW=1 (standard)
 - ✅ Institutional Standard: Industry standard
 
 **Edge Cases**:
+
 - ✅ Handles no Trump news → 0 (neutral)
 
 ---
@@ -462,12 +516,14 @@
 **Formula**: `base_weight * (1 + 0.2 * SIGN(news_trump_trade_china_net_30d) * ABS(news_trump_trade_china_net_30d) / 10)`
 
 **Validation**:
+
 - ✅ Correct: Multiplicative adjustment
 - ✅ Coefficient: 0.2 (20% max adjustment) - conservative
 - ✅ Normalization: Divided by 10 (assumes max net sentiment ~10)
 - ✅ Institutional Standard: Industry standard (regime weighting)
 
 **Edge Cases**:
+
 - ✅ Handles zero news → base_weight (no adjustment)
 - ✅ Handles extreme news → Capped at ±20% (conservative)
 
@@ -477,17 +533,17 @@
 
 ### All Calculations Validated:
 
-| Category | Features | Status |
-|----------|----------|--------|
-| **Technical Indicators** | 19 | ✅ **VALIDATED** |
-| **FX Indicators** | 16 | ✅ **VALIDATED** |
-| **Fundamental Spreads** | 5 | ✅ **VALIDATED** |
-| **Pair Correlations** | 112 | ✅ **VALIDATED** |
-| **Cross-Asset Betas** | 28 | ✅ **VALIDATED** |
-| **Lagged Features** | 96 | ✅ **VALIDATED** |
-| **News Sentiment** | 12 | ✅ **VALIDATED** |
-| **Trump Features** | 6-10 | ✅ **VALIDATED** |
-| **Regime Weights** | Dynamic | ✅ **VALIDATED** |
+| Category                 | Features | Status           |
+| ------------------------ | -------- | ---------------- |
+| **Technical Indicators** | 19       | ✅ **VALIDATED** |
+| **FX Indicators**        | 16       | ✅ **VALIDATED** |
+| **Fundamental Spreads**  | 5        | ✅ **VALIDATED** |
+| **Pair Correlations**    | 112      | ✅ **VALIDATED** |
+| **Cross-Asset Betas**    | 28       | ✅ **VALIDATED** |
+| **Lagged Features**      | 96       | ✅ **VALIDATED** |
+| **News Sentiment**       | 12       | ✅ **VALIDATED** |
+| **Trump Features**       | 6-10     | ✅ **VALIDATED** |
+| **Regime Weights**       | Dynamic  | ✅ **VALIDATED** |
 
 **Total**: **294+ features** ✅ **ALL VALIDATED**
 
@@ -496,18 +552,21 @@
 ## ✅ Institutional Standards Met
 
 ### ✅ GS Quant Standards:
+
 - ✅ Log returns for all correlations/betas
 - ✅ Annualized volatility (√252)
 - ✅ Standard formulas (Bollinger, PPO, Garman-Klass, Parkinson)
 - ✅ Stationary features (normalized, percentage-based)
 
 ### ✅ JPM Standards:
+
 - ✅ Distance % MAs
 - ✅ VWAP distance
 - ✅ Standard beta calculations
 - ✅ Regime weighting
 
 ### ✅ Academic Standards:
+
 - ✅ Amihud illiquidity (Amihud, 2002)
 - ✅ Garman-Klass volatility (Garman-Klass, 1980)
 - ✅ Parkinson volatility (Parkinson, 1980)
@@ -518,6 +577,7 @@
 ## ✅ Edge Cases Handled
 
 ### All Calculations Handle:
+
 - ✅ Division by zero → NULL
 - ✅ Missing data → NULL
 - ✅ Zero/negative prices → NULL
@@ -535,4 +595,3 @@
 ---
 
 **Last Updated**: December 13, 2025 (migrated from BigQuery to MotherDuck)
-

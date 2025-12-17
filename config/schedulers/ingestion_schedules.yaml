@@ -12,7 +12,7 @@
 
 databento_zl_price:
   name: "databento-zl-price-hourly"
-  schedule: "0 * * * *"  # Every hour
+  schedule: "0 * * * *" # Every hour
   timezone: "America/New_York"
   script: "trigger/DataBento/Scripts/collect_daily.py"
   payload:
@@ -21,7 +21,7 @@ databento_zl_price:
 
 databento_other_symbols:
   name: "databento-other-symbols-4hourly"
-  schedule: "0 */4 * * *"  # Every 4 hours
+  schedule: "0 */4 * * *" # Every 4 hours
   timezone: "America/New_York"
   script: "trigger/DataBento/Scripts/collect_daily.py"
   payload:
@@ -34,7 +34,7 @@ databento_other_symbols:
 
 fred_macro_daily:
   name: "fred-macro-daily"
-  schedule: "0 18 * * *"  # Daily at 6 PM ET (after market close)
+  schedule: "0 18 * * *" # Daily at 6 PM ET (after market close)
   timezone: "America/New_York"
   script: "trigger/FRED/Scripts/collect_fred_rates_curve.py"
   payload:
@@ -46,7 +46,7 @@ fred_macro_daily:
 
 scrapecreators_news_buckets:
   name: "scrapecreators-news-buckets-hourly"
-  schedule: "0 * * * *"  # Every hour
+  schedule: "0 * * * *" # Every hour
   timezone: "America/New_York"
   script: "trigger/ScrapeCreators/Scripts/collect_news_buckets.py"
   payload:
@@ -56,7 +56,7 @@ scrapecreators_news_buckets:
 
 scrapecreators_trump:
   name: "scrapecreators-trump-hourly"
-  schedule: "0 * * * *"  # Every hour
+  schedule: "0 * * * *" # Every hour
   timezone: "America/New_York"
   script: "trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py"
   payload:
@@ -69,7 +69,7 @@ scrapecreators_trump:
 
 usda_reports:
   name: "usda-reports-weekly"
-  schedule: "0 10 * * 1"  # Monday at 10 AM ET
+  schedule: "0 10 * * 1" # Monday at 10 AM ET
   timezone: "America/New_York"
   script: "trigger/USDA/Scripts/ingest_wasde.py"
   payload:
@@ -81,7 +81,7 @@ usda_reports:
 
 cftc_cot:
   name: "cftc-cot-weekly"
-  schedule: "0 10 * * 5"  # Friday at 10 AM ET
+  schedule: "0 10 * * 5" # Friday at 10 AM ET
   timezone: "America/New_York"
   script: "trigger/CFTC/Scripts/ingest_cot.py"
   payload:
@@ -94,7 +94,7 @@ cftc_cot:
 
 eia_biofuels:
   name: "eia-biofuels-weekly"
-  schedule: "0 10 * * 3"  # Wednesday at 10 AM ET
+  schedule: "0 10 * * 3" # Wednesday at 10 AM ET
   timezone: "America/New_York"
   script: "trigger/EIA_EPA/Scripts/collect_eia_biofuels.py"
   payload:
@@ -106,7 +106,7 @@ eia_biofuels:
 
 weather_noaa:
   name: "weather-noaa-daily"
-  schedule: "0 2 * * *"  # Daily at 2 AM ET
+  schedule: "0 2 * * *" # Daily at 2 AM ET
   timezone: "America/New_York"
   script: "trigger/Weather/Scripts/ingest_weather.py"
   payload:
@@ -119,7 +119,7 @@ weather_noaa:
 
 anofox_features_daily:
   name: "anofox-features-daily"
-  schedule: "0 3 * * *"  # Daily at 3 AM ET (after all ingestion complete)
+  schedule: "0 3 * * *" # Daily at 3 AM ET (after all ingestion complete)
   timezone: "America/New_York"
   script: "src/engines/anofox/build_all_features.py"
   payload:
@@ -128,7 +128,7 @@ anofox_features_daily:
 
 anofox_ml_matrix:
   name: "anofox-ml-matrix-daily"
-  schedule: "0 4 * * *"  # Daily at 4 AM ET (after features computed)
+  schedule: "0 4 * * *" # Daily at 4 AM ET (after features computed)
   timezone: "America/New_York"
   script: "src/engines/anofox/build_training.py"
   payload:

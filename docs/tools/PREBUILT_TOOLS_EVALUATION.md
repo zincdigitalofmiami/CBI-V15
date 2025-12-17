@@ -9,6 +9,7 @@
 ## 🎯 Evaluation Criteria
 
 ### Fit Assessment:
+
 1. ✅ **Aligns with Mac Training** (not cloud-dependent)
 2. ✅ **Institutional-Grade** (GS Quant/JPM standards)
 3. ✅ **Cost-Effective** (fits $50/month GCP cap)
@@ -24,6 +25,7 @@
 **What**: Vectorized TA library (130+ indicators) with numba/numpy
 
 **Fit**: ✅ **PERFECT**
+
 - Already in our plan (`requirements.txt`)
 - Matches TradingView/Bloomberg definitions
 - Pandas-native (fits Mac training)
@@ -31,6 +33,7 @@
 - Good for Family A (technicals)
 
 **Use Case**:
+
 - Mac training: Calculate technical indicators locally
 - DuckDB/MotherDuck: Pre-compute in SQL (already planned)
 - Hybrid: Use pandas-ta for validation/comparison
@@ -46,25 +49,28 @@
 **What**: DataFrame validation (Pydantic for Pandas)
 
 **Fit**: ✅ **PERFECT**
+
 - Prevents logic inversions (China sentiment bug)
 - Lightweight, no cloud dependency
 - Fits Mac training pipeline
 - Can hard-code economic assumptions as unit tests
 
 **Use Case**:
+
 - Mac training: Validate input matrix before training
 - Feature engineering: Check correlations (e.g., China sentiment must be positive with ZL returns)
 - Pipeline guardrails: Fail fast if logic inverted
 
 **Code Example**:
+
 ```python
 import pandera as pa
 
 schema = pa.DataFrameSchema({
     "china_sentiment": pa.Column(
-        float, 
+        float,
         checks=pa.Check(
-            lambda g: g.corr(df['zl_return']) > 0, 
+            lambda g: g.corr(df['zl_return']) > 0,
             error="CRITICAL: China Sentiment negatively correlated. Logic inverted?"
         )
     ),
@@ -86,12 +92,14 @@ schema = pa.DataFrameSchema({
 **What**: Downloads, parses, and cleans CFTC COT reports
 
 **Fit**: ✅ **PERFECT**
+
 - Solves CFTC ingestion nightmare
 - Handles Legacy vs. Disaggregated split automatically
 - 3 lines of code vs. weeks of parsing
 - Fits Mac ingestion scripts
 
 **Use Case**:
+
 - `src/ingestion/cftc/collect_cftc_comprehensive.py`
 - Replace manual parsing with `pycot_reports.get_cot_report()`
 
@@ -106,11 +114,13 @@ schema = pa.DataFrameSchema({
 **What**: Scrapes and parses USDA WASDE text/XML archives
 
 **Fit**: ✅ **PERFECT**
+
 - Solves USDA parsing nightmare
 - Handles "Revisionist History" (pull specific historical dates)
 - Fits Mac ingestion scripts
 
 **Use Case**:
+
 - `src/ingestion/usda/collect_usda_comprehensive.py`
 - Replace manual parsing with `wasdeparser.parse_wasde()`
 
@@ -125,12 +135,14 @@ schema = pa.DataFrameSchema({
 **What**: Explainable AI (SHAP values for model interpretability)
 
 **Fit**: ✅ **PERFECT**
+
 - Already in our plan (feature importance)
 - Fits Mac training pipeline
 - Detects logic inversions (slope analysis)
 - Industry standard (GS Quant uses SHAP)
 
 **Use Case**:
+
 - Post-training: SHAP dependence plots for sentiment features
 - Feature validation: Check if slopes match economic theory
 - Model interpretability: Explain LightGBM predictions
@@ -148,11 +160,13 @@ schema = pa.DataFrameSchema({
 **What**: Offline Change Point Detection (finds structural breaks)
 
 **Fit**: ⚠️ **MAYBE**
+
 - We already have manual regime calendar
 - Could auto-label regimes (reduce bias)
 - But: Manual regimes are domain knowledge (Trump eras, crises)
 
 **Use Case**:
+
 - Research: Auto-detect volatility regime shifts
 - Validation: Compare manual regimes vs. detected breaks
 - Feature engineering: Add detected breakpoints as features
@@ -170,11 +184,13 @@ schema = pa.DataFrameSchema({
 **What**: Factor analysis (quantile spread analysis)
 
 **Fit**: ⚠️ **MAYBE**
+
 - Detects logic inversions (would catch China bug)
 - Post-feature engineering validation
 - But: Adds complexity, might be overkill
 
 **Use Case**:
+
 - Feature validation: Check if sentiment features have correct quantile spreads
 - Research: Factor analysis before training
 
@@ -191,11 +207,13 @@ schema = pa.DataFrameSchema({
 **What**: VPIN, Amihud Illiquidity, Roll Models
 
 **Fit**: ⚠️ **MAYBE**
+
 - We already have Amihud in technical indicators
 - VPIN is deferred (microstructure not in Phase 1)
 - Could be useful for advanced features
 
 **Use Case**:
+
 - Advanced features: VPIN, Roll Models (if we add microstructure)
 - Validation: Compare our Amihud vs. pymicrostructure
 
@@ -214,6 +232,7 @@ schema = pa.DataFrameSchema({
 **What**: Commercial library (Hudson & Thames)
 
 **Fit**: ❌ **REJECTED**
+
 - Commercial (costs money)
 - We already have Garman-Klass, Parkinson in DuckDB/MotherDuck SQL
 - Free alternatives exist (ta-lib, tsfracdiff)
@@ -229,6 +248,7 @@ schema = pa.DataFrameSchema({
 **What**: Data pipeline testing framework
 
 **Fit**: ❌ **REJECTED**
+
 - Overkill for our scale
 - Pandera is lighter and sufficient
 - Adds complexity without proportional value
@@ -244,6 +264,7 @@ schema = pa.DataFrameSchema({
 **What**: Hidden Markov Models for regime detection
 
 **Fit**: ❌ **REJECTED**
+
 - We already have VIX-based regime system
 - Manual regimes are domain knowledge (Trump eras)
 - Adds complexity without clear benefit
@@ -257,6 +278,7 @@ schema = pa.DataFrameSchema({
 **What**: Data drift detection
 
 **Fit**: ❌ **REJECTED**
+
 - We already have segmentation strategy (prevents drift)
 - Cloud-dependent (doesn't fit Mac training)
 - Overkill for our scale
@@ -270,6 +292,7 @@ schema = pa.DataFrameSchema({
 **What**: Time series forecasting API
 
 **Fit**: ❌ **REJECTED**
+
 - We're doing Mac training (not API-based)
 - Redundant with our LightGBM/TFT approach
 - Adds external dependency
@@ -283,11 +306,13 @@ schema = pa.DataFrameSchema({
 **What**: Time-series causal discovery (PCMCI)
 
 **Fit**: ⚠️ **RESEARCH ONLY**
+
 - Validates fundamental assumptions (Big 8 drivers)
 - But: Complex, research tool, not production
 - Could validate "China → ZL" causality
 
 **Use Case**:
+
 - Research: Validate Big 8 driver causality
 - Not production: Too complex for pipeline
 
@@ -328,6 +353,7 @@ schema = pa.DataFrameSchema({
 ### Phase 1: Critical Tools (Immediate)
 
 **Add to `requirements.txt`**:
+
 ```txt
 pandas-ta>=0.3.14b
 pandera>=0.18.0
@@ -337,6 +363,7 @@ shap>=0.44.0
 ```
 
 **Integrate into Scripts**:
+
 1. **Pandera**: Add to `src/training/baselines/lightgbm_zl.py` (input validation)
 2. **pycot-reports**: Replace manual parsing in `src/ingestion/cftc/collect_cftc_comprehensive.py`
 3. **wasdeparser**: Replace manual parsing in `src/ingestion/usda/collect_usda_comprehensive.py`
@@ -347,6 +374,7 @@ shap>=0.44.0
 ### Phase 2: Research Tools (Optional)
 
 **Add to `requirements-research.txt`** (separate file):
+
 ```txt
 ruptures>=1.1.8
 alphalens-reloaded>=0.5.0
@@ -360,6 +388,7 @@ tigramite>=0.6.0
 ## ✅ Summary
 
 ### Approved (5 tools):
+
 - ✅ Pandas-TA (technical indicators)
 - ✅ Pandera (logic validation - CRITICAL)
 - ✅ pycot-reports (CFTC parsing)
@@ -367,6 +396,7 @@ tigramite>=0.6.0
 - ✅ SHAP (model interpretability)
 
 ### Rejected (5 tools):
+
 - ❌ mlfinlab (commercial, alternatives exist)
 - ❌ Great Expectations (overkill, Pandera sufficient)
 - ❌ hmmlearn (redundant with VIX regimes)
@@ -374,6 +404,7 @@ tigramite>=0.6.0
 - ❌ Nixtla API (redundant with Mac training)
 
 ### Optional (3 tools):
+
 - ⚠️ ruptures (research only)
 - ⚠️ Alphalens-Reloaded (research only)
 - ⚠️ Tigramite (research only)
@@ -385,4 +416,3 @@ tigramite>=0.6.0
 ---
 
 **Last Updated**: November 28, 2025
-

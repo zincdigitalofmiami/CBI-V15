@@ -161,6 +161,7 @@ CBI-V15/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Python 3.11+** (Mac M4 recommended for optimal AutoGluon performance)
 - **Node.js 18+** (for dashboard)
 - **Just** task runner (`brew install just`)
@@ -170,6 +171,7 @@ CBI-V15/
 ### Initial Setup
 
 1. **Clone and bootstrap environment**
+
    ```bash
    git clone https://github.com/zincdigitalofmiami/CBI-V15.git
    cd CBI-V15
@@ -177,6 +179,7 @@ CBI-V15/
    ```
 
 2. **Configure environment variables**
+
    ```bash
    cp config/env-templates/.env.example .env
    # Edit .env with your credentials:
@@ -195,11 +198,13 @@ CBI-V15/
 ### Development Workflows
 
 **Run dashboard locally** (queries MotherDuck cloud)
+
 ```bash
 just dev  # Starts Trigger.dev (port 3000) + Dashboard (port 3001)
 ```
 
 **Sync MotherDuck → local DuckDB** (before training)
+
 ```bash
 source .venv/bin/activate
 python scripts/sync_motherduck_to_local.py --dry-run  # Preview changes
@@ -207,11 +212,13 @@ python scripts/sync_motherduck_to_local.py            # Execute sync
 ```
 
 **Run quality checks**
+
 ```bash
 just qa  # Runs ruff linter
 ```
 
 **Database operations**
+
 ```bash
 just db:ddl     # Deploy DDL to MotherDuck
 just db:macros  # Deploy SQL macros to MotherDuck
@@ -219,6 +226,7 @@ just db:seed    # Load seed data
 ```
 
 **Autosave (backup commits every 5min)**
+
 ```bash
 just autosave  # Ctrl+C to stop
 ```
@@ -228,12 +236,14 @@ just autosave  # Ctrl+C to stop
 ## 🔑 Environment Variables
 
 ### Required
+
 - `MOTHERDUCK_DB` — MotherDuck database name (default: `cbi_v15`)
 - `MOTHERDUCK_TOKEN` — MotherDuck service token
 - `DATABENTO_API_KEY` — Databento API key (38 futures symbols)
 - `FRED_API_KEY` — FRED API key (24+ macro indicators)
 
 ### Optional (ingestion enhancers)
+
 - `EIA_API_KEY` — Energy Information Administration
 - `USDA_NASS_API_KEY` — USDA National Agricultural Statistics Service
 - `SCRAPECREATOR_API_KEY` — ScrapeCreator API (news scraping)
@@ -247,6 +257,7 @@ just autosave  # Ctrl+C to stop
 ## 📚 Key Documentation
 
 ### Architecture & Design
+
 - **[docs/architecture/MASTER_PLAN.md](docs/architecture/MASTER_PLAN.md)** — Single source of truth for V15.1 AutoGluon hybrid architecture
 - **[docs/architecture/FEATURE_ENGINEERING_ARCHITECTURE.md](docs/architecture/FEATURE_ENGINEERING_ARCHITECTURE.md)** — AnoFox SQL macro design patterns
 - **[docs/architecture/META_LEARNING_FRAMEWORK.md](docs/architecture/META_LEARNING_FRAMEWORK.md)** — Multi-layer ensemble strategy
@@ -254,11 +265,13 @@ just autosave  # Ctrl+C to stop
 - **[docs/architecture/BASELINE_V15_STRATEGY.md](docs/architecture/BASELINE_V15_STRATEGY.md)** — Baseline model strategy
 
 ### Operations & Deployment
+
 - **[docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md](docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md)** — Dashboard connection architecture
 - **[docs/ops/deployment_checklist.md](docs/ops/deployment_checklist.md)** — Production deployment guide
 - **[docs/ops/POST_REFACTOR_HARDENING_REPORT.md](docs/ops/POST_REFACTOR_HARDENING_REPORT.md)** — V15.1 refactor report
 
 ### Project References
+
 - **[AGENTS.md](AGENTS.md)** — Engineering agent guardrails, Big 8 coverage rules, naming conventions
 - **[DATA_LINKS_MASTER.md](DATA_LINKS_MASTER.md)** — Canonical data source URLs and API documentation
 - **[config/data_sources.yaml](config/data_sources.yaml)** — Machine-readable data source configurations
@@ -308,6 +321,7 @@ Enforce these rules in all engineering plans and changes:
 ---
 
 ## 🧭 Notes & Conventions
+
 - Ingestion lives under `trigger/<Source>/Scripts/` (no src/ingestion for new work).
 - Features in SQL macros only (`database/macros/`); avoid Python feature loops.
 - Training on Mac M4 CPU; `presets='extreme_quality'` (slower without GPU).
@@ -316,4 +330,5 @@ Enforce these rules in all engineering plans and changes:
 ---
 
 ## 📝 License
+
 MIT — see [LICENSE](LICENSE).

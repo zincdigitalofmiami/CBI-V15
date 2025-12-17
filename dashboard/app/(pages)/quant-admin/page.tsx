@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
 export default function QuantAdminPage() {
   const pipelineStages = [
-    { name: 'Databento', status: 'ok', lastRun: '—', rows: '—' },
-    { name: 'FRED', status: 'ok', lastRun: '—', rows: '—' },
-    { name: 'CFTC COT', status: 'ok', lastRun: '—', rows: '—' },
-    { name: 'USDA', status: 'pending', lastRun: '—', rows: '—' },
-    { name: 'News/Sentiment', status: 'pending', lastRun: '—', rows: '—' },
-    { name: 'EPA RIN', status: 'pending', lastRun: '—', rows: '—' },
+    { name: "Databento", status: "ok", lastRun: "—", rows: "—" },
+    { name: "FRED", status: "ok", lastRun: "—", rows: "—" },
+    { name: "CFTC COT", status: "ok", lastRun: "—", rows: "—" },
+    { name: "USDA", status: "pending", lastRun: "—", rows: "—" },
+    { name: "News/Sentiment", status: "pending", lastRun: "—", rows: "—" },
+    { name: "EPA RIN", status: "pending", lastRun: "—", rows: "—" },
   ];
 
   const schemas = [
-    { name: 'raw', tables: '—', rows: '—', coverage: '—' },
-    { name: 'staging', tables: '—', rows: '—', coverage: '—' },
-    { name: 'features', tables: '—', rows: '—', coverage: '—' },
-    { name: 'training', tables: '—', rows: '—', coverage: '—' },
-    { name: 'forecasts', tables: '—', rows: '—', coverage: '—' },
+    { name: "raw", tables: "—", rows: "—", coverage: "—" },
+    { name: "staging", tables: "—", rows: "—", coverage: "—" },
+    { name: "features", tables: "—", rows: "—", coverage: "—" },
+    { name: "training", tables: "—", rows: "—", coverage: "—" },
+    { name: "forecasts", tables: "—", rows: "—", coverage: "—" },
   ];
 
   const models = [
-    { name: 'Crush Specialist', type: 'TabularPredictor', status: 'pending' },
-    { name: 'China Specialist', type: 'TabularPredictor', status: 'pending' },
-    { name: 'Core ZL Forecaster', type: 'TimeSeriesPredictor', status: 'pending' },
-    { name: 'Meta Ensemble', type: 'GreedyEnsemble', status: 'pending' },
+    { name: "Crush Specialist", type: "TabularPredictor", status: "pending" },
+    { name: "China Specialist", type: "TabularPredictor", status: "pending" },
+    { name: "Core ZL Forecaster", type: "TimeSeriesPredictor", status: "pending" },
+    { name: "Meta Ensemble", type: "GreedyEnsemble", status: "pending" },
   ];
 
   return (
@@ -72,11 +72,11 @@ export default function QuantAdminPage() {
                   <div className="flex items-center gap-3">
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        stage.status === 'ok'
-                          ? 'bg-green-500'
-                          : stage.status === 'error'
-                          ? 'bg-red-500'
-                          : 'bg-yellow-500'
+                        stage.status === "ok"
+                          ? "bg-green-500"
+                          : stage.status === "error"
+                            ? "bg-red-500"
+                            : "bg-yellow-500"
                       }`}
                     ></span>
                     <span className="text-zinc-300 font-extralight">{stage.name}</span>
@@ -131,11 +131,11 @@ export default function QuantAdminPage() {
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
-                      model.status === 'active'
-                        ? 'bg-green-900/30 text-green-400'
-                        : model.status === 'training'
-                        ? 'bg-blue-900/30 text-blue-400'
-                        : 'bg-zinc-800 text-zinc-500'
+                      model.status === "active"
+                        ? "bg-green-900/30 text-green-400"
+                        : model.status === "training"
+                          ? "bg-blue-900/30 text-blue-400"
+                          : "bg-zinc-800 text-zinc-500"
                     }`}
                   >
                     {model.status}
@@ -195,7 +195,9 @@ export default function QuantAdminPage() {
               </div>
             </div>
             <div className="h-32 bg-black border border-zinc-800 rounded-lg flex items-center justify-center">
-              <span className="text-zinc-600 text-sm font-extralight">Feature coverage heatmap</span>
+              <span className="text-zinc-600 text-sm font-extralight">
+                Feature coverage heatmap
+              </span>
             </div>
             <div className="mt-4 text-xs text-zinc-600 font-extralight">
               Source: features.daily_ml_matrix_zl

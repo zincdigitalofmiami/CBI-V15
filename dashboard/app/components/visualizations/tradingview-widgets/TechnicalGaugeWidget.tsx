@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { memo, useMemo } from 'react';
-import TradingViewWidget from './TradingViewWidget';
+import { memo, useMemo } from "react";
+import TradingViewWidget from "./TradingViewWidget";
 
 interface TechnicalGaugeWidgetProps {
   symbol?: string;
   width?: number | string;
   height?: number;
   showIntervalTabs?: boolean;
-  displayMode?: 'single' | 'multiple';
+  displayMode?: "single" | "multiple";
 }
 
 /**
@@ -16,25 +16,25 @@ interface TechnicalGaugeWidgetProps {
  * Shows buy/sell sentiment based on oscillators and moving averages.
  */
 function TechnicalGaugeWidget({
-  symbol = 'CBOT:ZL1!',
-  width = '100%',
+  symbol = "CBOT:ZL1!",
+  width = "100%",
   height = 400,
   showIntervalTabs = true,
-  displayMode = 'multiple',
+  displayMode = "multiple",
 }: TechnicalGaugeWidgetProps) {
   const config = useMemo(
     () => ({
-      interval: '1D',
-      width: '100%',
-      height: '100%',
+      interval: "1D",
+      width: "100%",
+      height: "100%",
       isTransparent: false,
       showIntervalTabs,
       displayMode,
-      locale: 'en',
-      colorTheme: 'dark',
+      locale: "en",
+      colorTheme: "dark",
       symbol,
     }),
-    [symbol, showIntervalTabs, displayMode]
+    [symbol, showIntervalTabs, displayMode],
   );
 
   return (

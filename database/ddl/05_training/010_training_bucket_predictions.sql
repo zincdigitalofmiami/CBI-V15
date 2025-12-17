@@ -26,4 +26,3 @@ CREATE TABLE IF NOT EXISTS training.bucket_predictions (
 
 CREATE INDEX IF NOT EXISTS idx_bucket_predictions_bucket 
     ON training.bucket_predictions(bucket);
-

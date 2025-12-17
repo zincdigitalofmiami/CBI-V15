@@ -1,18 +1,33 @@
-'use client';
+"use client";
 
 export default function StrategyPage() {
   const horizons = [
-    { label: '1W', days: 5, desc: 'Immediate needs' },
-    { label: '1M', days: 20, desc: 'Near-term procurement' },
-    { label: '3M', days: 60, desc: 'Quarterly planning' },
-    { label: '6M', days: 126, desc: 'Strategic positioning' },
+    { label: "1W", days: 5, desc: "Immediate needs" },
+    { label: "1M", days: 20, desc: "Near-term procurement" },
+    { label: "3M", days: 60, desc: "Quarterly planning" },
+    { label: "6M", days: 126, desc: "Strategic positioning" },
   ];
 
   const scenarios = [
-    { id: 'china-soft', name: 'China Soft', impact: 'bearish', desc: 'Reduced China demand, export slowdown' },
-    { id: 'tariffs-escalate', name: 'Tariffs Escalate', impact: 'bullish', desc: 'Section 301 expansion, retaliatory measures' },
-    { id: 'weather-shock', name: 'Weather Shock', impact: 'bullish', desc: 'La Niña, drought conditions in key regions' },
-    { id: 'fed-pivot', name: 'Fed Pivot', impact: 'mixed', desc: 'Rate cuts, dollar weakness' },
+    {
+      id: "china-soft",
+      name: "China Soft",
+      impact: "bearish",
+      desc: "Reduced China demand, export slowdown",
+    },
+    {
+      id: "tariffs-escalate",
+      name: "Tariffs Escalate",
+      impact: "bullish",
+      desc: "Section 301 expansion, retaliatory measures",
+    },
+    {
+      id: "weather-shock",
+      name: "Weather Shock",
+      impact: "bullish",
+      desc: "La Niña, drought conditions in key regions",
+    },
+    { id: "fed-pivot", name: "Fed Pivot", impact: "mixed", desc: "Rate cuts, dollar weakness" },
   ];
 
   return (
@@ -22,7 +37,9 @@ export default function StrategyPage() {
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">📈</span>
-            <h1 className="text-3xl font-thin text-white tracking-wide">Strategy & Procurement Plan</h1>
+            <h1 className="text-3xl font-thin text-white tracking-wide">
+              Strategy & Procurement Plan
+            </h1>
           </div>
           <p className="text-zinc-400 font-extralight">
             Hedge ladder, scenario analysis, and P&L distribution for ZL procurement
@@ -119,20 +136,17 @@ export default function StrategyPage() {
                   key={s.id}
                   className="flex items-center gap-4 bg-black border border-zinc-800 p-4 rounded-lg hover:border-zinc-700 transition-colors"
                 >
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 bg-black border-zinc-600 rounded"
-                  />
+                  <input type="checkbox" className="w-4 h-4 bg-black border-zinc-600 rounded" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-white font-extralight">{s.name}</span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded ${
-                          s.impact === 'bullish'
-                            ? 'bg-green-900/30 text-green-400'
-                            : s.impact === 'bearish'
-                            ? 'bg-red-900/30 text-red-400'
-                            : 'bg-zinc-800 text-zinc-400'
+                          s.impact === "bullish"
+                            ? "bg-green-900/30 text-green-400"
+                            : s.impact === "bearish"
+                              ? "bg-red-900/30 text-red-400"
+                              : "bg-zinc-800 text-zinc-400"
                         }`}
                       >
                         {s.impact}

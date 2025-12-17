@@ -113,7 +113,8 @@ targets:
         keywords: ["RVO", "Renewable Volume Obligation", "SRE", "Small Refinery Exemptions"]
         impact: "Direct ZL correlation (RVO up -> ZL up)"
       - name: "Section 45Z (Clean Fuel Production Credit)"
-        keywords: ["Clean Fuel Production Credit", "Inflation Reduction Act", "Foreign feedstock", "UCO"]
+        keywords:
+          ["Clean Fuel Production Credit", "Inflation Reduction Act", "Foreign feedstock", "UCO"]
         start_date: "2025-01-01"
         impact: "Feedstock eligibility (Domestic vs Foreign)"
       - name: "California LCFS"
@@ -125,6 +126,3 @@ targets:
       - name: "UCO Import Bans"
         keywords: ["Used Cooking Oil", "Import Ban", "Suspect UCO", "China UCO"]
         impact: "Bullish ZL (Domestic oil switch)"
-
-
-

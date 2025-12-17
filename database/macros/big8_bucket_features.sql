@@ -299,12 +299,13 @@ WITH eia_data AS (
 ),
 epa_data AS (
     -- EPA RIN prices from canonical EPA table
+    -- FIX: Schema uses 'rin_type' and 'price', NOT 'series_id' and 'value'
     SELECT
         date AS as_of_date,
-        MAX(CASE WHEN series_id = 'rin_d4_price' THEN value END) AS rin_d4,
-        MAX(CASE WHEN series_id = 'rin_d6_price' THEN value END) AS rin_d6
+        MAX(CASE WHEN rin_type = 'D4' THEN price END) AS rin_d4,
+        MAX(CASE WHEN rin_type = 'D6' THEN price END) AS rin_d6
     FROM raw.epa_rin_prices
-    WHERE series_id IN ('rin_d4_price', 'rin_d6_price')
+    WHERE rin_type IN ('D4', 'D6')
     GROUP BY date
 ),
 biofuel_data AS (

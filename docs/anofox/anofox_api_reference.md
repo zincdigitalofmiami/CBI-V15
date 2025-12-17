@@ -28,15 +28,18 @@ LOAD anofox_statistics;
 **Purpose:** Data quality and anomaly detection
 
 ### `anofox_gap_fill()`
+
 Fill gaps in time series data.
 
 **Parameters:**
+
 - `date`: Date column
 - `value`: Value column to fill
 - `method`: Fill method ('linear', 'forward', 'backward')
 - `max_gap`: Maximum gap size (e.g., '5 days')
 
 **Example:**
+
 ```sql
 SELECT anofox_gap_fill(
     date, close,
@@ -46,14 +49,17 @@ SELECT anofox_gap_fill(
 ```
 
 ### `anofox_outlier_detect()`
+
 Detect outliers in data.
 
 **Parameters:**
+
 - `column`: Column to analyze
 - `method`: Detection method ('zscore', 'isolation_forest')
 - `threshold`: Threshold value (e.g., 3.0 for zscore)
 
 **Example:**
+
 ```sql
 SELECT anofox_outlier_detect(
     close,
@@ -69,66 +75,81 @@ SELECT anofox_outlier_detect(
 **Purpose:** Feature engineering and statistical calculations
 
 ### `anofox_volatility()`
+
 Calculate volatility.
 
 **Parameters:**
+
 - `column`: Price column
 - `window`: Window size (e.g., 21)
 
 **Example:**
+
 ```sql
 SELECT anofox_volatility(close, window := 21) AS vol_21d
 FROM raw.zl_prices;
 ```
 
 ### `anofox_trend_strength()`
+
 Calculate trend strength.
 
 **Parameters:**
+
 - `column`: Price column
 - `window`: Window size (e.g., 60)
 
 **Example:**
+
 ```sql
 SELECT anofox_trend_strength(close, window := 60) AS trend_60d
 FROM raw.zl_prices;
 ```
 
 ### `anofox_sma()`
+
 Simple moving average.
 
 **Parameters:**
+
 - `column`: Price column
 - `period`: Period (e.g., 5, 20, 50)
 
 **Example:**
+
 ```sql
 SELECT anofox_sma(close, 5) AS sma_5
 FROM raw.zl_prices;
 ```
 
 ### `anofox_rsi()`
+
 Relative Strength Index.
 
 **Parameters:**
+
 - `column`: Price column
 - `period`: Period (e.g., 14)
 
 **Example:**
+
 ```sql
 SELECT anofox_rsi(close, 14) AS rsi_14
 FROM raw.zl_prices;
 ```
 
 ### `anofox_correlation()`
+
 Calculate correlation between two series.
 
 **Parameters:**
+
 - `series1`: First series
 - `series2`: Second series
 - `window`: Window size (e.g., 90)
 
 **Example:**
+
 ```sql
 SELECT anofox_correlation(zl_close, wti_close, window := 90) AS zl_wti_corr
 FROM staging.market_daily;
@@ -141,9 +162,11 @@ FROM staging.market_daily;
 **Purpose:** Time-series forecasting
 
 ### `TS_FORECAST()`
+
 Generate forecasts using statistical methods.
 
 **Parameters:**
+
 - `data`: Subquery or table with date and value columns
 - `date_column`: Name of date column
 - `value_column`: Name of value column
@@ -151,6 +174,7 @@ Generate forecasts using statistical methods.
 - `horizon`: Forecast horizon (number of periods)
 
 **Example:**
+
 ```sql
 SELECT TS_FORECAST(
     (SELECT date, close FROM raw.zl_prices),
@@ -165,6 +189,7 @@ SELECT TS_FORECAST(
 ## Integration with Training Pipeline
 
 **Usage Pattern:**
+
 1. Data preprocessing → `anofox_gap_fill()`, `anofox_outlier_detect()`
 2. Feature engineering → `anofox_volatility()`, `anofox_trend_strength()`, `anofox_sma()`, `anofox_rsi()`
 3. Forecasting → `TS_FORECAST()` with various methods (legacy SQL-based forecasting)
@@ -175,4 +200,3 @@ SELECT TS_FORECAST(
 ---
 
 **Last Updated:** December 3, 2024
-

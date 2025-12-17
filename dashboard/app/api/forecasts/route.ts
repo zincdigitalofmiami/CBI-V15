@@ -1,7 +1,7 @@
-import { queryMotherDuck } from '@/lib/md';
-import { NextResponse } from 'next/server';
+import { queryMotherDuck } from "@/lib/md";
+import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs'; // Required for native DuckDB
+export const runtime = "nodejs"; // Required for native DuckDB
 
 export async function GET() {
   try {
@@ -17,13 +17,16 @@ export async function GET() {
       success: true,
       data: rows,
       count: Array.isArray(rows) ? rows.length : 0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('Database Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    console.error("Database Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

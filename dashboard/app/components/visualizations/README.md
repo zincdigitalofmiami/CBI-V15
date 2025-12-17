@@ -72,12 +72,3 @@ import TradingViewGauge from "@/app/Chart Package/TradingViewGauge";
 ---
 
 **Last Updated:** December 10, 2025
-
-
-
-
-
-
-
-
-

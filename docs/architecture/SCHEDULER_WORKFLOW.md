@@ -10,12 +10,14 @@
 ### Why Separate Schedulers?
 
 **Benefits**:
+
 - ✅ Parallel ingestion (faster)
 - ✅ Independent failure handling
 - ✅ Better monitoring (per-source metrics)
 - ✅ Easier debugging (isolated failures)
 
 **Drawbacks**:
+
 - ⚠️ More complex (multiple schedulers to manage)
 - ⚠️ Need coordination for AnoFox SQL macros triggers
 
@@ -56,6 +58,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `databento-zl-price-hourly` (every 1 hour)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers Cloud Function
 2. Cloud Function runs `trigger/DataBento/Scripts/collect_daily.py`
 3. Script pulls from Databento API (ZL price)
@@ -75,6 +78,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `fred-macro-daily` (daily at 6 PM ET)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers Cloud Function
 2. Cloud Function runs `trigger/FRED/Scripts/collect_fred_rates_curve.py`
 3. Script pulls from FRED API (55-60 series)
@@ -94,6 +98,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `scrapecreators-news-buckets-hourly` (every 1 hour)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers Cloud Function
 2. Cloud Function runs `trigger/ScrapeCreators/Scripts/collect_news_buckets.py`
 3. Script pulls from ScrapeCreators API
@@ -119,6 +124,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `scrapecreators-trump-hourly` (every 1 hour)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers Cloud Function
 2. Cloud Function runs `trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py`
 3. Script pulls from ScrapeCreators API (Truth Social)
@@ -136,12 +142,14 @@ DuckDB/MotherDuck Training Table
 
 ### 5. USDA/CFTC/EIA Data
 
-**Schedulers**: 
+**Schedulers**:
+
 - `usda-reports-weekly` (Monday 10 AM ET)
 - `cftc-cot-weekly` (Friday 10 AM ET)
 - `eia-biofuels-weekly` (Wednesday 10 AM ET)
 
 **Workflow** (similar for all):
+
 1. Cloud Scheduler triggers Cloud Function
 2. Cloud Function runs ingestion script
 3. Script pulls from API
@@ -161,6 +169,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `weather-noaa-daily` (daily at 2 AM ET)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers Cloud Function
 2. Cloud Function runs `trigger/Weather/Scripts/ingest_weather.py`
 3. Script pulls from NOAA/INMET/SMN APIs
@@ -180,6 +189,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `anofox-features-daily` (daily at 3 AM ET)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers AnoFox SQL macros API
 2. **WAIT FOR ALL INGESTION COMPLETE** (check completion flags)
 3. Run AnoFox SQL macros transformations (staging → features)
@@ -206,6 +216,7 @@ DuckDB/MotherDuck Training Table
 **Scheduler**: `anofox-daily-ml-matrix-daily` (daily at 4 AM ET)
 
 **Workflow**:
+
 1. Cloud Scheduler triggers AnoFox SQL macros API
 2. **WAIT FOR FEATURE COMPUTATION COMPLETE**
 3. Build `features.daily_ml_matrix` (master join)
@@ -243,6 +254,7 @@ WHERE date = CURRENT_DATE() AND source = 'databento_zl';
 ```
 
 **AnoFox SQL macros scheduler checks**:
+
 ```sql
 -- Wait for all ingestion complete
 SELECT COUNT(*) as pending

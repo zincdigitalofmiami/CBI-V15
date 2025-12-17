@@ -26,6 +26,7 @@ cd /Volumes/Satechi\ Hub/CBI-V15
 ```
 
 This will:
+
 - Search macOS Keychain for all required keys
 - Populate `.env.local` automatically
 - Create a backup of existing `.env.local`
@@ -40,6 +41,7 @@ cd /Volumes/Satechi\ Hub/CBI-V15
 ```
 
 Choose option 4 (All three) to store in:
+
 - macOS Keychain
 - .env.local
 - Vercel
@@ -50,31 +52,31 @@ Choose option 4 (All three) to store in:
 
 ### CRITICAL (Deploy Blockers)
 
-| Key | Service | Where to Find |
-|-----|---------|---------------|
-| `TRIGGER_SECRET_KEY` | Trigger.dev | Already set: `tr_dev_5cabtqdvsHwK8L9sQqRi` |
-| `MOTHERDUCK_TOKEN` | MotherDuck | Apple Keychain or MotherDuck dashboard |
-| `OPENAI_API_KEY` | OpenAI | Apple Keychain or OpenAI dashboard |
-| `ANCHOR_API_KEY` | Anchor | Already set: `sk-d22742b80f7f01b306fd39a2aac5d131` |
+| Key                  | Service     | Where to Find                                      |
+| -------------------- | ----------- | -------------------------------------------------- |
+| `TRIGGER_SECRET_KEY` | Trigger.dev | Already set: `tr_dev_5cabtqdvsHwK8L9sQqRi`         |
+| `MOTHERDUCK_TOKEN`   | MotherDuck  | Apple Keychain or MotherDuck dashboard             |
+| `OPENAI_API_KEY`     | OpenAI      | Apple Keychain or OpenAI dashboard                 |
+| `ANCHOR_API_KEY`     | Anchor      | Already set: `sk-d22742b80f7f01b306fd39a2aac5d131` |
 
 ### HIGH Priority
 
-| Key | Service | Where to Find |
-|-----|---------|---------------|
-| `PROFARMER_USERNAME` | ProFarmer | Apple Keychain |
-| `PROFARMER_PASSWORD` | ProFarmer | Apple Keychain |
-| `TRADINGECONOMICS_USERNAME` | TradingEconomics | Apple Keychain |
-| `TRADINGECONOMICS_PASSWORD` | TradingEconomics | Apple Keychain |
-| `DATABENTO_API_KEY` | Databento | Apple Keychain or Databento dashboard |
-| `FRED_API_KEY` | FRED | Already set: `dc195c8658c46ee1df83bcd4fd8a690b` |
+| Key                         | Service          | Where to Find                                   |
+| --------------------------- | ---------------- | ----------------------------------------------- |
+| `PROFARMER_USERNAME`        | ProFarmer        | Apple Keychain                                  |
+| `PROFARMER_PASSWORD`        | ProFarmer        | Apple Keychain                                  |
+| `TRADINGECONOMICS_USERNAME` | TradingEconomics | Apple Keychain                                  |
+| `TRADINGECONOMICS_PASSWORD` | TradingEconomics | Apple Keychain                                  |
+| `DATABENTO_API_KEY`         | Databento        | Apple Keychain or Databento dashboard           |
+| `FRED_API_KEY`              | FRED             | Already set: `dc195c8658c46ee1df83bcd4fd8a690b` |
 
 ### MEDIUM Priority
 
-| Key | Service | Where to Find |
-|-----|---------|---------------|
-| `EIA_API_KEY` | EIA | Apple Keychain or EIA dashboard |
-| `NOAA_API_TOKEN` | NOAA | Already set: `rxoLrCxYOlQyWvVjbBGRlMMhIRElWKZi` |
-| `SCRAPECREATORS_API_KEY` | ScrapeCreators | Already set: `B1TOgQvMVSV6TDglqB8lJ2cirqi2` |
+| Key                      | Service        | Where to Find                                   |
+| ------------------------ | -------------- | ----------------------------------------------- |
+| `EIA_API_KEY`            | EIA            | Apple Keychain or EIA dashboard                 |
+| `NOAA_API_TOKEN`         | NOAA           | Already set: `rxoLrCxYOlQyWvVjbBGRlMMhIRElWKZi` |
+| `SCRAPECREATORS_API_KEY` | ScrapeCreators | Already set: `B1TOgQvMVSV6TDglqB8lJ2cirqi2`     |
 
 ---
 
@@ -91,6 +93,7 @@ Or: `Cmd+Space` → type "Keychain Access"
 ### Step 2: Search for Service
 
 Search for:
+
 - "ProFarmer"
 - "TradingEconomics"
 - "OpenAI"
@@ -127,10 +130,11 @@ nano .env.local
 ```
 
 This will show:
+
 - ✅ Keys found in Keychain
 - ✅ Keys set in .env.local
 - ✅ Keys deployed to Vercel
-- ⚠️  Missing keys
+- ⚠️ Missing keys
 
 ### Test Individual Keys
 
@@ -188,6 +192,7 @@ vercel env ls
 ### "Key not found in Keychain"
 
 **Solution:**
+
 1. Open Keychain Access app
 2. Search for the service name
 3. If not found, check other keychains (System, iCloud)
@@ -196,6 +201,7 @@ vercel env ls
 ### ".env.local file not found"
 
 **Solution:**
+
 ```bash
 cd /Volumes/Satechi\ Hub/CBI-V15
 touch .env.local
@@ -205,6 +211,7 @@ touch .env.local
 ### "Vercel CLI not installed"
 
 **Solution:**
+
 ```bash
 npm i -g vercel
 vercel login
@@ -213,6 +220,7 @@ vercel login
 ### "Permission denied" when running scripts
 
 **Solution:**
+
 ```bash
 chmod +x /Volumes/Satechi\ Hub/CBI-V15/scripts/setup/*.sh
 ```
@@ -241,11 +249,11 @@ chmod +x /Volumes/Satechi\ Hub/CBI-V15/scripts/setup/*.sh
 
 ## Scripts Reference
 
-| Script | Purpose | Usage |
-|--------|---------|-------|
+| Script                  | Purpose                         | Usage                                   |
+| ----------------------- | ------------------------------- | --------------------------------------- |
 | `pull_from_keychain.sh` | Pull from Keychain → .env.local | `./scripts/setup/pull_from_keychain.sh` |
-| `store_api_keys.sh` | Store in Keychain/.env/Vercel | `./scripts/setup/store_api_keys.sh` |
-| `verify_api_keys.sh` | Verify all locations | `./scripts/setup/verify_api_keys.sh` |
+| `store_api_keys.sh`     | Store in Keychain/.env/Vercel   | `./scripts/setup/store_api_keys.sh`     |
+| `verify_api_keys.sh`    | Verify all locations            | `./scripts/setup/verify_api_keys.sh`    |
 
 ---
 
@@ -266,4 +274,3 @@ npx trigger.dev@latest dev
 ---
 
 **Last Updated:** December 9, 2024
-

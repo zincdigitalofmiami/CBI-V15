@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
 export default function VegasIntelPage() {
   const priorityLevels = {
-    high: 'bg-red-900/30 border-red-700/50 text-red-400',
-    medium: 'bg-yellow-900/30 border-yellow-700/50 text-yellow-400',
-    low: 'bg-zinc-800 border-zinc-700 text-zinc-400',
+    high: "bg-red-900/30 border-red-700/50 text-red-400",
+    medium: "bg-yellow-900/30 border-yellow-700/50 text-yellow-400",
+    low: "bg-zinc-800 border-zinc-700 text-zinc-400",
   };
 
   const customerStatuses = {
-    active: 'bg-green-500',
-    atRisk: 'bg-yellow-500',
-    winBack: 'bg-red-500',
+    active: "bg-green-500",
+    atRisk: "bg-yellow-500",
+    winBack: "bg-red-500",
   };
 
   return (
@@ -22,9 +22,7 @@ export default function VegasIntelPage() {
             <span className="text-3xl">🎰</span>
             <h1 className="text-3xl font-thin text-white tracking-wide">Vegas Intel</h1>
           </div>
-          <p className="text-zinc-400 font-extralight">
-            Event-driven sales intelligence for Kevin
-          </p>
+          <p className="text-zinc-400 font-extralight">Event-driven sales intelligence for Kevin</p>
         </header>
 
         {/* KPI Bar */}
@@ -62,7 +60,9 @@ export default function VegasIntelPage() {
                       <span className={`w-2 h-2 rounded-full ${customerStatuses.active}`}></span>
                       <div>
                         <div className="text-white font-extralight">—</div>
-                        <div className="text-zinc-500 text-sm font-extralight">Tier — | Last order: —</div>
+                        <div className="text-zinc-500 text-sm font-extralight">
+                          Tier — | Last order: —
+                        </div>
                       </div>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded border ${priorityLevels.high}`}>
@@ -171,9 +171,7 @@ export default function VegasIntelPage() {
                   <div className="text-zinc-500 text-xs font-extralight">
                     Last order: — days ago
                   </div>
-                  <div className="text-zinc-400 text-xs mt-1">
-                    Suggest: —
-                  </div>
+                  <div className="text-zinc-400 text-xs mt-1">Suggest: —</div>
                 </div>
               ))}
             </div>
@@ -187,24 +185,38 @@ export default function VegasIntelPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-zinc-400 text-sm font-extralight mb-2">Event</label>
-                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500">—</div>
+                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500">
+                    —
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-zinc-400 text-sm font-extralight mb-2">Customer</label>
-                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500">—</div>
+                  <label className="block text-zinc-400 text-sm font-extralight mb-2">
+                    Customer
+                  </label>
+                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500">
+                    —
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-zinc-400 text-sm font-extralight mb-2">Fryer Setup</label>
-                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500">—</div>
+                  <label className="block text-zinc-400 text-sm font-extralight mb-2">
+                    Fryer Setup
+                  </label>
+                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500">
+                    —
+                  </div>
                 </div>
                 <div>
                   <label className="block text-zinc-400 text-sm font-extralight mb-2">Notes</label>
-                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500 h-20">—</div>
+                  <div className="bg-black border border-zinc-800 rounded px-3 py-2 text-zinc-500 h-20">
+                    —
+                  </div>
                 </div>
               </div>
               {/* Email Draft */}
               <div>
-                <label className="block text-zinc-400 text-sm font-extralight mb-2">Email Draft</label>
+                <label className="block text-zinc-400 text-sm font-extralight mb-2">
+                  Email Draft
+                </label>
                 <div className="bg-black border border-zinc-800 rounded-lg p-4 h-64 font-mono text-sm">
                   <div className="text-zinc-500 mb-2">Subject: —</div>
                   <div className="text-zinc-400 font-extralight">

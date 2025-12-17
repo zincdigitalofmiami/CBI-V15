@@ -95,3 +95,5 @@ echo "Next steps:"
 echo "1. Review coverage report above"
 echo "2. Set up daily automation: bash scripts/daily_scrapecreators_run.sh"
 echo "3. Add to crontab for daily runs"
+
+

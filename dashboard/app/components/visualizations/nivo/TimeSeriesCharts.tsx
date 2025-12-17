@@ -109,9 +109,7 @@ export function FundamentalChart({ series, height = 380 }: FundamentalChartProps
                     style={{ backgroundColor: (p as any).color ?? "#22d3ee" }}
                   />
                   <span>{(p as any).serieId ?? (p as any).seriesId ?? "Series"}</span>
-                  <span className="ml-auto font-semibold">
-                    {p.data.yFormatted ?? p.data.y}
-                  </span>
+                  <span className="ml-auto font-semibold">{p.data.yFormatted ?? p.data.y}</span>
                 </div>
               ))}
             </div>
@@ -136,9 +134,7 @@ export function YieldCurveChart({ curves, height = 420 }: YieldCurveChartProps) 
     <div className="w-full rounded-2xl bg-black/80 border border-slate-800 p-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-medium text-slate-200">Yield Curves</h2>
-        <div className="text-[10px] uppercase tracking-wide text-slate-500">
-          Term structure (%)
-        </div>
+        <div className="text-[10px] uppercase tracking-wide text-slate-500">Term structure (%)</div>
       </div>
       <div style={{ height }}>
         <ResponsiveLine

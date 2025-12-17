@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { memo, useMemo } from 'react';
-import TradingViewWidget from './TradingViewWidget';
+import { memo, useMemo } from "react";
+import TradingViewWidget from "./TradingViewWidget";
 
 interface NewsFeedWidgetProps {
   width?: number | string;
   height?: number;
-  feedMode?: 'all_symbols' | 'symbol' | 'market';
+  feedMode?: "all_symbols" | "symbol" | "market";
   symbol?: string;
 }
 
@@ -15,24 +15,24 @@ interface NewsFeedWidgetProps {
  * Live market news headlines in a scrollable list.
  */
 function NewsFeedWidget({
-  width = '100%',
+  width = "100%",
   height = 400,
-  feedMode = 'all_symbols',
+  feedMode = "all_symbols",
   symbol,
 }: NewsFeedWidgetProps) {
   const config = useMemo(
     () => ({
       feedMode,
-      ...(feedMode === 'symbol' && symbol ? { symbol } : {}),
-      market: 'commodity',
+      ...(feedMode === "symbol" && symbol ? { symbol } : {}),
+      market: "commodity",
       isTransparent: false,
-      displayMode: 'regular',
-      width: '100%',
-      height: '100%',
-      locale: 'en',
-      colorTheme: 'dark',
+      displayMode: "regular",
+      width: "100%",
+      height: "100%",
+      locale: "en",
+      colorTheme: "dark",
     }),
-    [feedMode, symbol]
+    [feedMode, symbol],
   );
 
   return (

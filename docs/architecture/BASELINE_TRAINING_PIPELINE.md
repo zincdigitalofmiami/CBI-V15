@@ -30,6 +30,7 @@ DuckDB/MotherDuck (Forecasts)
 ### Features Pre-Computed (~365 features)
 
 #### Technical Indicators (19 features)
+
 - Distance MAs: 5 features
 - Bollinger: 2 features
 - PPO: 1 feature
@@ -40,6 +41,7 @@ DuckDB/MotherDuck (Forecasts)
 - Metadata: 2 features
 
 #### FX Indicators (16 features)
+
 - BRL Momentum: 3 features
 - DXY Momentum: 3 features
 - BRL Volatility: 2 features
@@ -49,6 +51,7 @@ DuckDB/MotherDuck (Forecasts)
 - Correlation Regimes: 2 features
 
 #### Fundamental Spreads (4 features)
+
 - Board Crush: 1 feature
 - Oil Share: 1 feature
 - Hog Spread: 1 feature
@@ -56,15 +59,19 @@ DuckDB/MotherDuck (Forecasts)
 - China Pulse: 1 feature (optional)
 
 #### Pair Correlations (112 features)
+
 - 28 pairs × 4 horizons = 112 features
 
 #### Cross-Asset Betas (28 features)
+
 - 7 assets × 4 horizons = 28 features
 
 #### Lagged Features (96 features)
+
 - 8 symbols × 12 lags = 96 features
 
 #### Additional Pre-Compute (90 features)
+
 - Rolling statistics: 50 features
 - Feature interactions: 20 features
 - Factor loadings: 10 features

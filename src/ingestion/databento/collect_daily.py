@@ -39,85 +39,114 @@ MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 DATASET = "GLBX.MDP3"
 DATASET_START = "2010-06-06"  # Earliest available date for GLBX.MDP3
 
-# Master Symbol List - Full Cross-Asset Universe for Big 8 Drivers
-# Uses Databento continuous front-month symbology (.v.0) for Mode B ingestion
-# Total: ~70 roots covering all major asset classes
+# Master Symbol List - CME Group (GLBX.MDP3) ONLY
+# VALIDATED: All symbols below resolve in GLBX.MDP3 as of Dec 2025
+# Updates:
+# - ZE removed; use CU (Chicago Ethanol)
+# - DA removed; use DC (Class III) + DY (Dry Whey)
+# - MSI corrected to SIL (Micro Silver)
+# - GE removed (legacy Eurodollar)
+# Uses Databento continuous front-month symbology (.v.0)
 SYMBOLS = [
-    # === A) Oilseeds / Grains / Ag (CBOT/CME) ===
-    "ZL",  # Soybean Oil (PRIMARY - RIN-driven)
-    "ZS",  # Soybeans
-    "ZM",  # Soybean Meal
-    "ZC",  # Corn
-    "ZW",  # Wheat (Chicago)
-    "ZO",  # Oats
-    "ZR",  # Rough Rice
-    "KE",  # KC HRW Wheat
-    "MW",  # Minneapolis Wheat
-    "LE",  # Live Cattle (inflation hedge)
-    "GF",  # Feeder Cattle
-    "HE",  # Lean Hogs
-    "LB",  # Lumber
-    "FCPO",  # Crude Palm Oil (Bursa - CRITICAL for ZL)
-    # === B) Energy Complex (NYMEX/CME) ===
-    "CL",  # WTI Crude Oil
-    "BZ",  # Brent Crude
-    "HO",  # Heating Oil / ULSD
-    "RB",  # RBOB Gasoline
-    "NG",  # Natural Gas
-    "QM",  # E-mini Crude
-    "QG",  # E-mini Natural Gas
-    # === C) Metals ===
-    "GC",  # Gold
-    "SI",  # Silver
-    "HG",  # Copper (CHINA GREEN INFRASTRUCTURE PROXY)
-    "PA",  # Palladium
-    "PL",  # Platinum
-    "MGC",  # Micro Gold
-    # === D) US Rates / Money Markets (Macro Transmission) ===
-    "ZT",  # 2-Year Treasury Note
-    "ZF",  # 5-Year Treasury Note
-    "ZN",  # 10-Year Treasury Note
-    "ZB",  # 30-Year Treasury Bond
-    "UB",  # Ultra Bond
-    "GE",  # Eurodollar (legacy)
-    "SR3",  # 3-Month SOFR
-    "SR1",  # 1-Month SOFR
-    # === E) Equity Index (Risk-On/Risk-Off Regime) ===
-    "ES",  # S&P 500 E-mini
-    "NQ",  # Nasdaq 100 E-mini
-    "RTY",  # Russell 2000 E-mini
-    "YM",  # Dow Jones E-mini
-    "MES",  # Micro S&P 500
-    "MNQ",  # Micro Nasdaq
-    "M2K",  # Micro Russell
-    "MYM",  # Micro Dow
-    # === F) FX Futures (CME Majors + EM Proxies) ===
-    "6A",  # Australian Dollar
-    "6B",  # British Pound
-    "6C",  # Canadian Dollar
-    "6E",  # Euro FX
-    "6J",  # Japanese Yen
-    "6M",  # Mexican Peso
-    "6N",  # New Zealand Dollar
-    "6S",  # Swiss Franc
-    "6Z",  # South African Rand
-    "6R",  # Russian Ruble (may be delisted)
-    "6L",  # Brazilian Real
-    "6P",  # Polish Zloty
-    "6W",  # Chinese Yuan (offshore)
-    "DX",  # U.S. Dollar Index
-    # === G) Soft Commodities (ICE-style roots) ===
-    "CT",  # Cotton
-    "SB",  # Sugar
-    "KC",  # Coffee
-    "CC",  # Cocoa
-    "OJ",  # Orange Juice
-    # === H) Crypto (Risk Appetite Proxy) ===
-    "BTC",  # Bitcoin
-    "ETH",  # Ethereum
-    "MBT",  # Micro Bitcoin
-    "MET",  # Micro Ethereum
+    # === A) GRAINS & OILSEEDS ===
+    "ZL",
+    "ZS",
+    "ZM",  # Soy Complex
+    "ZC",
+    "ZW",
+    "KE",
+    "ZO",  # Corn/Wheat/Oats
+    "ZR",
+    "XC",
+    "XW",
+    "XK",  # Mini Grains
+    "CPO",  # Crude Palm Oil (CME USD Cash-Settled)
+    # === B) LIVESTOCK & DAIRY ===
+    "LE",
+    "GF",
+    "HE",  # Cattle/Hogs
+    "DC",
+    "DY",
+    # === C) SOFTS (CME/NYMEX ALTERNATIVES) ===
+    "YO",  # Sugar No. 11 (Cash Settled)
+    "KT",  # Coffee (Cash Settled)
+    "CJ",  # Cocoa (Cash Settled)
+    "TT",  # Cotton (Cash Settled)
+    "LBR",  # Lumber (Physically Delivered)
+    # === D) ENERGY ===
+    "CL",
+    "BZ",  # Crude (WTI/Brent)
+    "HO",
+    "RB",
+    "NG",  # Heating Oil/RBOB/NatGas
+    "QM",
+    "QG",
+    "QH",
+    "QU",  # E-minis
+    "MCL",  # Micro Crude
+    "CU",  # Chicago Ethanol (Platts)
+    # === E) METALS ===
+    "GC",
+    "SI",
+    "HG",  # Gold/Silver/Copper
+    "PL",
+    "PA",
+    "ALI",  # Platinum/Palladium/Aluminum
+    "MGC",
+    "SIL",  # Micro Silver (CME root)
+    "QI",
+    "QO",  # Mini Silver/Gold
+    # === F) EQUITY INDICES ===
+    "ES",
+    "NQ",
+    "YM",
+    "RTY",  # E-minis (S&P, Nas, Dow, Russ)
+    "EMD",  # MidCap 400
+    "MES",
+    "MNQ",
+    "MYM",
+    "M2K",  # Micro Indices
+    "NIY",  # Nikkei 225 (USD)
+    # === G) FX (FUTURES ONLY) ===
+    "6E",
+    "6A",
+    "6J",
+    "6B",  # Euro, Aussie, Yen, Pound
+    "6C",
+    "6N",
+    "6S",
+    "6M",  # CAD, Kiwi, Swiss, Peso
+    "6L",
+    "6Z",
+    "6R",  # BRL, Rand, Ruble
+    "M6E",
+    "M6A",
+    "M6B",  # Micro FX
+    # === H) INTEREST RATES & YIELDS ===
+    "ZQ",  # 30-Day Fed Funds
+    "ZT",
+    "ZF",
+    "ZN",  # 2Y, 5Y, 10Y Treasury Notes
+    "TN",
+    "ZB",
+    "UB",  # Ultra 10Y, 30Y Bond, Ultra Bond
+    "SR1",
+    "SR3",  # 1M / 3M SOFR
+    # Yield Futures (Financial)
+    "2YY",
+    "5YY",
+    "10Y",
+    "30Y",
+    # === I) CRYPTO ===
+    "BTC",
+    "ETH",  # Bitcoin/Ether
+    "MBT",
+    "MET",  # Micro Crypto
 ]
+
+# NOTE: VX (VIX) excluded - trades on CBOE, not CME GLBX.MDP3
+# NOTE: ICE originals (KC/SB/CC/CT) excluded - use CME alternatives (KT/YO/CJ/TT)
+# NOTE: FCPO (Bursa) excluded - use CPO (CME cash-settled palm oil) instead
 
 
 def get_connection():
@@ -274,7 +303,11 @@ def collect_batch_data(
     return pd.DataFrame()
 
 
-def main(dry_run: bool = False):
+def main(
+    dry_run: bool = False,
+    start_date_override: str | None = None,
+    symbols_override: list[str] | None = None,
+):
     """
     Main ingestion function (CLOUD ONLY - writes to MotherDuck).
 
@@ -292,25 +325,30 @@ def main(dry_run: bool = False):
     con = get_connection()
     logger.info("Target: MotherDuck (CLOUD ONLY)")
     logger.info(f"Dataset: {DATASET}")
-    logger.info(f"Symbols: {len(SYMBOLS)}")
+    symbols = symbols_override or SYMBOLS
+    logger.info(f"Symbols: {len(symbols)}")
 
     # Determine start date (resume from last data or start fresh)
     try:
-        result = con.execute(
-            """
-            SELECT MAX(as_of_date) as last_date
-            FROM raw.databento_futures_ohlcv_1d
-            WHERE symbol = 'ZL'
-        """
-        ).df()
-
-        if not result.empty and result["last_date"].iloc[0] is not None:
-            last_date = pd.to_datetime(result["last_date"].iloc[0]).date()
-            start_date = (last_date + timedelta(days=1)).strftime("%Y-%m-%d")
-            logger.info(f"Resuming from {start_date} (last data: {last_date})")
+        if start_date_override:
+            start_date = pd.to_datetime(start_date_override).date().strftime("%Y-%m-%d")
+            logger.info(f"Start date overridden to {start_date}")
         else:
-            start_date = DATASET_START
-            logger.info(f"No existing data. Starting from {start_date}")
+            result = con.execute(
+                """
+                SELECT MAX(as_of_date) as last_date
+                FROM raw.databento_futures_ohlcv_1d
+                WHERE symbol = 'ZL'
+            """
+            ).df()
+
+            if not result.empty and result["last_date"].iloc[0] is not None:
+                last_date = pd.to_datetime(result["last_date"].iloc[0]).date()
+                start_date = (last_date + timedelta(days=1)).strftime("%Y-%m-%d")
+                logger.info(f"Resuming from {start_date} (last data: {last_date})")
+            else:
+                start_date = DATASET_START
+                logger.info(f"No existing data. Starting from {start_date}")
     except Exception as e:
         logger.warning(f"Could not check existing data: {e}")
         start_date = DATASET_START
@@ -336,7 +374,7 @@ def main(dry_run: bool = False):
 
     # Collect data (single batched request)
     logger.info("Fetching data...")
-    df = collect_batch_data(client, SYMBOLS, start_date, end_date)
+    df = collect_batch_data(client, symbols, start_date, end_date)
 
     if df.empty:
         logger.warning("No data collected")
@@ -397,6 +435,22 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dry-run", action="store_true", help="Estimate cost without fetching data"
     )
+    parser.add_argument(
+        "--start-date",
+        type=str,
+        default=None,
+        help="Override start date (YYYY-MM-DD) for backfill",
+    )
+    parser.add_argument(
+        "--symbols",
+        nargs="+",
+        default=None,
+        help="Optional list of symbols to fetch (defaults to full SYMBOLS list)",
+    )
 
     args = parser.parse_args()
-    main(dry_run=args.dry_run)
+    main(
+        dry_run=args.dry_run,
+        start_date_override=args.start_date,
+        symbols_override=args.symbols,
+    )

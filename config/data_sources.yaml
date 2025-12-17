@@ -11,11 +11,11 @@ market_data:
   databento:
     base_url: "https://api.databento.com"
     datasets:
-      - "GLBX.MDP3"  # CME Globex
-      - "XNAS.ITCH"  # Nasdaq
-    symbols: 38  # See DATA_LINKS_MASTER.md
+      - "GLBX.MDP3" # CME Globex
+      - "XNAS.ITCH" # Nasdaq
+    symbols: 38 # See DATA_LINKS_MASTER.md
     auth: "DATABENTO_API_KEY"
-    
+
   polygon:
     base_url: "https://api.polygon.io"
     endpoints:
@@ -30,26 +30,26 @@ economic:
     base_url: "https://api.stlouisfed.org/fred"
     endpoints:
       series: "/series/observations"
-    series_count: 24  # See DATA_LINKS_MASTER.md
+    series_count: 24 # See DATA_LINKS_MASTER.md
     auth: "FRED_API_KEY"
-    
+
   treasury:
     base_url: "https://api.fiscaldata.treasury.gov/services/api/v1"
     endpoints:
       auctions: "/accounting/od/auctions"
-    
+
   bls:
     base_url: "https://api.bls.gov/publicAPI/v2"
-    
+
   ecb:
     base_url: "https://sdw-wsrest.ecb.europa.eu/service"
-    
+
   banco_central_brasil:
     base_url: "https://www3.bcb.gov.br/sgspub"
-    
+
   pboc:
     base_url: "http://www.pbc.gov.cn/en"
-    
+
   bcra:
     base_url: "http://www.bcra.gob.ar"
 
@@ -62,27 +62,27 @@ weather:
     endpoints:
       data: "/data"
       stations: "/stations"
-    regions: 14  # See DATA_LINKS_MASTER.md
+    regions: 14 # See DATA_LINKS_MASTER.md
     auth: "NOAA_API_TOKEN"
-    
+
   noaa_nws:
     base_url: "https://api.weather.gov"
     endpoints:
       forecast: "/points/{lat},{lon}/forecast"
-    auth: null  # No auth required
-    
+    auth: null # No auth required
+
   inmet_brazil:
     base_url: "https://apitempo.inmet.gov.br"
     endpoints:
       station: "/estacao/{start}/{end}/{station_id}"
       token: "/token"
       stations: "/estacoes"
-    
+
   smn_argentina:
     base_url: "https://ssl.smn.gob.ar/dpd"
     endpoints:
       hourly: "/descarga_opendata.php?file=observaciones/datohorario{station_id}.txt"
-    
+
   copernicus:
     base_url: "https://cds.climate.copernicus.eu/api"
     auth: "COPERNICUS_API_KEY"
@@ -96,18 +96,18 @@ agricultural:
     endpoints:
       data: "/api_GET"
     auth: "USDA_NASS_API_KEY"
-    
+
   usda_fas:
     base_url: "https://apps.fas.usda.gov"
     endpoints:
       export_sales: "/export-sales/esrd1.html"
       gain_reports: "/newgainapi/api/Report/DownloadReportByFileName"
-    
+
   conab_brazil:
     base_url: "https://www.conab.gov.br"
     endpoints:
       news: "/ultimas-noticias"
-    
+
   abiove:
     base_url: "https://abiove.org.br/en"
     endpoints:
@@ -135,8 +135,8 @@ cftc:
     disaggregated_combined: "/com_disagg_txt_{year}.zip"
     tff_futures: "/fut_fin_txt_{year}.zip"
     tff_combined: "/com_fin_txt_{year}.zip"
-  frequency: "weekly"  # Friday 3:30 PM ET
-  coverage: 38  # futures symbols
+  frequency: "weekly" # Friday 3:30 PM ET
+  coverage: 38 # futures symbols
 
 # ============================================================================
 # News & Sentiment
@@ -149,18 +149,18 @@ news:
       truthsocial_post: "/truthsocial/post"
       facebook_post: "/facebook/post"
     auth: "SCRAPECREATORS_API_KEY"
-    
+
   federal_register:
     base_url: "https://www.federalregister.gov/api/v1"
     endpoints:
       documents: "/documents.json"
-    
+
   reuters:
     base_url: "https://www.reuters.com"
     sections:
       - "/business/commodities"
       - "/markets/commodities"
-    
+
   reddit:
     base_url: "https://www.reddit.com"
     endpoints:
@@ -172,16 +172,16 @@ news:
 trade:
   trump_tariff_tracker:
     url: "https://www.tradecomplianceresourcehub.com/2025/09/25/trump-2-0-tariff-tracker"
-    
+
   congress:
     base_url: "https://www.congress.gov"
-    
+
   ice_news:
     url: "https://www.ice.gov/news/releases"
-    
+
   dhs_news:
     url: "https://www.dhs.gov/news-releases"
-    
+
   cbp_news:
     url: "https://www.cbp.gov/newsroom"
 
@@ -219,4 +219,3 @@ required_env_vars:
     - POLYGON_API_KEY
     - COPERNICUS_API_KEY
     - MARINETRAFFIC_API_KEY
-

@@ -18,6 +18,13 @@ from pathlib import Path
 from datetime import datetime
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT_DIR / ".env")
+    load_dotenv(ROOT_DIR / ".env.local", override=True)
+except ImportError:
+    pass
 DATABASE_DIR = ROOT_DIR / "database"
 DDL_DIR = DATABASE_DIR / "ddl"
 MACROS_DIR = DATABASE_DIR / "macros"

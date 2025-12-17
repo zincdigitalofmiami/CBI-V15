@@ -22,14 +22,11 @@ MACROS_DIR = ROOT_DIR / "database" / "macros"
 
 
 def get_connection():
-    """Get DuckDB/MotherDuck connection"""
+    """Get MotherDuck connection - NO LOCAL FALLBACK"""
     motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
-    if motherduck_token:
-        return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}")
-    else:
-        # Local fallback
-        db_path = ROOT_DIR / "data" / "duckdb" / "cbi_v15.duckdb"
-        return duckdb.connect(str(db_path))
+    if not motherduck_token:
+        raise ValueError("MOTHERDUCK_TOKEN required - no local fallback")
+    return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}")
 
 
 def load_macros(con: duckdb.DuckDBPyConnection):
@@ -115,7 +112,10 @@ def build_technical_indicators(con: duckdb.DuckDBPyConnection):
             con.execute(
                 f"""
                 INSERT OR REPLACE INTO features.technical_indicators_all_symbols
-                SELECT * FROM calc_all_technical_indicators('{symbol}')
+                SELECT 
+                    *,
+                    CURRENT_TIMESTAMP as updated_at
+                FROM calc_all_technical_indicators('{symbol}')
             """
             )
         except Exception as e:
@@ -168,14 +168,15 @@ def build_bucket_scores(con: duckdb.DuckDBPyConnection):
 
     con.execute(
         """
-        INSERT OR REPLACE INTO features.big8_bucket_scores
-        SELECT * FROM calc_all_bucket_scores()
+        INSERT OR REPLACE INTO features.bucket_scores
+        SELECT 
+            *,
+            CURRENT_TIMESTAMP as updated_at
+        FROM calc_all_bucket_scores()
     """
     )
 
-    row_count = con.execute(
-        "SELECT COUNT(*) FROM features.big8_bucket_scores"
-    ).fetchone()[0]
+    row_count = con.execute("SELECT COUNT(*) FROM features.bucket_scores").fetchone()[0]
     print(f"✅ Bucket scores built: {row_count:,} rows\n")
 
 
@@ -185,10 +186,17 @@ def build_master_feature_matrix(con: duckdb.DuckDBPyConnection):
 
     # For now, just build for ZL (primary symbol)
     # Later can expand to all symbols
+
+    # Delete existing ZL data then insert fresh
+    # (Can't use INSERT OR REPLACE because table has no PRIMARY KEY)
+    con.execute("DELETE FROM features.daily_ml_matrix_zl WHERE symbol = 'ZL'")
     con.execute(
         """
-        INSERT OR REPLACE INTO features.daily_ml_matrix_zl
-        SELECT * FROM build_symbol_features('ZL')
+        INSERT INTO features.daily_ml_matrix_zl
+        SELECT 
+            *,
+            CURRENT_TIMESTAMP as updated_at
+        FROM build_symbol_features('ZL')
     """
     )
 
@@ -225,13 +233,13 @@ def main():
         # Step 2: Build technical indicators
         build_technical_indicators(con)
 
-        # Step 3: Build cross-asset features
-        build_cross_asset_features(con)
+        # Step 3: Build cross-asset features (DISABLED - tables don't exist yet)
+        # build_cross_asset_features(con)
 
-        # Step 4: Build bucket scores
-        build_bucket_scores(con)
+        # Step 4: Build bucket scores (DISABLED - table schema doesn't match macro)
+        # build_bucket_scores(con)
 
-        # Step 5: Build master feature matrix
+        # Step 5: Build master feature matrix (uses build_symbol_features macro)
         build_master_feature_matrix(con)
 
         print("=" * 80)

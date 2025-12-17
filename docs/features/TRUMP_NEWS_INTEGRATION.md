@@ -36,20 +36,20 @@
 
 ```sql
 -- Net sentiment per policy axis (7-day rolling)
-news_trump_trade_china_net_7d = 
+news_trump_trade_china_net_7d =
   COUNT(IF(zl_sentiment = 'BULLISH_ZL' AND policy_axis = 'TRADE_CHINA', 1, NULL)) -
   COUNT(IF(zl_sentiment = 'BEARISH_ZL' AND policy_axis = 'TRADE_CHINA', 1, NULL))
   WHERE date BETWEEN CURRENT_DATE() - 7 AND CURRENT_DATE()
   AND is_trump_related = TRUE
 
-news_trump_biofuels_net_7d = 
+news_trump_biofuels_net_7d =
   COUNT(IF(zl_sentiment = 'BULLISH_ZL' AND policy_axis = 'BIOFUELS_RFS', 1, NULL)) -
   COUNT(IF(zl_sentiment = 'BEARISH_ZL' AND policy_axis = 'BIOFUELS_RFS', 1, NULL))
   WHERE date BETWEEN CURRENT_DATE() - 7 AND CURRENT_DATE()
   AND is_trump_related = TRUE
 
 -- 30-day structural trade stance
-news_trump_tariffs_net_30d = 
+news_trump_tariffs_net_30d =
   COUNT(IF(zl_sentiment = 'BULLISH_ZL' AND policy_axis = 'TRADE_TARIFFS', 1, NULL)) -
   COUNT(IF(zl_sentiment = 'BEARISH_ZL' AND policy_axis = 'TRADE_TARIFFS', 1, NULL))
   WHERE date BETWEEN CURRENT_DATE() - 30 AND CURRENT_DATE()
@@ -57,8 +57,8 @@ news_trump_tariffs_net_30d =
   AND horizon = 'STRUCTURAL'
 
 -- ZL impact scores (weighted by impact_magnitude)
-trump_zl_bull_score_7d = 
-  SUM(CASE 
+trump_zl_bull_score_7d =
+  SUM(CASE
     WHEN impact_magnitude = 'HIGH' THEN 3
     WHEN impact_magnitude = 'MEDIUM' THEN 2
     WHEN impact_magnitude = 'LOW' THEN 1
@@ -68,8 +68,8 @@ trump_zl_bull_score_7d =
   AND date BETWEEN CURRENT_DATE() - 7 AND CURRENT_DATE()
   AND is_trump_related = TRUE
 
-trump_zl_bear_score_7d = 
-  SUM(CASE 
+trump_zl_bear_score_7d =
+  SUM(CASE
     WHEN impact_magnitude = 'HIGH' THEN 3
     WHEN impact_magnitude = 'MEDIUM' THEN 2
     WHEN impact_magnitude = 'LOW' THEN 1
@@ -105,12 +105,12 @@ trump_zl_net_score_7d = trump_zl_bull_score_7d - trump_zl_bear_score_7d
 
 ```sql
 -- Modulate trump_anticipation_2024 weight by trade news sentiment
-regime_trump_anticipation_weight = 
+regime_trump_anticipation_weight =
   base_weight * (1 + 0.2 * SIGN(news_trump_trade_china_net_30d) * ABS(news_trump_trade_china_net_30d) / 10)
   WHERE base_weight = prediction_market_probability OR poll_average
 
 -- Modulate trump_second_term weight by biofuels news sentiment
-regime_trump_second_term_weight = 
+regime_trump_second_term_weight =
   base_weight * (1 + 0.2 * SIGN(news_trump_biofuels_net_30d) * ABS(news_trump_biofuels_net_30d) / 10)
   WHERE base_weight = 1.0 IF trump_second_term = TRUE ELSE 0.0
 ```
@@ -142,14 +142,14 @@ regime_trump_second_term_weight =
 
 ### News Buckets → Features:
 
-| News Bucket Field | Feature Name | Usage |
-|-------------------|--------------|-------|
-| `is_trump_related = TRUE` + `policy_axis = TRADE_CHINA` | `policy_trump_trade_china_net_7d` | Trump predictor, regime weights |
-| `is_trump_related = TRUE` + `policy_axis = TRADE_CHINA` | `policy_trump_trade_china_net_30d` | Regime weights, structural view |
-| `is_trump_related = TRUE` + `policy_axis = BIOFUELS_RFS` | `policy_trump_biofuels_net_7d` | Trump predictor, ZL effects |
-| `is_trump_related = TRUE` + `policy_axis = BIOFUELS_RFS` | `policy_trump_biofuels_net_30d` | Regime weights, structural view |
-| `is_trump_related = TRUE` + `zl_sentiment` + `impact_magnitude` | `policy_trump_zl_net_7d` | ZL effects engine, Legislative page |
-| `is_trump_related = TRUE` + `zl_sentiment` + `impact_magnitude` | `policy_trump_zl_net_30d` | ZL effects engine, structural view |
+| News Bucket Field                                               | Feature Name                       | Usage                               |
+| --------------------------------------------------------------- | ---------------------------------- | ----------------------------------- |
+| `is_trump_related = TRUE` + `policy_axis = TRADE_CHINA`         | `policy_trump_trade_china_net_7d`  | Trump predictor, regime weights     |
+| `is_trump_related = TRUE` + `policy_axis = TRADE_CHINA`         | `policy_trump_trade_china_net_30d` | Regime weights, structural view     |
+| `is_trump_related = TRUE` + `policy_axis = BIOFUELS_RFS`        | `policy_trump_biofuels_net_7d`     | Trump predictor, ZL effects         |
+| `is_trump_related = TRUE` + `policy_axis = BIOFUELS_RFS`        | `policy_trump_biofuels_net_30d`    | Regime weights, structural view     |
+| `is_trump_related = TRUE` + `zl_sentiment` + `impact_magnitude` | `policy_trump_zl_net_7d`           | ZL effects engine, Legislative page |
+| `is_trump_related = TRUE` + `zl_sentiment` + `impact_magnitude` | `policy_trump_zl_net_30d`          | ZL effects engine, structural view  |
 
 ---
 
@@ -198,4 +198,3 @@ regime_trump_second_term_weight =
 ---
 
 **Last Updated**: November 28, 2025
-

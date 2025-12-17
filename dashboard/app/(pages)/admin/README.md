@@ -1,7 +1,9 @@
 # Admin / Business Configuration (`/admin`)
 
 ## Purpose
+
 Central place for business-level configuration:
+
 - Base procurement volume for $ impact calculations.
 - Risk thresholds for red/yellow/green zones on gauges.
 - Feature/section visibility toggles.
@@ -9,23 +11,29 @@ Central place for business-level configuration:
 ## Key Components
 
 ### 1. App Settings Form
+
 - Base volume (lbs)
 - Currency (USD)
 - Default contract (ZL front month)
 
 ### 2. Risk Thresholds
+
 Sliders or numeric inputs for green/yellow/red per key score:
+
 - China Demand: Green > 70, Yellow 40-70, Red < 40
 - Tariff Risk: Green < 30, Yellow 30-60, Red > 60
 - Weather Risk: Green < 25, Yellow 25-50, Red > 50
 
 ### 3. Visibility Toggles
+
 Enable/disable certain dashboard tiles:
+
 - Show/hide Chris's Four Factors
 - Show/hide Big-8 heatmap
 - Show/hide Vegas Intel link in nav
 
 ## Data Sources (MotherDuck)
+
 - `reference.app_config` (key/value settings).
 - Read-only views:
   - `reference.feature_catalog`
@@ -34,6 +42,7 @@ Enable/disable certain dashboard tiles:
 ## Configuration Schema
 
 ### `reference.app_config`
+
 ```sql
 CREATE TABLE reference.app_config (
   key TEXT PRIMARY KEY,
@@ -45,6 +54,7 @@ CREATE TABLE reference.app_config (
 ```
 
 ### Example Rows
+
 ```sql
 INSERT INTO reference.app_config VALUES
   ('base_volume_lbs', '1000000', 'number', 'Base procurement volume for $ impact calcs'),
@@ -56,9 +66,11 @@ INSERT INTO reference.app_config VALUES
 ## API Routes
 
 ### GET /api/config
+
 Fetch all config values.
 
 ### POST /api/config
+
 Update config values (requires auth).
 
 ```ts
@@ -80,6 +92,7 @@ Update config values (requires auth).
 ```
 
 ## Notes
+
 - Writes should go through API route with auth.
 - Keep this page separate from Quant Admin (no model knobs here).
 - Changes take effect immediately (no restart required).
@@ -87,6 +100,7 @@ Update config values (requires auth).
 ## Visual Design
 
 ### DashdarkX Theme
+
 - **Background:** `rgb(0, 0, 0)` - pure black
 - **Upload cards:** `border-zinc-800` with `font-extralight` titles
 - **Refresh buttons:** all `font-extralight`
@@ -94,13 +108,15 @@ Update config values (requires auth).
 - **Badges:** all include `font-extralight`
 
 ### Form Elements
+
 - Inputs: `bg-zinc-950 border-zinc-800`
 - Sliders: Custom styled with zinc track
 - Toggles: Green for enabled, zinc for disabled
 
 ### Threshold Visualization
-| Zone | Color | Example |
-|------|-------|--------|
-| Green | `bg-green-500/20` | Safe zone |
+
+| Zone   | Color              | Example      |
+| ------ | ------------------ | ------------ |
+| Green  | `bg-green-500/20`  | Safe zone    |
 | Yellow | `bg-yellow-500/20` | Caution zone |
-| Red | `bg-red-500/20` | Alert zone |
+| Red    | `bg-red-500/20`    | Alert zone   |

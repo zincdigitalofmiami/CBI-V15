@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface TradingViewGaugeProps {
   value: number;
@@ -16,10 +16,10 @@ export default function TradingViewGauge({
   value,
   min = 0,
   max = 100,
-  label = '',
+  label = "",
   shapImpact,
-  color = '#3b82f6',
-  size = 120
+  color = "#3b82f6",
+  size = 120,
 }: TradingViewGaugeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -27,7 +27,7 @@ export default function TradingViewGauge({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const centerX = size / 2;
@@ -45,7 +45,7 @@ export default function TradingViewGauge({
     // Draw background arc (dark gray, unfilled portion)
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, Math.PI, 0, false);
-    ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+    ctx.strokeStyle = "rgba(100, 100, 100, 0.3)";
     ctx.lineWidth = strokeWidth;
     ctx.stroke();
 
@@ -54,7 +54,7 @@ export default function TradingViewGauge({
     ctx.arc(centerX, centerY, radius, Math.PI, Math.PI - angle, true);
     ctx.strokeStyle = color;
     ctx.lineWidth = strokeWidth;
-    ctx.lineCap = 'round';
+    ctx.lineCap = "round";
     ctx.stroke();
 
     // Draw value indicator dot
@@ -69,24 +69,15 @@ export default function TradingViewGauge({
 
   return (
     <div className="flex flex-col items-center">
-      <canvas
-        ref={canvasRef}
-        width={size}
-        height={size}
-        className="block"
-      />
-      {label && (
-        <div className="mt-2 text-xs text-slate-400 font-light">{label}</div>
-      )}
-      <div className="mt-1 text-sm font-medium text-slate-200">
-        {value.toFixed(1)}
-      </div>
+      <canvas ref={canvasRef} width={size} height={size} className="block" />
+      {label && <div className="mt-2 text-xs text-slate-400 font-light">{label}</div>}
+      <div className="mt-1 text-sm font-medium text-slate-200">{value.toFixed(1)}</div>
       {shapImpact !== undefined && (
         <div className="mt-1 text-xs text-slate-500">
-          SHAP: {shapImpact > 0 ? '+' : ''}{shapImpact.toFixed(2)}
+          SHAP: {shapImpact > 0 ? "+" : ""}
+          {shapImpact.toFixed(2)}
         </div>
       )}
     </div>
   );
 }
-

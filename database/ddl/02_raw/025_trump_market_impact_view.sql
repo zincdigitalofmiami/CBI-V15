@@ -112,3 +112,5 @@ ORDER BY tp.post_date DESC;
 -- FROM raw.v_trump_market_impact
 -- WHERE posts_count >= 10
 -- ORDER BY post_date DESC;
+
+

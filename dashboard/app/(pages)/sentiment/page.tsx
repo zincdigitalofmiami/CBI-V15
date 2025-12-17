@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
 const HeatmapEmbed = dynamic(
-  () => import('@/app/components/visualizations/tradingview-widgets/HeatmapEmbed'),
-  { ssr: false, loading: () => <WidgetLoader height={300} /> }
+  () => import("@/app/components/visualizations/tradingview-widgets/HeatmapEmbed"),
+  { ssr: false, loading: () => <WidgetLoader height={300} /> },
 );
 
 const TechnicalGaugeWidget = dynamic(
-  () => import('@/app/components/visualizations/tradingview-widgets/TechnicalGaugeWidget'),
-  { ssr: false, loading: () => <WidgetLoader height={300} /> }
+  () => import("@/app/components/visualizations/tradingview-widgets/TechnicalGaugeWidget"),
+  { ssr: false, loading: () => <WidgetLoader height={300} /> },
 );
 
 function WidgetLoader({ height = 300 }: { height?: number }) {
@@ -25,21 +25,21 @@ function WidgetLoader({ height = 300 }: { height?: number }) {
 
 export default function SentimentPage() {
   const buckets = [
-    { id: 'crush', name: 'Crush', desc: 'ZL/ZS/ZM spreads', color: 'bg-amber-500' },
-    { id: 'china', name: 'China', desc: 'Demand proxy', color: 'bg-red-500' },
-    { id: 'fx', name: 'FX', desc: 'Currency effects', color: 'bg-blue-500' },
-    { id: 'fed', name: 'Fed', desc: 'Monetary policy', color: 'bg-purple-500' },
-    { id: 'tariff', name: 'Tariff', desc: 'Trade policy', color: 'bg-orange-500' },
-    { id: 'biofuel', name: 'Biofuel', desc: 'RIN/RFS', color: 'bg-green-500' },
-    { id: 'energy', name: 'Energy', desc: 'Crude/HO/RB', color: 'bg-yellow-500' },
-    { id: 'volatility', name: 'Volatility', desc: 'VIX/stress', color: 'bg-pink-500' },
+    { id: "crush", name: "Crush", desc: "ZL/ZS/ZM spreads", color: "bg-amber-500" },
+    { id: "china", name: "China", desc: "Demand proxy", color: "bg-red-500" },
+    { id: "fx", name: "FX", desc: "Currency effects", color: "bg-blue-500" },
+    { id: "fed", name: "Fed", desc: "Monetary policy", color: "bg-purple-500" },
+    { id: "tariff", name: "Tariff", desc: "Trade policy", color: "bg-orange-500" },
+    { id: "biofuel", name: "Biofuel", desc: "RIN/RFS", color: "bg-green-500" },
+    { id: "energy", name: "Energy", desc: "Crude/HO/RB", color: "bg-yellow-500" },
+    { id: "volatility", name: "Volatility", desc: "VIX/stress", color: "bg-pink-500" },
   ];
 
   const regimes = [
-    { label: 'Risk-On', color: 'bg-green-600' },
-    { label: 'Risk-Off', color: 'bg-red-600' },
-    { label: 'Range-Bound', color: 'bg-zinc-600' },
-    { label: 'Trending', color: 'bg-blue-600' },
+    { label: "Risk-On", color: "bg-green-600" },
+    { label: "Risk-Off", color: "bg-red-600" },
+    { label: "Range-Bound", color: "bg-zinc-600" },
+    { label: "Trending", color: "bg-blue-600" },
   ];
 
   return (
@@ -49,7 +49,9 @@ export default function SentimentPage() {
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">🎯</span>
-            <h1 className="text-3xl font-thin text-white tracking-wide">Sentiment & Regime Monitor</h1>
+            <h1 className="text-3xl font-thin text-white tracking-wide">
+              Sentiment & Regime Monitor
+            </h1>
           </div>
           <p className="text-zinc-400 font-extralight">
             Big-8 bucket sentiment scores and market regime evolution
@@ -137,7 +139,9 @@ export default function SentimentPage() {
               <h2 className="text-xl font-thin text-white">Bucket Detail</h2>
               <select className="bg-black border border-zinc-800 rounded px-3 py-1 text-zinc-300 text-sm">
                 {buckets.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -166,7 +170,7 @@ export default function SentimentPage() {
                     <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-zinc-600 to-zinc-500 rounded-full"
-                        style={{ width: '0%' }}
+                        style={{ width: "0%" }}
                       ></div>
                     </div>
                   </div>

@@ -1,9 +1,11 @@
 # CBI‑V15 Agents Workspace Guide
 
 ## AI AGENT MASTER GUIDELINES (CBI-V15)
+
 **Path:** `/Volumes/Satechi Hub/CBI-V15/AI_GUIDELINES.md`
 
 Read in this order before any task:
+
 1. `docs/architecture/MASTER_PLAN.md`
 2. `AGENTS.md`
 3. `database/README.md`
@@ -11,22 +13,26 @@ Read in this order before any task:
 5. Active plan in `.cursor/plans/*.plan.md`
 
 Operating protocol:
+
 - Verify paths/APIs before use; no unconfirmed imports.
 - Prevent leakage/look-ahead; use train-only stats; set `random_state/seed`.
 - Follow naming rules (`volatility_*` vs `volume_*`; never `vol_*`).
 - Run sanity checks (shapes, tests/linters) and remove temp debug.
 
 Workspace hygiene:
+
 - Keep Augment configs in `augment/`; no data/code/docs there.
 - Avoid root clutter; update existing docs; sync plan changes in `.cursor/plans/`.
 
 ## Read First
+
 - `docs/architecture/MASTER_PLAN.md` — V15.1 AutoGluon hybrid architecture (UPDATED Dec 9, 2025)
 - `docs/architecture/SYSTEM_STATUS_COMPLETE.md` — comprehensive system reference (schemas, tables, models, data coverage)
 - `database/README.md` — 8‑schema layout, SQL macros, feature boundaries
 - `docs/ingestion/CFTC_COT_INGESTION_COMPLETE.md` — CFTC COT pipeline reference
 
 ## ⛔ HARD STOP RULES (CRITICAL)
+
 Before creating ANYTHING new, verify these conditions:
 
 1. **NO NEW FILES** until existing work is complete:
@@ -52,6 +58,7 @@ Before creating ANYTHING new, verify these conditions:
    - What's broken? (run validation scripts)
 
 ## Non‑Negotiables
+
 - No fake/placeholder data. Ask for missing schemas; do not guess.
 - No Google/BigQuery/Dataform. Use DuckDB locally and MotherDuck in cloud.
 - Feature engineering in SQL (AnoFox macros). Do not build features in Python.
@@ -62,33 +69,38 @@ Before creating ANYTHING new, verify these conditions:
 - **Never create new markdown files** unless you plan to keep them permanently. If kept, file in the correct folder (`docs/architecture/`, `docs/ops/`, etc.) or delete after use.
 
 ## Big 8 Buckets (Official Names)
+
 The Big 8 are **focus overlays**, NOT exclusive feature sets. Models see ALL features.
 
-| Bucket | Name | What It Represents |
-|--------|------|-------------------|
-| 1 | **Crush** | ZL/ZS/ZM spread economics, oil share, board crush |
-| 2 | **China** | China demand proxy (HG copper, export sales) |
-| 3 | **FX** | Currency effects (DX, BRL, CNY, MXN) |
-| 4 | **Fed** | Monetary policy (Fed funds, yield curve, NFCI) |
-| 5 | **Tariff** | Trade policy (Trump sentiment, Section 301) |
-| 6 | **Biofuel** | RIN prices, biodiesel, RFS mandates, BOHO spread |
-| 7 | **Energy** | Crude, HO, RB, crack spreads |
-| 8 | **Volatility** | VIX, realized vol, STLFSI4, stress indices |
+| Bucket | Name           | What It Represents                                |
+| ------ | -------------- | ------------------------------------------------- |
+| 1      | **Crush**      | ZL/ZS/ZM spread economics, oil share, board crush |
+| 2      | **China**      | China demand proxy (HG copper, export sales)      |
+| 3      | **FX**         | Currency effects (DX, BRL, CNY, MXN)              |
+| 4      | **Fed**        | Monetary policy (Fed funds, yield curve, NFCI)    |
+| 5      | **Tariff**     | Trade policy (Trump sentiment, Section 301)       |
+| 6      | **Biofuel**    | RIN prices, biodiesel, RFS mandates, BOHO spread  |
+| 7      | **Energy**     | Crude, HO, RB, crack spreads                      |
+| 8      | **Volatility** | VIX, realized vol, STLFSI4, stress indices        |
 
 ## Naming Conventions (MANDATORY)
 
 ### Volatility vs Volume (CRITICAL)
-| Concept | Pattern | Examples | NEVER USE |
-|---------|---------|----------|-----------|
+
+| Concept                         | Pattern        | Examples                                       | NEVER USE     |
+| ------------------------------- | -------------- | ---------------------------------------------- | ------------- |
 | **Volatility** (price variance) | `volatility_*` | `volatility_zl_21d`, `volatility_bucket_score` | `vol_*` alone |
-| **Volume** (trading activity) | `volume_*` | `volume_zl_21d`, `open_interest_zl` | `vol_*` alone |
+| **Volume** (trading activity)   | `volume_*`     | `volume_zl_21d`, `open_interest_zl`            | `vol_*` alone |
 
 ### Feature Naming
+
 Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
+
 - ✅ `databento_zl_close`, `volatility_vix_close`, `cftc_zl_managed_money_net_pct`
 - ❌ `vol_zl_21d` (ambiguous), `volat_regime` (inconsistent)
 
 ## Workspace Defaults
+
 - Structure: SQL → `database/models/`, Python → `src/`, ops → `scripts/`, configs → `config/`, docs → `docs/`.
 - Before calling work done, run:
   - `python scripts/setup_database.py --both`
@@ -98,6 +110,7 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 - 38 futures symbols: Agricultural (11), Energy (4), Metals (5), Treasuries (3), FX (10), plus FCPO (palm oil).
 
 ## Implementation Guardrails
+
 - Check resources before creating; audit outputs after changes.
 - Use DuckDB/MotherDuck SQL for joins/transforms; keep pipelines idempotent and date‑partitioned.
 - Parameterize SQL; avoid f‑strings for queries. Handle errors explicitly.
@@ -105,6 +118,7 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 - Update adjacent docs when behavior changes (explain why, not just what).
 
 ## What Goes Where
+
 - `trigger/<Source>/Scripts/` — data collection (Databento, EIA, EPA, USDA, CFTC, FRED, UofI_Feeds)
 - `src/training/autogluon/` — AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
 - `src/features/` — Python wrappers around AnoFox SQL macros
@@ -116,11 +130,13 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 - `data/models/` — AutoGluon model artifacts
 
 ## If You Need Context
+
 - Dashboard lives in `dashboard/` (Vercel). Queries read `forecasts.*` in MotherDuck.
 - Data sources: see `DATA_LINKS_MASTER.md` (canonical) and `trigger/WEB_SCRAPING_TARGETS_MASTER.md` (web scraping URLs).
 - Integration details: `README.md`, `docs/architecture/MASTER_PLAN.md`.
 
 ## When Unsure
+
 - Pause and ask. Point to the exact doc section you need. Never invent data, columns, or paths.
 
 ## AI Assistant Behavior (Augment / LLMs)
@@ -213,13 +229,14 @@ When building implementation plans:
    8. **Volatility**: FRED VIXCLS, Databento VIX, STLFSI4
 
 8a. **Big 8 Bucket Modeling Rules** (Enforced for all plans):
-   - Big 8 buckets are: Crush, China, FX, Fed, Tariff, Biofuel, Energy, Volatility
-   - Features for buckets are derived from SQL macros only (`database/macros/`), not Python loops
-   - Use AutoGluon `TabularPredictor` for all Big 8 bucket specialists
-   - Use AutoGluon `TimeSeriesPredictor` for core ZL forecasting
-   - Meta model fuses Big 8 + core ZL outputs
-   - Ensemble layer smooths predictions into final forecasts
-   - Monte Carlo simulation produces probabilistic scenarios (VaR/CVaR), not raw forecasts
+
+- Big 8 buckets are: Crush, China, FX, Fed, Tariff, Biofuel, Energy, Volatility
+- Features for buckets are derived from SQL macros only (`database/macros/`), not Python loops
+- Use AutoGluon `TabularPredictor` for all Big 8 bucket specialists
+- Use AutoGluon `TimeSeriesPredictor` for core ZL forecasting
+- Meta model fuses Big 8 + core ZL outputs
+- Ensemble layer smooths predictions into final forecasts
+- Monte Carlo simulation produces probabilistic scenarios (VaR/CVaR), not raw forecasts
 
 8. **Validation Requirements**:
    Every planned feature/model must include:

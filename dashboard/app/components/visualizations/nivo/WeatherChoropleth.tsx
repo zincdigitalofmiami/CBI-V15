@@ -55,12 +55,10 @@ export function WeatherChoropleth() {
           byCountry.set(code, current);
         });
 
-        const points: WeatherPoint[] = Array.from(byCountry.entries()).map(
-          ([code, agg]) => ({
-            id: code,
-            value: agg.sum / Math.max(agg.count, 1),
-          }),
-        );
+        const points: WeatherPoint[] = Array.from(byCountry.entries()).map(([code, agg]) => ({
+          id: code,
+          value: agg.sum / Math.max(agg.count, 1),
+        }));
         setData(points);
       } catch (e) {
         console.error("WeatherChoropleth fetch error", e);
@@ -76,15 +74,9 @@ export function WeatherChoropleth() {
       <div className="flex items-center justify-between mb-3">
         <div>
           <h2 className="text-sm font-medium text-slate-200">Weather – Key Ag Regions</h2>
-          <p className="text-[10px] text-slate-500">
-            NOAA anomalies (latest day) · TEMP_MEAN_C
-          </p>
+          <p className="text-[10px] text-slate-500">NOAA anomalies (latest day) · TEMP_MEAN_C</p>
         </div>
-        {dateLabel && (
-          <span className="text-[10px] text-slate-500">
-            As of {dateLabel}
-          </span>
-        )}
+        {dateLabel && <span className="text-[10px] text-slate-500">As of {dateLabel}</span>}
       </div>
       <div style={{ height: 320 }}>
         {loading ? (

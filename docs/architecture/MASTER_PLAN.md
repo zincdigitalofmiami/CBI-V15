@@ -1,4 +1,5 @@
 # MASTER PLAN
+
 **Date:** December 9, 2025  
 **Last Revised:** December 9, 2025  
 **Status:** V15.1 - AutoGluon Hybrid Architecture  
@@ -26,22 +27,25 @@
 ### Current Architecture (V15.1 - AutoGluon Hybrid)
 
 **Data Warehouse:**
+
 - **MotherDuck Cloud**: Source of truth for all data (raw ingestion, features, forecasts)
 - **Local DuckDB**: Training landing pad at `data/duckdb/cbi_v15.duckdb` (synced before training)
 - **Sync Strategy**: Sync MotherDuck → Local before training for 100-1000x faster I/O
 
 **Forecasting Engine:**
+
 - **AutoGluon 1.4**: Primary engine using hybrid TabularPredictor + TimeSeriesPredictor
   - TabularPredictor with `presets='extreme_quality'` for bucket specialists (includes foundation models)
-     - TabularPredictor with `presets='extreme_quality'` for main ZL predictor (all 300+ features)
-     - TimeSeriesPredictor (Chronos-Bolt excluded on Mac M4 due to mutex hang - uses alternative models)
-     - **Mitra (Salesforce)**: Metal-accelerated time series foundation model via `mitra_trainer.py` (optional fallback)
-   - **NO Vertex AI, NO BQML, NO Cloud AutoML**
-   - **Mac M4**: All training runs locally on CPU with Metal (MPS) acceleration where available.
-   - **Note**: Foundation models (TabPFNv2, Mitra, TabICL) included in `extreme_quality` will run on Mac M4 CPU, but will be significantly slower than with a GPU. The `libomp` fix in `scripts/setup/install_autogluon_mac.sh` is still required for the tree model components (LightGBM, CatBoost, XGBoost).
-   - **Mitra Integration**: Available at `src/training/autogluon/mitra_trainer.py` with Metal (MPS) support for Mac M4. See implementation notes in `src/training/README.md`.
+    - TabularPredictor with `presets='extreme_quality'` for main ZL predictor (all 300+ features)
+    - TimeSeriesPredictor (Chronos-Bolt excluded on Mac M4 due to mutex hang - uses alternative models)
+    - **Mitra (Salesforce)**: Metal-accelerated time series foundation model via `mitra_trainer.py` (optional fallback)
+  - **NO Vertex AI, NO BQML, NO Cloud AutoML**
+  - **Mac M4**: All training runs locally on CPU with Metal (MPS) acceleration where available.
+  - **Note**: Foundation models (TabPFNv2, Mitra, TabICL) included in `extreme_quality` will run on Mac M4 CPU, but will be significantly slower than with a GPU. The `libomp` fix in `scripts/setup/install_autogluon_mac.sh` is still required for the tree model components (LightGBM, CatBoost, XGBoost).
+  - **Mitra Integration**: Available at `src/training/autogluon/mitra_trainer.py` with Metal (MPS) support for Mac M4. See implementation notes in `src/training/README.md`.
 
 **Model Stack** (~90-135 models total):
+
 - **L0**: 9 specialists (8 bucket specialists + 1 main ZL predictor)
   - Each specialist: AutoGluon trains 10-15 models (LightGBM, CatBoost, XGBoost, Neural Nets)
   - Each specialist: AutoGluon creates WeightedEnsemble_L2 (automatic stacking)
@@ -71,29 +75,27 @@
 ### Data Sources (V15.1 - Updated Dec 2025)
 
 **Market Data:**
+
 1. **Databento**: 38 futures symbols (ZL/ZS/ZM/CL/HO/RB/HG/6L/DX/etc.) - OHLCV daily
 
-**Economic/Macro:**
-2. **FRED**: 24+ macro indicators (rates, yields, VIXCLS, DFEDTARU, DXY, NFCI, STLFSI4)
-3. **EIA**: Petroleum products (ULSD wholesale, gasoline, diesel)
+**Economic/Macro:** 2. **FRED**: 24+ macro indicators (rates, yields, VIXCLS, DFEDTARU, DXY, NFCI, STLFSI4) 3. **EIA**: Petroleum products (ULSD wholesale, gasoline, diesel)
 
-**Biofuels (CRITICAL for Biofuel Bucket):**
-4. **EPA RIN Prices**: Weekly D3/D4/D5/D6 RIN prices (July 2010-present, FREE)
-   - URL: https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information
-   - Weekly volume-weighted averages from EPA EMTS
+**Biofuels (CRITICAL for Biofuel Bucket):** 4. **EPA RIN Prices**: Weekly D3/D4/D5/D6 RIN prices (July 2010-present, FREE)
+
+- URL: https://www.epa.gov/fuels-registration-reporting-and-compliance-help/rin-trades-and-price-information
+- Weekly volume-weighted averages from EPA EMTS
+
 5. **EIA Biofuels**: Production, consumption, RFS volumes
 
-**Agricultural/Trade:**
-6. **USDA FAS Export Sales**: Weekly China soybean purchases (CRITICAL for China bucket)
-7. **USDA WASDE**: Monthly supply/demand reports
-8. **CFTC COT**: Weekly positioning data (disaggregated reports)
+**Agricultural/Trade:** 6. **USDA FAS Export Sales**: Weekly China soybean purchases (CRITICAL for China bucket) 7. **USDA WASDE**: Monthly supply/demand reports 8. **CFTC COT**: Weekly positioning data (disaggregated reports)
 
-**News/Intelligence (CRITICAL NEW SOURCES):**
-9. **Farm Policy News** (MANDATORY): Real-time China/tariff policy
-   - URL: https://farmpolicynews.illinois.edu/
-   - Categories: trade, ethanol, budget, regulations, immigration
-   - Author: Keith Good (University of Illinois)
-   - **Why Critical**: "China Soybean Buying Deadline", "$11B Farm Aid", Trump policy
+**News/Intelligence (CRITICAL NEW SOURCES):** 9. **Farm Policy News** (MANDATORY): Real-time China/tariff policy
+
+- URL: https://farmpolicynews.illinois.edu/
+- Categories: trade, ethanol, budget, regulations, immigration
+- Author: Keith Good (University of Illinois)
+- **Why Critical**: "China Soybean Buying Deadline", "$11B Farm Aid", Trump policy
+
 10. **farmdoc Daily** (HIGH VALUE): Academic ag economics analysis
     - URL: https://farmdocdaily.illinois.edu/
     - Scott Irwin RIN pricing models (75% R² accuracy)
@@ -101,21 +103,19 @@
 11. **ScrapeCreators**: Trump posts (Truth Social) + news buckets
 12. **ProFarmer**: Weather, basis, barge rates (chris@usoilsolutions.com)
 
-**Weather:**
-13. **NOAA**: U.S. weather data
-14. **INMET**: Brazil weather stations
-15. **Argentina SMN**: Argentina weather observations
+**Weather:** 13. **NOAA**: U.S. weather data 14. **INMET**: Brazil weather stations 15. **Argentina SMN**: Argentina weather observations
 
-**Other:**
-16. **Glide API**: Vegas Intel (optional)
+**Other:** 16. **Glide API**: Vegas Intel (optional)
 
 ### Primary Documents
+
 - `docs/architecture/MASTER_PLAN.md` (this document) – Source of truth for V15.1
 - `AGENTS.md` – Agent workspace guide and Big 8 bucket reference
 - `database/README.md` – 8-schema layout, SQL macros, feature boundaries
 - `.cursorrules` – Cursor-specific rules and conventions
 
 ### Critical Rules
+
 1. **NO FAKE DATA** - Only real, verified data from authenticated APIs
 2. **ALWAYS CHECK BEFORE CREATING** - Tables, datasets, files, schemas
 3. **ALWAYS AUDIT AFTER WORK** - Data quality checks after any data modification
@@ -131,6 +131,7 @@
 13. **ZL Focus** - Soybean Oil Futures (ZL) primary target, Big 8 bucket coverage
 
 ### File Organization
+
 - **DuckDB SQL Macros** → `database/macros/` (AnoFox feature engineering)
 - **Raw Table Definitions** → `database/models/01_raw/`
 - **Python/Trigger Ingestion** → `trigger/<Source>/Scripts/`
@@ -141,6 +142,7 @@
 - **Documentation** → `docs/`
 
 ### Workflow (V15.1)
+
 1. **Data Ingestion**: Trigger.dev jobs run on schedule → MotherDuck
 2. **Feature Engineering**: AnoFox SQL macros execute → `features.daily_ml_matrix`
 3. **Sync to Local**: `python scripts/sync_motherduck_to_local.py` → Local DuckDB
@@ -150,18 +152,19 @@
 
 ### Big 8 Drivers (Complete Coverage Required)
 
-| Bucket | Features | Primary Data Sources |
-|--------|----------|---------------------|
-| 1. **Crush** | ZL/ZS/ZM spreads, board crush, oil share | Databento, NOPA, farmdoc Grain Outlook |
-| 2. **China** | Export sales, HG-ZS correlation, trade policy | **Farm Policy News: Trade**, USDA FAS |
-| 3. **FX** | DX, BRL (6L), momentum, volatility | FRED FX series, Databento |
-| 4. **Fed** | Fed funds, curve (T10Y2Y), NFCI, STLFSI4 | FRED, Farm Policy: Budget |
-| 5. **Tariff** | Trump sentiment, policy events | **Farm Policy News: Trade**, ScrapeCreators |
-| 6. **Biofuel** | D4/D5/D6 RIN prices, BOHO spread, biodiesel | **EPA RIN Prices**, farmdoc RINs, EIA |
-| 7. **Energy** | CL/HO/RB, crack spreads, CL-ZL correlation | EIA, Databento |
-| 8. **Volatility** | VIX, realized vol, stress indices | FRED VIXCLS, STLFSI4 |
+| Bucket            | Features                                      | Primary Data Sources                        |
+| ----------------- | --------------------------------------------- | ------------------------------------------- |
+| 1. **Crush**      | ZL/ZS/ZM spreads, board crush, oil share      | Databento, NOPA, farmdoc Grain Outlook      |
+| 2. **China**      | Export sales, HG-ZS correlation, trade policy | **Farm Policy News: Trade**, USDA FAS       |
+| 3. **FX**         | DX, BRL (6L), momentum, volatility            | FRED FX series, Databento                   |
+| 4. **Fed**        | Fed funds, curve (T10Y2Y), NFCI, STLFSI4      | FRED, Farm Policy: Budget                   |
+| 5. **Tariff**     | Trump sentiment, policy events                | **Farm Policy News: Trade**, ScrapeCreators |
+| 6. **Biofuel**    | D4/D5/D6 RIN prices, BOHO spread, biodiesel   | **EPA RIN Prices**, farmdoc RINs, EIA       |
+| 7. **Energy**     | CL/HO/RB, crack spreads, CL-ZL correlation    | EIA, Databento                              |
+| 8. **Volatility** | VIX, realized vol, stress indices             | FRED VIXCLS, STLFSI4                        |
 
 ### Horizons
+
 - 1w (5 trading days)
 - 1m (20 trading days)
 - 3m (60 trading days)
@@ -169,6 +172,7 @@
 - 12m (240 trading days) - optional
 
 ### Project Structure
+
 - `database/` - DuckDB schema definitions + SQL macros (AnoFox)
 - `src/` - Python source code (ingestion, training, engines, models)
   - `src/engines/anofox/` - AnoFox bridge to DuckDB
@@ -190,6 +194,7 @@
 ### Complete Feature Inventory (276 Features)
 
 **Technical Indicators** (19 features):
+
 - Distance MAs: 5 features (EMA 5d, 10d, 21d; SMA 63d, 200d)
 - Bollinger: 2 features (%B, Bandwidth)
 - PPO: 1 feature (12, 26, 9)
@@ -200,6 +205,7 @@
 - Metadata: 2 features (Seasonality SIN/COS)
 
 **FX Indicators** (16 features):
+
 - BRL Momentum: 3 features (21d, 63d, 252d)
 - DXY Momentum: 3 features (21d, 63d, 252d)
 - BRL Volatility: 2 features (21d, 63d)
@@ -209,6 +215,7 @@
 - Correlation Regimes: 2 features
 
 **Fundamental Spreads** (5 features):
+
 - Board Crush: `(ZM × 0.022 + ZL × 11) - ZS`
 - Oil Share: `(ZL × 11) / Board_Crush_Value`
 - Hog Spread: `HE - (0.8 × ZC + 0.2 × ZM)`
@@ -216,12 +223,15 @@
 - China Pulse: `CORR(HG, ZS, 60d)`
 
 **Pair Correlations** (112 features):
+
 - 28 pairs × 4 horizons (30d, 60d, 90d, 252d)
 
 **Cross-Asset Betas** (28 features):
+
 - 7 assets × 4 horizons (30d, 60d, 90d, 252d)
 
 **Lagged Features** (96 features):
+
 - 8 symbols × 12 lags (1d, 2d, 3d, 5d, 10d, 21d for prices & returns)
 
 **Total**: **276 features** pre-computed in DuckDB/MotherDuck ✅
@@ -229,25 +239,29 @@
 ### Symbols Locked In (10-12 symbols)
 
 **Commodities** (8 symbols):
+
 - ZL (Soybean Oil) - PRIMARY TARGET
 - ZS (Soybeans), ZM (Soybean Meal)
 - CL (Crude Oil), HO (Heating Oil)
 - FCPO (Palm Oil), ZC (Corn), HE (Lean Hogs)
 
 **FX** (2 symbols):
+
 - 6L (BRL Futures), DX (DXY Futures)
 
 **Optional** (2 symbols):
+
 - HG (Copper) - For China Pulse
 - GC (Gold) - For Real-Terms Price
 
 ### Prerequisites Before Training
 
 **Must Complete** (Current Status):
+
 1. ⚠️ EPA RIN Prices ingestion (D3/D4/D5/D6 weekly)
 2. ⚠️ Farm Policy News scraper (China trade policy - CRITICAL)
 3. ⚠️ farmdoc Daily scraper (Scott Irwin RIN analysis)
-4. ⚠️ USDA FAS Export Sales (remove mock data, implement real API)
+4. ✅ USDA FAS Export Sales (real API implemented)
 5. ⚠️ CFTC COT Trigger.dev job (script exists, needs Trigger job)
 6. ⚠️ Local DuckDB mirror setup (training landing pad)
 

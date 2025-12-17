@@ -126,3 +126,5 @@ ORDER BY date DESC;
 -- LEFT JOIN raw.databento_futures_ohlcv_1d d ON t.date = d.as_of_date AND d.symbol = 'ZL'
 -- WHERE t.date >= '2024-01-01'
 -- ORDER BY t.date DESC;
+
+

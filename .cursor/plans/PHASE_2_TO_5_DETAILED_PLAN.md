@@ -11,6 +11,7 @@
 **Dependencies:** Phase 0 complete, Phase 1 complete
 
 ### Task 2.1: Create Mac M4 AutoGluon Setup Script (HIGH RISK)
+
 **UUID:** `nmDVCuPjvqA2A9XRA6YD7J`
 
 **Purpose:** Install AutoGluon 1.4 with Mac M4 compatibility (libomp fix)
@@ -18,6 +19,7 @@
 **File:** `scripts/setup/install_autogluon_mac.sh`
 
 **Implementation:**
+
 ```bash
 #!/bin/bash
 set -e
@@ -43,6 +45,7 @@ echo "✅ AutoGluon 1.4 installed successfully"
 ```
 
 **Validation:**
+
 ```bash
 bash scripts/setup/install_autogluon_mac.sh
 python -c 'from autogluon.tabular import TabularPredictor; from autogluon.timeseries import TimeSeriesPredictor; print("AutoGluon 1.4 ready")'
@@ -54,9 +57,11 @@ python -c 'from autogluon.tabular import TabularPredictor; from autogluon.timese
 ---
 
 ### Task 2.2: Create src/training/autogluon/ Directory Structure (LOW RISK)
+
 **UUID:** `vxqqByVLHr9KUe1KB83y8M`
 
 **Files to Create:**
+
 ```bash
 mkdir -p src/training/autogluon
 touch src/training/autogluon/__init__.py
@@ -68,6 +73,7 @@ touch src/training/autogluon/ensemble_combiner.py
 ```
 
 **Validation:**
+
 ```bash
 ls -la src/training/autogluon/
 # Expected: 6 Python files created
@@ -76,6 +82,7 @@ ls -la src/training/autogluon/
 ---
 
 ### Task 2.3: Create TabularPredictor Wrapper with Quantile Regression (MEDIUM RISK)
+
 **UUID:** `vuAnAqaTPqVFmUr48UQ1xr`
 
 **File:** `src/training/autogluon/tabular_trainer.py`
@@ -83,6 +90,7 @@ ls -la src/training/autogluon/
 **Purpose:** Wrapper for AutoGluon TabularPredictor with quantile regression
 
 **Implementation:**
+
 ```python
 from autogluon.tabular import TabularPredictor
 import pandas as pd
@@ -99,7 +107,7 @@ def train_tabular(
 ):
     """
     Train AutoGluon TabularPredictor with quantile regression.
-    
+
     Args:
         train_df: Training data
         val_df: Validation data
@@ -108,22 +116,22 @@ def train_tabular(
         quantiles: Quantile levels for probabilistic forecasts
         time_limit: Training time limit in seconds
         model_path: Path to save model (default: data/models/{target_col}/)
-    
+
     Returns:
         predictor: Trained AutoGluon TabularPredictor
     """
     if model_path is None:
         model_path = f"data/models/{target_col}"
-    
+
     Path(model_path).mkdir(parents=True, exist_ok=True)
-    
+
     predictor = TabularPredictor(
         label=target_col,
         problem_type='quantile',
         quantile_levels=quantiles,
         path=model_path
     )
-    
+
     predictor.fit(
         train_data=train_df,
         tuning_data=val_df,
@@ -132,11 +140,12 @@ def train_tabular(
         num_stack_levels=1,  # Creates L1 + WeightedEnsemble_L2
         num_bag_folds=8
     )
-    
+
     return predictor
 ```
 
 **Validation:**
+
 ```bash
 python -c 'from src.training.autogluon.tabular_trainer import train_tabular; print("Wrapper ready")'
 # Expected: No import errors
@@ -145,6 +154,7 @@ python -c 'from src.training.autogluon.tabular_trainer import train_tabular; pri
 ---
 
 ### Task 2.4: Create TimeSeriesPredictor Wrapper with Chronos-Bolt (MEDIUM RISK)
+
 **UUID:** `efED7rpvbH4E4ejX9KVdcS`
 
 **File:** `src/training/autogluon/timeseries_trainer.py`
@@ -152,6 +162,7 @@ python -c 'from src.training.autogluon.tabular_trainer import train_tabular; pri
 **Purpose:** Wrapper for AutoGluon TimeSeriesPredictor with Chronos-Bolt
 
 **Implementation:**
+
 ```python
 from autogluon.timeseries import TimeSeriesPredictor
 import pandas as pd
@@ -165,20 +176,20 @@ def train_timeseries(
 ):
     """
     Train AutoGluon TimeSeriesPredictor with Chronos-Bolt.
-    
+
     Args:
         train_df: Training data (time series format)
         target_col: Target column name
         known_covariates: List of known covariate columns (Big 8 bucket scores)
         prediction_length: Forecast horizon (days)
         model_path: Path to save model
-    
+
     Returns:
         predictor: Trained TimeSeriesPredictor
     """
     if model_path is None:
         model_path = f"data/models/timeseries_{target_col}"
-    
+
     predictor = TimeSeriesPredictor(
         target=target_col,
         known_covariates_names=known_covariates,
@@ -186,7 +197,7 @@ def train_timeseries(
         path=model_path,
         quantile_levels=[0.1, 0.5, 0.9]
     )
-    
+
     predictor.fit(
         train_data=train_df,
         hyperparameters={
@@ -195,11 +206,12 @@ def train_timeseries(
         },
         time_limit=3600
     )
-    
+
     return predictor
 ```
 
 **Validation:**
+
 ```bash
 python -c 'from src.training.autogluon.timeseries_trainer import train_timeseries; print("Wrapper ready")'
 # Expected: No import errors, Chronos-Bolt available
@@ -208,11 +220,13 @@ python -c 'from src.training.autogluon.timeseries_trainer import train_timeserie
 ---
 
 ### Task 2.5: Create Foundation Models Configuration (LOW RISK)
+
 **UUID:** `chRBL6LYNgCEac3Zu5D8Gc`
 
 **File:** `src/training/autogluon/foundation_models.py`
 
 **Implementation:**
+
 ```python
 """
 Foundation models configuration for AutoGluon 1.4.
@@ -251,6 +265,7 @@ def get_foundation_model_config(model_name: str) -> dict:
 ```
 
 **Validation:**
+
 ```bash
 python -c 'from src.training.autogluon.foundation_models import FOUNDATION_MODELS; print(len(FOUNDATION_MODELS))'
 # Expected: 4 foundation models configured
@@ -259,11 +274,13 @@ python -c 'from src.training.autogluon.foundation_models import FOUNDATION_MODEL
 ---
 
 ### Task 2.6: Update engine_registry.py with AutoGluon Models (LOW RISK)
+
 **UUID:** `874pSBiQzYseeW7gFawHBj`
 
 **File:** `src/engines/engine_registry.py`
 
 **Changes:**
+
 ```python
 MODEL_FAMILIES = {
     # Existing models...
@@ -276,6 +293,7 @@ MODEL_FAMILIES = {
 ```
 
 **Validation:**
+
 ```bash
 python -c 'from src.engines.engine_registry import MODEL_FAMILIES; print(MODEL_FAMILIES)'
 # Expected: AutoGluon models in registry
@@ -284,6 +302,7 @@ python -c 'from src.engines.engine_registry import MODEL_FAMILIES; print(MODEL_F
 ---
 
 ### Task 2.7: Create Feature Drift Detection Module (MEDIUM RISK)
+
 **UUID:** `h6eSfMSeJGLUzhWRmqqEYq`
 
 **File:** `src/validation/feature_drift.py`
@@ -291,6 +310,7 @@ python -c 'from src.engines.engine_registry import MODEL_FAMILIES; print(MODEL_F
 **Purpose:** Detect feature distribution drift before training
 
 **Implementation:**
+
 ```python
 import pandas as pd
 import numpy as np
@@ -334,6 +354,7 @@ def check_feature_drift(
 ```
 
 **Validation:**
+
 ```bash
 python -c 'from src.validation.feature_drift import check_feature_drift; print("Drift detector ready")'
 ```
@@ -343,11 +364,13 @@ python -c 'from src.validation.feature_drift import check_feature_drift; print("
 ---
 
 ### Task 2.8: Document AutoGluon Foundation Models Setup (MEDIUM RISK)
+
 **UUID:** `wNMujpKwWzWfdQGyG8FtBZ`
 
 **File:** `docs/architecture/AUTOGLUON_FOUNDATION_MODELS.md`
 
 **Sections:**
+
 1. Overview: Foundation models vs traditional ML models
 2. TabPFNv2: Installation, usage, limitations (max 10K samples)
 3. Mitra: Installation, usage, CPU compatibility
@@ -358,6 +381,7 @@ python -c 'from src.validation.feature_drift import check_feature_drift; print("
 8. Integration with AutoGluon: How to enable in TabularPredictor/TimeSeriesPredictor
 
 **Validation:**
+
 ```bash
 cat docs/architecture/AUTOGLUON_FOUNDATION_MODELS.md
 # Expected: Documentation exists with all 6 models covered
@@ -366,9 +390,11 @@ cat docs/architecture/AUTOGLUON_FOUNDATION_MODELS.md
 ---
 
 ### Task 2.9: Validate Phase 2 Complete (HIGH RISK)
+
 **UUID:** `uoNMEUpzdBur3bPNjZXBvj`
 
 **Validation Commands:**
+
 ```bash
 # 1. Install AutoGluon
 bash scripts/setup/install_autogluon_mac.sh
@@ -391,6 +417,7 @@ train_tabular(df, df, "target_1w", preset="medium", time_limit=60)
 ```
 
 **Expected Outputs:**
+
 - ✅ AutoGluon 1.4 installed successfully
 - ✅ Foundation models available (Mitra, TabPFNv2, TabICL, Chronos)
 - ✅ Local DuckDB mirror synced
@@ -398,6 +425,7 @@ train_tabular(df, df, "target_1w", preset="medium", time_limit=60)
 - ✅ Model artifacts saved to data/models/
 
 **Success Criteria:**
+
 - No import errors
 - No libomp errors on Mac M4
 - Training completes successfully
@@ -414,6 +442,7 @@ train_tabular(df, df, "target_1w", preset="medium", time_limit=60)
 **Dependencies:** Phase 0-2 complete
 
 ### Task 3.1: Create bucket_feature_selectors.yaml Config (LOW RISK)
+
 **UUID:** `owV5tSmeSq96tVasgFx4hs`
 
 **File:** `config/bucket_feature_selectors.yaml`
@@ -421,6 +450,7 @@ train_tabular(df, df, "target_1w", preset="medium", time_limit=60)
 **Purpose:** Define feature lists for each of the Big 8 buckets
 
 **Structure:**
+
 ```yaml
 crush:
   - databento_zl_close
@@ -483,11 +513,10 @@ volatility:
 ```
 
 **Validation:**
+
 ```bash
 python -c 'import yaml; config = yaml.safe_load(open("config/bucket_feature_selectors.yaml")); print(len(config))'
 # Expected: 8 buckets defined
 ```
 
 ---
-
-

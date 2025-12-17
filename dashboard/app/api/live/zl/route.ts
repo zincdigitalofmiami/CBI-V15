@@ -1,8 +1,8 @@
-import { queryMotherDuck } from '@/lib/md';
-import { NextResponse } from 'next/server';
+import { queryMotherDuck } from "@/lib/md";
+import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs'; // Required for native DuckDB
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs"; // Required for native DuckDB
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
@@ -19,15 +19,18 @@ export async function GET() {
       success: true,
       data: rows,
       count: Array.isArray(rows) ? rows.length : 0,
-      symbol: 'ZL',
-      source: 'MotherDuck Live',
-      timestamp: new Date().toISOString()
+      symbol: "ZL",
+      source: "MotherDuck Live",
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('Database Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    console.error("Database Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

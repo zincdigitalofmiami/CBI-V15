@@ -6,6 +6,7 @@ should be "pushed to external drive with the rest of the archives" — until tha
 happens, everything is consolidated here.
 
 Structure:
+
 - tools/
   - augment/ (archived)
   - infrastructure/ (archived)

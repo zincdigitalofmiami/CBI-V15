@@ -22,7 +22,7 @@ profarmer:
     - name: "Newsletters"
       url: "/newsletters"
       edition_type: "newsletter"
-  buckets: ["crush", "china", "tariff", "biofuel", "weather"]  # Multi-bucket
+  buckets: ["crush", "china", "tariff", "biofuel", "weather"] # Multi-bucket
 
 crush:
   sources:
@@ -127,7 +127,7 @@ labor_policy:
     - name: "Writers Guild of America"
       url: "https://www.wga.com/"
       type: "public"
-  buckets: ["tariff", "fed"]  # Maps to multiple buckets
+  buckets: ["tariff", "fed"] # Maps to multiple buckets
 
 # Vegas Intel (demand proxy)
 vegas_intel:
@@ -149,5 +149,5 @@ vegas_intel:
       type: "public"
       trust_score: 0.90
       keywords: ["tourism", "arrivals", "visitor", "spending", "food", "beverage"]
-  buckets: ["demand"]  # Demand proxy for F&B consumption
+  buckets: ["demand"] # Demand proxy for F&B consumption
 

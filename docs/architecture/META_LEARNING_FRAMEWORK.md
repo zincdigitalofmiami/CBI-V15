@@ -2,6 +2,7 @@
 
 > **Important:** This document captures a **pre-V15.1** idea for building a custom AutoML system (CatBoost/TFT/Prophet/etc.) for each bucket.  
 > The **actual V15.1 implementation** uses:
+>
 > - AutoGluon `TabularPredictor` for all Big 8 bucket specialists
 > - AutoGluon `TimeSeriesPredictor` for core ZL
 > - AutoGluon stacking + `WeightedEnsemble_L2` as the meta-model
@@ -44,6 +45,7 @@
    - Stacking (combine top 3 from above)
 
 **Selection criteria:**
+
 - Validation RMSE (P50 forecast)
 - Pinball loss (P10/P90 calibration)
 - Training time (< 30 min on Mac M4)
@@ -57,41 +59,49 @@
 **Each bucket gets its own AutoML tournament:**
 
 #### **Bucket 1: Crush**
+
 **Characteristics:** Fundamental, mean-reverting, low noise  
 **Best model candidates:** CatBoost, XGBoost, ARIMA  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 2: China**
+
 **Characteristics:** Event-driven, regime-dependent, high noise  
 **Best model candidates:** TFT, LSTM, Stacking  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 3: FX**
+
 **Characteristics:** Macro-driven, trending, medium noise  
 **Best model candidates:** TFT, CatBoost, Prophet  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 4: Fed**
+
 **Characteristics:** Regime-dependent, low-frequency, low noise  
 **Best model candidates:** CatBoost, ARIMA, Prophet  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 5: Tariff**
+
 **Characteristics:** Event-driven, non-linear, Trump-era specific  
 **Best model candidates:** TFT, LSTM, Stacking  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 6: Biofuel**
+
 **Characteristics:** Policy-driven, seasonal, medium noise  
 **Best model candidates:** TFT, CatBoost, Prophet  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 7: Energy**
+
 **Characteristics:** Mean-reverting, high volatility, medium noise  
 **Best model candidates:** GARCH, CatBoost, TFT  
 **AutoML winner:** TBD (run tournament)
 
 #### **Bucket 8: Volatility**
+
 **Characteristics:** Regime-switching, non-linear, high noise (VIX, realized vol, stress indices)  
 **Best model candidates:** GARCH, TFT, Stacking  
 **Note:** Volatility ≠ Volume. This bucket models price variance regimes, not trading activity.  
@@ -136,6 +146,7 @@
    - Guaranteed coverage (e.g., 90% intervals contain true value 90% of time)
 
 **Selection criteria:**
+
 - Validation pinball loss (P10/P50/P90)
 - Coverage (do 90% intervals actually contain 90% of outcomes?)
 - Sharpness (narrower intervals = better)
@@ -150,7 +161,7 @@
 ```python
 # Pseudocode
 for bucket in ['crush', 'china', 'fx', 'fed', 'tariff', 'biofuel', 'energy', 'vol']:
-    
+
     # Define model candidates
     models = [
         CatBoostQuantile(),
@@ -163,27 +174,27 @@ for bucket in ['crush', 'china', 'fx', 'fed', 'tariff', 'biofuel', 'energy', 'vo
         GARCH(),
         StackingEnsemble()
     ]
-    
+
     # Train/val split (regime-aware)
     train_data = get_train_data(bucket, regime='all')
     val_data = get_val_data(bucket, regime='current')
-    
+
     # Run tournament
     results = []
     for model in models:
         # Train
         model.fit(train_data)
-        
+
         # Validate
         preds = model.predict(val_data)
-        
+
         # Score
         rmse = calc_rmse(preds['p50'], val_data['target'])
         pinball = calc_pinball_loss(preds, val_data['target'])
         coverage = calc_coverage(preds, val_data['target'])
         train_time = model.train_time
         inference_time = model.inference_time
-        
+
         results.append({
             'model': model.name,
             'rmse': rmse,
@@ -193,7 +204,7 @@ for bucket in ['crush', 'china', 'fx', 'fed', 'tariff', 'biofuel', 'energy', 'vo
             'inference_time': inference_time,
             'score': weighted_score(rmse, pinball, coverage, train_time)
         })
-    
+
     # Select winner
     winner = min(results, key=lambda x: x['score'])
     save_winner(bucket, winner)
@@ -224,12 +235,12 @@ results = []
 for method in ensemble_methods:
     # Combine bucket predictions
     final_preds = method.combine(bucket_preds)
-    
+
     # Score
     pinball = calc_pinball_loss(final_preds, val_data['target'])
     coverage = calc_coverage(final_preds, val_data['target'])
     sharpness = calc_sharpness(final_preds)
-    
+
     results.append({
         'method': method.name,
         'pinball': pinball,
@@ -253,12 +264,12 @@ save_ensemble_winner(winner)
 # Every week, check if current models are still best
 for bucket in buckets:
     current_model = load_winner(bucket)
-    
+
     # Get recent performance
     recent_data = get_recent_data(bucket, days=7)
     recent_preds = current_model.predict(recent_data)
     recent_score = calc_score(recent_preds, recent_data['target'])
-    
+
     # Compare to baseline
     if recent_score > threshold:
         # Model degraded, trigger re-tournament
@@ -272,7 +283,7 @@ for bucket in buckets:
 # This catches regime shifts, new data patterns, etc.
 for bucket in buckets:
     run_tournament(bucket)
-    
+
 # Re-select ensemble method
 run_ensemble_tournament()
 ```
@@ -282,26 +293,31 @@ run_ensemble_tournament()
 ## 🎯 **Why This Is Better**
 
 ### **1. No Assumptions**
+
 - Don't assume TFT is best for tariffs
 - Don't assume CatBoost is best for crush
 - Let the data decide
 
 ### **2. Adaptive**
+
 - Models can change over time
 - Ensemble method can change
 - Adapts to regime shifts
 
 ### **3. Robust**
+
 - Multiple models = less overfitting
 - Ensemble reduces model risk
 - Continuous evaluation catches degradation
 
 ### **4. Interpretable**
+
 - Know WHY a model was chosen (scores)
 - Know WHEN it started failing (health checks)
 - Know WHAT to do (re-tournament)
 
 ### **5. Scalable**
+
 - Add new model families easily
 - Add new ensemble methods easily
 - Add new buckets easily
@@ -311,6 +327,7 @@ run_ensemble_tournament()
 ## 📋 **Implementation Plan**
 
 ### **Phase 1: Build AutoML Framework (Week 1-2)**
+
 ```bash
 src/training/automl/
 ├── model_candidates.py      # All 12 model families
@@ -320,6 +337,7 @@ src/training/automl/
 ```
 
 ### **Phase 2: Run Tournaments (Week 3)**
+
 ```bash
 python src/training/automl/run_tournament.py --bucket crush
 python src/training/automl/run_tournament.py --bucket china
@@ -327,6 +345,7 @@ python src/training/automl/run_tournament.py --bucket china
 ```
 
 ### **Phase 3: Build Ensemble Framework (Week 4)**
+
 ```bash
 src/ensemble/
 ├── methods.py                # All 6 ensemble methods
@@ -335,6 +354,7 @@ src/ensemble/
 ```
 
 ### **Phase 4: Deploy & Monitor (Week 5+)**
+
 ```bash
 python src/ops/model_health_check.py  # Weekly
 python src/ops/full_retournament.py   # Monthly
@@ -345,11 +365,13 @@ python src/ops/full_retournament.py   # Monthly
 ## ✅ **Summary**
 
 **Instead of:**
+
 - "I hope PyTorch works"
 - Manual model selection
 - Static ensemble (Monte Carlo only)
 
 **We get:**
+
 - Automated model selection per bucket
 - 12 model families tested
 - 6 ensemble methods tested

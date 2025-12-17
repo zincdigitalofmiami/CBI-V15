@@ -67,7 +67,13 @@ def train_lgbm_for_horizon(horizon_col: str, horizon_name: str):
     logging.info(f"Test: {len(test):,} rows")
 
     # Drop non-feature columns
-    meta_cols = ["date", "symbol"]
+    meta_cols = [
+        "as_of_date",
+        "symbol",
+        "train_val_test_split",
+        "updated_at",
+        "training_weight",
+    ]
     target = horizon_col
 
     # Get all target columns to exclude

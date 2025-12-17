@@ -1,15 +1,18 @@
 # Ensemble Module (L3)
 
 ## Purpose
+
 Regime-weighted Quantile Regression Averaging (QRA) for combining model outputs.
 
 This is **Level 3** in the legacy modeling stack:
+
 - L1: Base models generate quantile forecasts
 - L2: Meta-learner selects candidates
 - **L3: QRA combines forecasts** ← YOU ARE HERE (experimental/legacy)
 - L4: Monte Carlo simulates risk
 
 ## What Belongs Here
+
 - `qra_ensemble.py` - Quantile Regression Averaging implementation
 - Future ensemble methods:
   - `bayesian_model_averaging.py`
@@ -19,7 +22,9 @@ This is **Level 3** in the legacy modeling stack:
 ## Current Implementation
 
 ### QuantileForecast (Dataclass)
+
 Represents a single model's quantile forecast:
+
 ```python
 @dataclass
 class QuantileForecast:
@@ -32,7 +37,9 @@ class QuantileForecast:
 ```
 
 ### EnsembleForecast (Dataclass)
+
 QRA ensemble result:
+
 ```python
 @dataclass
 class EnsembleForecast:
@@ -46,7 +53,9 @@ class EnsembleForecast:
 ```
 
 ### run_qra() Function
+
 Main QRA implementation:
+
 ```python
 def run_qra(
     forecasts: List[QuantileForecast],
@@ -56,6 +65,7 @@ def run_qra(
 ```
 
 **Features:**
+
 - Weighted average of quantiles (NOT simple point forecast averaging)
 - Preserves full uncertainty structure
 - Regime-aware weights (suggested by AutoGluon, executed here)
@@ -117,6 +127,7 @@ ensemble_df = ensemble.to_dataframe()
 ## Metrics
 
 **Interval Score:** Evaluates probabilistic forecast quality
+
 ```python
 from src.ensemble import calculate_interval_score
 
@@ -130,12 +141,15 @@ score = calculate_interval_score(
 ```
 
 ## What Does NOT Belong Here
+
 - Base model training (→ `src/training/` / AutoGluon wrappers, or legacy baselines)
 - Model selection / orchestration logic (→ AutoGluon, legacy AutoGluons, or scripts)
 - Risk simulation (→ `src/simulators/`)
 
 ## Philosophy
+
 QRA should be:
+
 1. Purely numeric (no LLM logic here)
 2. Preserve quantile structure
 3. Regime-aware (via weights)
@@ -144,5 +158,3 @@ QRA should be:
 ---
 
 **For L4 (Monte Carlo), see:** `src/simulators/README.md`
-
-

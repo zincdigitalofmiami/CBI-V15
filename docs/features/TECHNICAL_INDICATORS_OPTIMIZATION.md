@@ -11,6 +11,7 @@
 ### Option 1: pandas-ta (Currently in Requirements)
 
 **Pros**:
+
 - ✅ Pure Python (no C dependencies)
 - ✅ 100+ indicators built-in
 - ✅ Easy to use, pandas-native
@@ -18,6 +19,7 @@
 - ✅ Already in requirements.txt
 
 **Cons**:
+
 - ❌ Slower than TA-Lib (pure Python)
 - ❌ Not optimized for large datasets
 - ❌ Single-threaded
@@ -31,6 +33,7 @@
 ### Option 2: TA-Lib (Industry Standard)
 
 **Pros**:
+
 - ✅ **Fastest** - C library, highly optimized
 - ✅ Industry standard (used by GS, JPM, etc.)
 - ✅ 150+ indicators
@@ -38,6 +41,7 @@
 - ✅ Battle-tested
 
 **Cons**:
+
 - ❌ Requires C library installation
 - ❌ macOS installation can be tricky
 - ❌ Not pure Python
@@ -47,6 +51,7 @@
 **Cost**: Same compute, but 5-10x faster = less compute time
 
 **Installation**:
+
 ```bash
 # macOS
 brew install ta-lib
@@ -61,6 +66,7 @@ conda install -c conda-forge ta-lib
 ### Option 3: DuckDB/MotherDuck SQL UDFs (Recommended for Initial Load)
 
 **Pros**:
+
 - ✅ **Zero compute cost** (runs on DuckDB/MotherDuck, uses query budget)
 - ✅ **Vectorized** - processes entire columns at once
 - ✅ **Parallel** - DuckDB/MotherDuck parallelizes automatically
@@ -68,6 +74,7 @@ conda install -c conda-forge ta-lib
 - ✅ **Scalable** - handles billions of rows
 
 **Cons**:
+
 - ❌ More complex SQL
 - ❌ Limited indicator library (need to implement)
 - ❌ Less flexible than Python
@@ -77,6 +84,7 @@ conda install -c conda-forge ta-lib
 **Cost**: Uses DuckDB/MotherDuck query budget (first 1 TB free, then $5/TB)
 
 **Example**:
+
 ```sql
 -- RSI calculation in DuckDB/MotherDuck
 CREATE TEMP FUNCTION calculate_rsi(prices ARRAY<FLOAT64>, period INT64)
@@ -85,12 +93,12 @@ RETURNS FLOAT64 AS (
 );
 
 -- Apply to entire column
-SELECT 
+SELECT
   date,
   symbol,
   close,
   calculate_rsi(ARRAY_AGG(close) OVER (
-    ORDER BY date 
+    ORDER BY date
     ROWS BETWEEN 13 PRECEDING AND CURRENT ROW
   ), 14) AS rsi_14
 FROM `cbi-v15.raw.databento_daily_ohlcv`
@@ -102,12 +110,14 @@ WHERE symbol = 'ZL'
 ### Option 4: vectorbt (Advanced)
 
 **Pros**:
+
 - ✅ Optimized for backtesting
 - ✅ Vectorized operations
 - ✅ Good for technical indicators
 - ✅ Built on NumPy
 
 **Cons**:
+
 - ❌ More complex API
 - ❌ Overkill for simple indicators
 - ❌ Not as fast as TA-Lib
@@ -120,13 +130,15 @@ WHERE symbol = 'ZL'
 
 ### Phase 1: Initial Load (15 Years) - DuckDB/MotherDuck SQL UDFs
 
-**Why**: 
+**Why**:
+
 - Zero compute cost (uses DuckDB/MotherDuck query budget)
 - Fastest for bulk processing
 - Parallelized automatically
 - No data transfer needed
 
 **Implementation**:
+
 ```sql
 -- Create DuckDB/MotherDuck UDFs for common indicators
 -- RSI, MACD, Bollinger Bands, Moving Averages, etc.
@@ -142,12 +154,14 @@ WHERE symbol = 'ZL'
 ### Phase 2: Incremental Updates - pandas-ta (Python)
 
 **Why**:
+
 - Easy to maintain
 - Flexible for new indicators
 - Runs on Mac M4 (free compute)
 - Good for daily updates
 
 **Implementation**:
+
 ```python
 # Daily updates: Only calculate for new data
 # Use pandas-ta for flexibility
@@ -162,11 +176,13 @@ WHERE symbol = 'ZL'
 ### Phase 3: Complex Indicators - TA-Lib (If Needed)
 
 **Why**:
+
 - If pandas-ta is too slow
 - For advanced indicators
 - Performance-critical calculations
 
 **Implementation**:
+
 ```python
 # Use TA-Lib for performance-critical indicators
 # Fallback to pandas-ta for others
@@ -178,22 +194,24 @@ WHERE symbol = 'ZL'
 
 ### 15 Years of Data (Single Symbol)
 
-| Method | Time | Cost | Notes |
-|--------|------|------|-------|
-| **DuckDB/MotherDuck SQL UDFs** | ~2-5 minutes | $0.00 (free tier) | ✅ **BEST** |
-| **TA-Lib (Python)** | ~30-45 seconds | Mac M4 (free) | Fast but requires data export |
-| **pandas-ta (Python)** | ~2.5-3.75 minutes | Mac M4 (free) | Slower but easier |
-| **vectorbt** | ~1.25-2 minutes | Mac M4 (free) | Good middle ground |
+| Method                         | Time              | Cost              | Notes                         |
+| ------------------------------ | ----------------- | ----------------- | ----------------------------- |
+| **DuckDB/MotherDuck SQL UDFs** | ~2-5 minutes      | $0.00 (free tier) | ✅ **BEST**                   |
+| **TA-Lib (Python)**            | ~30-45 seconds    | Mac M4 (free)     | Fast but requires data export |
+| **pandas-ta (Python)**         | ~2.5-3.75 minutes | Mac M4 (free)     | Slower but easier             |
+| **vectorbt**                   | ~1.25-2 minutes   | Mac M4 (free)     | Good middle ground            |
 
 ### Cost Analysis
 
 **DuckDB/MotherDuck SQL Approach**:
+
 - Query: ~50-100 GB for 15 years
 - Cost: $0.00 (within 1 TB free tier) ✅
 - Time: 2-5 minutes
 - **Total**: **$0.00, 2-5 minutes**
 
 **Python Approach**:
+
 - Export: ~1 GB Parquet
 - Compute: Mac M4 (free)
 - Time: 30 seconds - 4 minutes
@@ -217,9 +235,9 @@ RETURNS FLOAT64 AS (
 
 -- MACD
 CREATE TEMP FUNCTION calculate_macd(
-  prices ARRAY<FLOAT64>, 
-  fast_period INT64, 
-  slow_period INT64, 
+  prices ARRAY<FLOAT64>,
+  fast_period INT64,
+  slow_period INT64,
   signal_period INT64
 )
 RETURNS STRUCT<macd FLOAT64, signal FLOAT64, histogram FLOAT64> AS (
@@ -228,8 +246,8 @@ RETURNS STRUCT<macd FLOAT64, signal FLOAT64, histogram FLOAT64> AS (
 
 -- Bollinger Bands
 CREATE TEMP FUNCTION calculate_bollinger(
-  prices ARRAY<FLOAT64>, 
-  period INT64, 
+  prices ARRAY<FLOAT64>,
+  period INT64,
   std_dev FLOAT64
 )
 RETURNS STRUCT<upper FLOAT64, middle FLOAT64, lower FLOAT64> AS (
@@ -248,61 +266,61 @@ config {
   name: "technical_indicators_15y"
 }
 
-SELECT 
+SELECT
   date,
   symbol,
   close,
-  
+
   -- RSI
   calculate_rsi(
     ARRAY_AGG(close) OVER (
-      PARTITION BY symbol 
-      ORDER BY date 
+      PARTITION BY symbol
+      ORDER BY date
       ROWS BETWEEN 13 PRECEDING AND CURRENT ROW
     ),
     14
   ) AS rsi_14,
-  
+
   -- MACD
   calculate_macd(
     ARRAY_AGG(close) OVER (
-      PARTITION BY symbol 
-      ORDER BY date 
+      PARTITION BY symbol
+      ORDER BY date
       ROWS BETWEEN 25 PRECEDING AND CURRENT ROW
     ),
     12, 26, 9
   ) AS macd,
-  
+
   -- Bollinger Bands
   calculate_bollinger(
     ARRAY_AGG(close) OVER (
-      PARTITION BY symbol 
-      ORDER BY date 
+      PARTITION BY symbol
+      ORDER BY date
       ROWS BETWEEN 19 PRECEDING AND CURRENT ROW
     ),
     20, 2.0
   ) AS bollinger_bands,
-  
+
   -- Moving Averages
   AVG(close) OVER (
-    PARTITION BY symbol 
-    ORDER BY date 
+    PARTITION BY symbol
+    ORDER BY date
     ROWS BETWEEN 9 PRECEDING AND CURRENT ROW
   ) AS sma_10,
-  
+
   AVG(close) OVER (
-    PARTITION BY symbol 
-    ORDER BY date 
+    PARTITION BY symbol
+    ORDER BY date
     ROWS BETWEEN 19 PRECEDING AND CURRENT ROW
   ) AS sma_20,
-  
+
   -- ATR
   AVG(high - low) OVER (
-    PARTITION BY symbol 
-    ORDER BY date 
+    PARTITION BY symbol
+    ORDER BY date
     ROWS BETWEEN 13 PRECEDING AND CURRENT ROW
   ) AS atr_14
-  
+
 FROM `${ref("databento_daily_ohlcv")}`
 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
 ```
@@ -312,12 +330,14 @@ WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
 ### For Initial 15-Year Load: **DuckDB/MotherDuck SQL UDFs** ✅
 
 **Why**:
+
 1. ✅ Zero compute cost (uses query budget, within free tier)
 2. ✅ Fastest (parallelized, vectorized)
 3. ✅ No data transfer (stays in DuckDB/MotherDuck)
 4. ✅ Scalable (handles billions of rows)
 
 **Implementation**:
+
 - Create DuckDB/MotherDuck UDFs for common indicators
 - Process all 15 years in one query
 - Store results in `features.technical_indicators_15y`
@@ -325,12 +345,14 @@ WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 15 YEAR)
 ### For Daily Updates: **pandas-ta (Python)** ✅
 
 **Why**:
+
 1. ✅ Easy to maintain
 2. ✅ Flexible for new indicators
 3. ✅ Runs on Mac M4 (free)
 4. ✅ Good for incremental updates
 
 **Implementation**:
+
 - Use pandas-ta for daily calculations
 - Only process new data
 - Append to DuckDB/MotherDuck table

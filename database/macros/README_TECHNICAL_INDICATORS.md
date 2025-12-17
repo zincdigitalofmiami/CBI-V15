@@ -11,6 +11,7 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 ## 📊 Symbols Covered (30+)
 
 ### Agriculture/Softs/Oils (6)
+
 - **ZL** - Soybean Oil (primary)
 - **ZS** - Soybeans
 - **ZM** - Soybean Meal
@@ -19,12 +20,14 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 - **ZO** - Soybean Oil (alternate cycle)
 
 ### Energy (4)
+
 - **CL** - WTI Crude Oil
 - **HO** - Heating Oil
 - **RB** - RBOB Gasoline
 - **NG** - Natural Gas
 
 ### Metals (5)
+
 - **HG** - Copper
 - **GC** - Gold
 - **SI** - Silver
@@ -32,11 +35,13 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 - **PA** - Palladium
 
 ### Treasuries (3)
+
 - **ZF** - 5-Year Treasury
 - **ZN** - 10-Year Treasury
 - **ZB** - 30-Year Treasury
 
 ### FX (1)
+
 - **DX** - U.S. Dollar Index
 
 ---
@@ -44,6 +49,7 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 ## 🔧 Feature Categories (276+ Total)
 
 ### 1. Technical Indicators (40 per symbol)
+
 - **Price & Lags**: close, lag_1d, lag_5d, lag_21d
 - **Returns**: log_ret_1d, log_ret_5d, log_ret_21d
 - **Moving Averages**: SMA 5/10/21/50/200
@@ -57,11 +63,13 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 - **Volume**: OBV, volume ratio, z-score
 
 ### 2. Cross-Asset Correlations (11)
+
 - ZL vs ZS/ZM/CL/HO/HG/DX (60-day rolling)
 - CL vs HO/RB/DX
 - HG vs GC/DX
 
 ### 3. Fundamental Spreads (6)
+
 - **Board Crush**: (ZM × 0.022 + ZL × 11) - ZS
 - **Oil Share**: ZL value / total crush value
 - **BOHO Spread**: Soy Oil vs Heating Oil
@@ -70,7 +78,9 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 - **Dollar Index**: DX baseline
 
 ### 4. Big 8 Bucket Scores (16)
+
 **8 Scores (0-100 scale, 50 = neutral):**
+
 1. **Crush** - Soybean crush margins
 2. **China** - Import demand (HG-ZS correlation)
 3. **FX** - Currency effects (inverse DX momentum)
@@ -81,14 +91,17 @@ Complete technical analysis and feature engineering system for **30+ futures sym
 8. **Vol** - Market volatility (inverse VIX + ZL vol)
 
 **8 Key Metrics:**
+
 - board_crush, china_pulse, dollar_index, yield_curve_slope
 - tariff_activity, rin_d4, crude_price, vix
 
 ### 5. Neural Scores (9)
+
 - 8 bucket neural scores (populated by ML models)
 - 1 master neural score (ensemble)
 
 ### 6. Targets (8)
+
 - 4 price targets: 1W/1M/3M/6M
 - 4 return targets: 1W/1M/3M/6M
 
@@ -157,6 +170,7 @@ python src/engines/anofox/build_all_features.py
 ```
 
 This will:
+
 1. Load all SQL macros
 2. Compute technical indicators for 17 symbols
 3. Compute cross-asset correlations
@@ -168,6 +182,7 @@ This will:
 ## 📈 Example Queries
 
 ### Get Latest ZL Features
+
 ```sql
 SELECT *
 FROM features.daily_ml_matrix_zl
@@ -177,8 +192,9 @@ LIMIT 1;
 ```
 
 ### Get Bucket Scores for Last 30 Days
+
 ```sql
-SELECT 
+SELECT
     as_of_date,
     crush_bucket_score,
     china_bucket_score,
@@ -190,8 +206,9 @@ ORDER BY as_of_date DESC;
 ```
 
 ### Find High Volatility Periods
+
 ```sql
-SELECT 
+SELECT
     as_of_date,
     symbol,
     volatility_21d,
@@ -233,4 +250,3 @@ ORDER BY as_of_date DESC;
 - All correlations use **rolling windows** (60-day default)
 - Bucket scores are **normalized to 0-100** (50 = neutral)
 - Neural scores are **placeholders** until models are trained
-

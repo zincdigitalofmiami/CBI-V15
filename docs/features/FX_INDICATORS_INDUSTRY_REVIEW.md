@@ -11,6 +11,7 @@
 ### Overall Assessment: **COMPREHENSIVE** ✅
 
 FX indicators used by top quant firms fall into 5 categories:
+
 1. **Carry Trade Indicators** (Interest rate differentials)
 2. **Momentum Indicators** (Currency momentum, trend strength)
 3. **Volatility Indicators** (Realized vol, term structure)
@@ -26,16 +27,19 @@ FX indicators used by top quant firms fall into 5 categories:
 #### Industry Standard: Interest Rate Differential
 
 **GS Quant Approach**:
+
 - **Carry Signal**: `(Foreign_Rate - US_Rate) / US_Rate`
 - **Forward Premium/Discount**: `(Forward_Rate - Spot_Rate) / Spot_Rate`
 - **Carry-Adjusted Returns**: Returns adjusted for carry cost
 
 **JPM Approach**:
+
 - **Carry Score**: Normalized interest rate differential
 - **Carry Momentum**: Change in carry over time
 - **Carry Regime**: High/Medium/Low carry classification
 
 **Hedge Fund Approach** (Citadel, Bridgewater):
+
 - **Carry Factor**: Multi-currency carry portfolio
 - **Carry Risk-Adjusted**: Carry / Volatility
 - **Carry Persistence**: How long carry signal persists
@@ -43,6 +47,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **Verdict**: ✅ **INDUSTRY STANDARD** - All top firms use carry indicators.
 
 **For ZL-BRL**:
+
 - **BRL-US Rate Differential**: `(BRL_Rate - US_Rate)`
 - **Carry Signal**: Positive = BRL attractive (capital flows in)
 - **Impact on ZL**: Strong BRL = Brazilian farmers sell more = Supply increase = ZL price down
@@ -54,16 +59,19 @@ FX indicators used by top quant firms fall into 5 categories:
 #### Industry Standard: Currency Momentum (Multiple Horizons)
 
 **GS Quant Approach**:
+
 - **Momentum Score**: `(Price_t / Price_{t-N}) - 1` for N = 1m, 3m, 6m, 12m
 - **Momentum Persistence**: How long momentum persists
 - **Momentum Acceleration**: Change in momentum
 
 **JPM Approach**:
+
 - **Momentum Factor**: Multi-currency momentum portfolio
 - **Momentum Regime**: Trending vs Mean-Reverting
 - **Momentum Strength**: Z-score of momentum
 
 **Hedge Fund Approach** (Renaissance, Two Sigma):
+
 - **Momentum Decay**: Half-life of momentum signal
 - **Momentum Cross-Asset**: Momentum correlation across currencies
 - **Momentum Risk-Adjusted**: Momentum / Volatility
@@ -71,6 +79,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **Verdict**: ✅ **INDUSTRY STANDARD** - Multi-horizon momentum is standard.
 
 **For ZL-BRL**:
+
 - **BRL Momentum**: 1m, 3m, 6m, 12m returns
 - **DXY Momentum**: 1m, 3m, 6m, 12m returns
 - **ZL-BRL Momentum Correlation**: How ZL momentum correlates with BRL momentum
@@ -82,16 +91,19 @@ FX indicators used by top quant firms fall into 5 categories:
 #### Industry Standard: Realized Volatility & Term Structure
 
 **GS Quant Approach**:
+
 - **Realized Volatility**: Rolling 21d, 63d, 252d volatility
 - **Volatility Term Structure**: Short-term vs Long-term vol
 - **Volatility Regime**: High/Medium/Low volatility classification
 
 **JPM Approach**:
+
 - **Volatility Risk Premium**: Implied vol - Realized vol
 - **Volatility Persistence**: How long volatility persists
 - **Volatility Spillover**: Cross-currency volatility transmission
 
 **Hedge Fund Approach** (Citadel, Bridgewater):
+
 - **Volatility Clustering**: GARCH-style volatility modeling
 - **Volatility Regime Switching**: Markov-switching volatility
 - **Volatility Risk-Adjusted Returns**: Returns / Volatility
@@ -99,6 +111,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **Verdict**: ✅ **INDUSTRY STANDARD** - Volatility indicators are essential.
 
 **For ZL-BRL**:
+
 - **BRL Volatility**: 21d, 63d realized volatility
 - **BRL Volatility Spike**: When BRL vol spikes, farmers stop selling
 - **DXY Volatility**: Dollar volatility (risk-off indicator)
@@ -110,16 +123,19 @@ FX indicators used by top quant firms fall into 5 categories:
 #### Industry Standard: Rolling Correlations & Regime-Dependent
 
 **GS Quant Approach**:
+
 - **Rolling Correlation**: 30d, 60d, 90d, 252d windows
 - **Correlation Regime**: High/Medium/Low correlation periods
 - **Correlation Persistence**: How long correlations persist
 
 **JPM Approach**:
+
 - **Dynamic Correlation**: Time-varying correlation (DCC-GARCH)
 - **Correlation Breakdown**: When correlations break down (crisis)
 - **Correlation Risk**: Correlation risk in portfolios
 
 **Hedge Fund Approach** (Renaissance, Two Sigma):
+
 - **Correlation Clustering**: Correlation clusters across currencies
 - **Correlation Regime Detection**: Identify correlation regimes
 - **Correlation-Adjusted Signals**: Signals adjusted for correlation
@@ -127,6 +143,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **Verdict**: ✅ **INDUSTRY STANDARD** - Multi-horizon correlations are standard.
 
 **For ZL-BRL**:
+
 - **ZL-BRL Correlation**: 30d, 60d, 90d rolling correlation
 - **ZL-DXY Correlation**: 30d, 60d, 90d rolling correlation
 - **Correlation Regime**: High correlation = Macro-driven, Low = Fundamental-driven
@@ -138,16 +155,19 @@ FX indicators used by top quant firms fall into 5 categories:
 #### Industry Standard: Terms of Trade & Purchasing Power
 
 **GS Quant Approach**:
+
 - **Terms of Trade**: `Commodity_Price / Currency_Price`
 - **Purchasing Power**: Real purchasing power of commodity
 - **Export Competitiveness**: Currency-adjusted export prices
 
 **JPM Approach**:
+
 - **Real Exchange Rate**: Nominal rate adjusted for inflation
 - **Trade-Weighted Exchange Rate**: Weighted average vs trading partners
 - **Export Price Index**: Currency-adjusted export prices
 
 **Hedge Fund Approach** (Bridgewater, Renaissance):
+
 - **Purchasing Power Parity (PPP)**: Long-term fair value
 - **Real Effective Exchange Rate (REER)**: Trade-weighted real rate
 - **Commodity-Currency Beta**: Sensitivity of commodity to currency
@@ -155,6 +175,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **Verdict**: ✅ **INDUSTRY STANDARD** - Terms of Trade is standard.
 
 **For ZL-BRL**:
+
 - **Terms of Trade**: `ZL_Price / BRL_Price` (already in spec ✅)
 - **Real BRL**: BRL adjusted for inflation
 - **Export Competitiveness**: BRL-adjusted ZL export price
@@ -230,6 +251,7 @@ FX indicators used by top quant firms fall into 5 categories:
 ## 📊 Implementation Priority
 
 ### Phase 1: Core FX Features (7 indicators)
+
 - ✅ BRL-US Rate Differential
 - ✅ BRL Momentum (21d, 63d, 252d)
 - ✅ DXY Momentum (21d, 63d, 252d)
@@ -243,6 +265,7 @@ FX indicators used by top quant firms fall into 5 categories:
 ---
 
 ### Phase 2: Advanced FX Features (3 indicators)
+
 - ⏳ Forward Premium/Discount
 - ⏳ Volatility Term Structure
 - ⏳ Correlation Regime
@@ -252,6 +275,7 @@ FX indicators used by top quant firms fall into 5 categories:
 ---
 
 ### Phase 3: Extended FX Features (3 indicators)
+
 - ⏳ Real Exchange Rate
 - ⏳ Trade-Weighted BRL
 - ⏳ Carry Risk-Adjusted
@@ -263,6 +287,7 @@ FX indicators used by top quant firms fall into 5 categories:
 ## 💰 Cost Impact
 
 ### Additional Query Costs
+
 - **FX Data**: ~10 GB/month (FRED rates, Databento FX futures)
 - **FX Calculations**: ~5 GB/month (correlations, momentum)
 - **Total**: ~15 GB/month = **$0.00** (within free tier) ✅
@@ -276,6 +301,7 @@ FX indicators used by top quant firms fall into 5 categories:
 **File**: `anofox/definitions/03_features/fx_indicators_daily.sqlx`
 
 **Features**:
+
 - BRL-US Rate Differential
 - BRL Momentum (multi-horizon)
 - DXY Momentum (multi-horizon)
@@ -285,6 +311,7 @@ FX indicators used by top quant firms fall into 5 categories:
 - Terms of Trade (already implemented)
 
 **Data Sources**:
+
 - FRED: Interest rates (BRL, US)
 - Databento: FX futures (6L = BRL, DX = DXY)
 - DuckDB/MotherDuck: ZL prices (for correlations)
@@ -295,13 +322,13 @@ FX indicators used by top quant firms fall into 5 categories:
 
 ### Industry Standards Identified
 
-| Category | GS Quant | JPM | Hedge Funds | US Oil Solutions | Status |
-|----------|----------|-----|-------------|------------------|--------|
-| **Carry Trade** | ✅ | ✅ | ✅ | ⏳ Missing | ⚠️ **ADD** |
-| **Momentum** | ✅ | ✅ | ✅ | ⏳ Partial | ⚠️ **ENHANCE** |
-| **Volatility** | ✅ | ✅ | ✅ | ✅ Partial | ✅ **ENHANCE** |
-| **Correlation** | ✅ | ✅ | ✅ | ✅ Good | ✅ **KEEP** |
-| **Terms of Trade** | ✅ | ✅ | ✅ | ✅ Implemented | ✅ **KEEP** |
+| Category           | GS Quant | JPM | Hedge Funds | US Oil Solutions | Status         |
+| ------------------ | -------- | --- | ----------- | ---------------- | -------------- |
+| **Carry Trade**    | ✅       | ✅  | ✅          | ⏳ Missing       | ⚠️ **ADD**     |
+| **Momentum**       | ✅       | ✅  | ✅          | ⏳ Partial       | ⚠️ **ENHANCE** |
+| **Volatility**     | ✅       | ✅  | ✅          | ✅ Partial       | ✅ **ENHANCE** |
+| **Correlation**    | ✅       | ✅  | ✅          | ✅ Good          | ✅ **KEEP**    |
+| **Terms of Trade** | ✅       | ✅  | ✅          | ✅ Implemented   | ✅ **KEEP**    |
 
 ### Recommendations
 
@@ -314,4 +341,3 @@ FX indicators used by top quant firms fall into 5 categories:
 ---
 
 **Last Updated**: November 28, 2025
-

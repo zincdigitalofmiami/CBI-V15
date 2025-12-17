@@ -1,7 +1,7 @@
 # Database
 
 > V15.1 Database Schema for MotherDuck + Local DuckDB
-> 
+>
 > **Read first:** `docs/architecture/MASTER_PLAN.md`, `AGENTS.md`, active plan in `.cursor/plans/`
 
 All SQL schema definitions, macros, seeds, and tests for CBI-V15 (DuckDB/MotherDuck).
@@ -44,17 +44,17 @@ database/
 
 ## Schemas (9 total)
 
-| Schema | Purpose | Table Count |
-|--------|---------|-------------|
-| `raw` | Immutable source data from collectors | 12 |
-| `staging` | Cleaned/normalized daily grains | 7 |
-| `features` | Engineered features, bucket materializations | 10+ |
-| `features_dev` | Dev views (pre-snapshot) | varies |
-| `training` | OOF predictions, meta matrices, weights | 6 |
-| `forecasts` | Serving contract (dashboard reads this) | 4 |
-| `reference` | Symbols, calendars, regimes, driver maps | 10 |
-| `ops` | Ingestion status, alerts, data quality | 7 |
-| `explanations` | SHAP values (weekly) | 1 |
+| Schema         | Purpose                                      | Table Count |
+| -------------- | -------------------------------------------- | ----------- |
+| `raw`          | Immutable source data from collectors        | 12          |
+| `staging`      | Cleaned/normalized daily grains              | 7           |
+| `features`     | Engineered features, bucket materializations | 10+         |
+| `features_dev` | Dev views (pre-snapshot)                     | varies      |
+| `training`     | OOF predictions, meta matrices, weights      | 6           |
+| `forecasts`    | Serving contract (dashboard reads this)      | 4           |
+| `reference`    | Symbols, calendars, regimes, driver maps     | 10          |
+| `ops`          | Ingestion status, alerts, data quality       | 7           |
+| `explanations` | SHAP values (weekly)                         | 1           |
 
 ## Data Flow
 
@@ -78,14 +78,15 @@ Trigger.dev jobs → raw.* (MotherDuck, source of truth)
 
 - **MotherDuck** = Cloud source of truth. All ingestion writes here.
 - **Local DuckDB** = Ephemeral compute for training. Attaches MotherDuck via:
+
   ```sql
   -- Local DuckDB session (main = local scratch)
   -- Attach MotherDuck by name (NO alias in workspace mode)
   ATTACH 'md:usoil_intelligence?motherduck_token=${MOTHERDUCK_TOKEN}';
-  
+
   -- Verify attachment
   SHOW DATABASES;
-  
+
   -- Query cloud data using database.schema.table
   SELECT * FROM usoil_intelligence.features.daily_ml_matrix_zl;
   ```
@@ -114,6 +115,7 @@ python database/tests/harness.py
 ## Big 8 Bucket Modeling Rules
 
 The Big 8 buckets are:
+
 1. **Crush** - ZL/ZS/ZM spread economics
 2. **China** - China demand proxy
 3. **FX** - Currency effects
@@ -124,6 +126,7 @@ The Big 8 buckets are:
 8. **Volatility** - VIX, stress indices
 
 Rules:
+
 - Bucket features implemented via SQL macros in `database/macros/`
 - `bucket_features.sql` = model FEATURES (vectors for training)
 - `big8_bucket_features.sql` = dashboard SCORES (0-100 for display)
@@ -142,10 +145,10 @@ Rules:
 
 ## Naming Conventions
 
-| Concept | Pattern | Examples |
-|---------|---------|----------|
-| **Volatility** (price variance) | `volatility_*` | `volatility_zl_21d` |
-| **Volume** (trading activity) | `volume_*` | `volume_zl_sma_20` |
-| **Features** | `{source}_{symbol}_{indicator}` | `databento_zl_close`, `fred_dxy` |
+| Concept                         | Pattern                         | Examples                         |
+| ------------------------------- | ------------------------------- | -------------------------------- |
+| **Volatility** (price variance) | `volatility_*`                  | `volatility_zl_21d`              |
+| **Volume** (trading activity)   | `volume_*`                      | `volume_zl_sma_20`               |
+| **Features**                    | `{source}_{symbol}_{indicator}` | `databento_zl_close`, `fred_dxy` |
 
 **NEVER use `vol_*` alone** - always spell out `volatility_` or `volume_`.

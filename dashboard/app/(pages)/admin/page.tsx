@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 export default function AdminPage() {
   return (
@@ -72,11 +72,13 @@ export default function AdminPage() {
               Set threshold values for color-coded risk indicators
             </p>
             <div className="space-y-4">
-              {['China Demand', 'Tariff Risk', 'Biofuel Policy', 'FX Impact'].map((metric) => (
+              {["China Demand", "Tariff Risk", "Biofuel Policy", "FX Impact"].map((metric) => (
                 <div key={metric} className="grid grid-cols-4 gap-4 items-center">
                   <div className="text-zinc-300 font-extralight">{metric}</div>
                   <div>
-                    <label className="block text-green-500 text-xs font-extralight mb-1">Green</label>
+                    <label className="block text-green-500 text-xs font-extralight mb-1">
+                      Green
+                    </label>
                     <input
                       type="number"
                       placeholder="70"
@@ -84,7 +86,9 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-yellow-500 text-xs font-extralight mb-1">Yellow</label>
+                    <label className="block text-yellow-500 text-xs font-extralight mb-1">
+                      Yellow
+                    </label>
                     <input
                       type="number"
                       placeholder="50"
@@ -113,11 +117,11 @@ export default function AdminPage() {
             <div className="space-y-4">
               {[
                 { label: "Show Chris's Four Factors", default: true },
-                { label: 'Show Big-8 Heatmap', default: true },
-                { label: 'Show Forward Curve', default: true },
-                { label: 'Show Vegas Intel in Nav', default: true },
-                { label: 'Show Quant Admin (internal)', default: false },
-                { label: 'Enable Scenario Analysis', default: true },
+                { label: "Show Big-8 Heatmap", default: true },
+                { label: "Show Forward Curve", default: true },
+                { label: "Show Vegas Intel in Nav", default: true },
+                { label: "Show Quant Admin (internal)", default: false },
+                { label: "Enable Scenario Analysis", default: true },
               ].map((toggle, idx) => (
                 <label
                   key={idx}
@@ -139,10 +143,10 @@ export default function AdminPage() {
             <h2 className="text-xl font-thin text-white mb-6">Notifications</h2>
             <div className="space-y-4">
               {[
-                { label: 'Price alerts', desc: 'Notify when ZL crosses threshold' },
-                { label: 'Regime changes', desc: 'Notify on market regime shifts' },
-                { label: 'Policy events', desc: 'Upcoming legislation deadlines' },
-                { label: 'Customer alerts', desc: 'At-risk customer notifications' },
+                { label: "Price alerts", desc: "Notify when ZL crosses threshold" },
+                { label: "Regime changes", desc: "Notify on market regime shifts" },
+                { label: "Policy events", desc: "Upcoming legislation deadlines" },
+                { label: "Customer alerts", desc: "At-risk customer notifications" },
               ].map((item, idx) => (
                 <div
                   key={idx}

@@ -1,25 +1,55 @@
-'use client';
+"use client";
 
 export default function LegislationPage() {
   const usPolicies = [
-    { id: 'rfs', name: 'RFS/RVO', agency: 'EPA', status: 'active', impact: 'bullish' },
-    { id: 'farm-bill', name: 'Farm Bill 2024', agency: 'USDA', status: 'pending', impact: 'neutral' },
-    { id: 'biodiesel-blenders', name: 'Biodiesel Blender Credit', agency: 'Treasury', status: 'expired', impact: 'bearish' },
-    { id: 'saf-credit', name: 'SAF Tax Credit', agency: 'Treasury', status: 'active', impact: 'bullish' },
+    { id: "rfs", name: "RFS/RVO", agency: "EPA", status: "active", impact: "bullish" },
+    {
+      id: "farm-bill",
+      name: "Farm Bill 2024",
+      agency: "USDA",
+      status: "pending",
+      impact: "neutral",
+    },
+    {
+      id: "biodiesel-blenders",
+      name: "Biodiesel Blender Credit",
+      agency: "Treasury",
+      status: "expired",
+      impact: "bearish",
+    },
+    {
+      id: "saf-credit",
+      name: "SAF Tax Credit",
+      agency: "Treasury",
+      status: "active",
+      impact: "bullish",
+    },
   ];
 
   const tradePolicies = [
-    { id: 'section-301', name: 'Section 301 Tariffs', target: 'China', status: 'active', rate: '25%' },
-    { id: 'wto-dispute', name: 'WTO Ag Subsidy Dispute', target: 'Brazil', status: 'pending', rate: '—' },
-    { id: 'usmca', name: 'USMCA Review', target: 'Mexico/Canada', status: 'scheduled', rate: '—' },
+    {
+      id: "section-301",
+      name: "Section 301 Tariffs",
+      target: "China",
+      status: "active",
+      rate: "25%",
+    },
+    {
+      id: "wto-dispute",
+      name: "WTO Ag Subsidy Dispute",
+      target: "Brazil",
+      status: "pending",
+      rate: "—",
+    },
+    { id: "usmca", name: "USMCA Review", target: "Mexico/Canada", status: "scheduled", rate: "—" },
   ];
 
   const timeline = [
-    { date: 'Dec 15', event: 'EPA RVO Final Rule', impact: 'bullish', days: 1 },
-    { date: 'Jan 3', event: 'New Congress Convenes', impact: 'neutral', days: 20 },
-    { date: 'Jan 20', event: 'Administration Transition', impact: 'mixed', days: 37 },
-    { date: 'Feb 1', event: 'USDA Outlook Forum', impact: 'neutral', days: 49 },
-    { date: 'Mar 15', event: 'Farm Bill Deadline', impact: 'bullish', days: 91 },
+    { date: "Dec 15", event: "EPA RVO Final Rule", impact: "bullish", days: 1 },
+    { date: "Jan 3", event: "New Congress Convenes", impact: "neutral", days: 20 },
+    { date: "Jan 20", event: "Administration Transition", impact: "mixed", days: 37 },
+    { date: "Feb 1", event: "USDA Outlook Forum", impact: "neutral", days: 49 },
+    { date: "Mar 15", event: "Farm Bill Deadline", impact: "bullish", days: 91 },
   ];
 
   return (
@@ -29,7 +59,9 @@ export default function LegislationPage() {
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">⚖️</span>
-            <h1 className="text-3xl font-thin text-white tracking-wide">Legislation & Policy Intel</h1>
+            <h1 className="text-3xl font-thin text-white tracking-wide">
+              Legislation & Policy Intel
+            </h1>
           </div>
           <p className="text-zinc-400 font-extralight">
             Track RFS, tariffs, Farm Bill, and trade regulations impacting ZL
@@ -56,22 +88,22 @@ export default function LegislationPage() {
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
-                      policy.status === 'active'
-                        ? 'bg-green-900/30 text-green-400'
-                        : policy.status === 'pending'
-                        ? 'bg-yellow-900/30 text-yellow-400'
-                        : 'bg-zinc-800 text-zinc-500'
+                      policy.status === "active"
+                        ? "bg-green-900/30 text-green-400"
+                        : policy.status === "pending"
+                          ? "bg-yellow-900/30 text-yellow-400"
+                          : "bg-zinc-800 text-zinc-500"
                     }`}
                   >
                     {policy.status}
                   </span>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
-                      policy.impact === 'bullish'
-                        ? 'bg-green-900/20 text-green-400 border border-green-800/50'
-                        : policy.impact === 'bearish'
-                        ? 'bg-red-900/20 text-red-400 border border-red-800/50'
-                        : 'bg-zinc-900 text-zinc-400 border border-zinc-700'
+                      policy.impact === "bullish"
+                        ? "bg-green-900/20 text-green-400 border border-green-800/50"
+                        : policy.impact === "bearish"
+                          ? "bg-red-900/20 text-red-400 border border-red-800/50"
+                          : "bg-zinc-900 text-zinc-400 border border-zinc-700"
                     }`}
                   >
                     {policy.impact}
@@ -93,11 +125,11 @@ export default function LegislationPage() {
                   </div>
                   <div
                     className={`w-2 h-2 rounded-full mt-1.5 ${
-                      item.impact === 'bullish'
-                        ? 'bg-green-500'
-                        : item.impact === 'bearish'
-                        ? 'bg-red-500'
-                        : 'bg-zinc-500'
+                      item.impact === "bullish"
+                        ? "bg-green-500"
+                        : item.impact === "bearish"
+                          ? "bg-red-500"
+                          : "bg-zinc-500"
                     }`}
                   />
                   <div className="flex-1">
@@ -119,7 +151,9 @@ export default function LegislationPage() {
                 >
                   <div className="flex-1">
                     <div className="text-white font-extralight">{policy.name}</div>
-                    <div className="text-zinc-500 text-sm font-extralight">Target: {policy.target}</div>
+                    <div className="text-zinc-500 text-sm font-extralight">
+                      Target: {policy.target}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-white font-extralight">{policy.rate}</div>
@@ -127,11 +161,11 @@ export default function LegislationPage() {
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
-                      policy.status === 'active'
-                        ? 'bg-red-900/30 text-red-400'
-                        : policy.status === 'pending'
-                        ? 'bg-yellow-900/30 text-yellow-400'
-                        : 'bg-zinc-800 text-zinc-400'
+                      policy.status === "active"
+                        ? "bg-red-900/30 text-red-400"
+                        : policy.status === "pending"
+                          ? "bg-yellow-900/30 text-yellow-400"
+                          : "bg-zinc-800 text-zinc-400"
                     }`}
                   >
                     {policy.status}

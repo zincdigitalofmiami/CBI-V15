@@ -27,15 +27,11 @@ def build_forecasts(
     """
     if con is None:
         motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
-        if motherduck_token:
-            con = duckdb.connect(
-                f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}"
-            )
-        else:
-            # Fallback to local
-            ROOT_DIR = Path(__file__).resolve().parents[2]
-            DB_PATH = ROOT_DIR / "data" / "duckdb" / "cbi_v15.duckdb"
-            con = duckdb.connect(str(DB_PATH))
+        if not motherduck_token:
+            raise ValueError("MOTHERDUCK_TOKEN required - no local fallback")
+        con = duckdb.connect(
+            f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}"
+        )
 
     print(f"Generating forecasts for {model_id} at {horizon} horizon...")
 

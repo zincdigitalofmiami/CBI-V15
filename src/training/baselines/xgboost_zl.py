@@ -29,11 +29,11 @@ except PermissionError:
     pass
 
 HORIZONS = {
-    "target_1w_price": "1w",
-    "target_1m_price": "1m",
-    "target_3m_price": "3m",
-    "target_6m_price": "6m",
-    "target_12m_price": "12m",
+    "target_price_1w": "1w",
+    "target_price_1m": "1m",
+    "target_price_3m": "3m",
+    "target_price_6m": "6m",
+    # Note: 12m not available in current macro output
 }
 
 QUANTILES = [0.1, 0.5, 0.9]  # P10, P50, P90
@@ -176,7 +176,13 @@ def train_xgboost_for_horizon(
     logger.info(f"Test: {len(test):,} rows")
 
     # Feature columns
-    meta_cols = ["date", "symbol"]
+    meta_cols = [
+        "as_of_date",
+        "symbol",
+        "train_val_test_split",
+        "updated_at",
+        "training_weight",
+    ]
     all_targets = list(HORIZONS.keys())
     feature_cols = sorted(
         col
@@ -272,7 +278,7 @@ def load_training_data_from_motherduck(
     SELECT *
     FROM training.daily_ml_matrix_zl
     WHERE symbol = 'ZL'
-    ORDER BY date
+    ORDER BY as_of_date
     """
 
     try:
@@ -290,11 +296,13 @@ def load_training_data_from_motherduck(
     logger.info(f"Loaded {len(df):,} rows from MotherDuck")
 
     # Time-based splits
-    df["date"] = pd.to_datetime(df["date"])
+    df["as_of_date"] = pd.to_datetime(df["as_of_date"])
 
-    train_df = df[df["date"] < "2023-01-01"].copy()
-    val_df = df[(df["date"] >= "2023-01-01") & (df["date"] < "2023-07-01")].copy()
-    test_df = df[df["date"] >= "2023-07-01"].copy()
+    train_df = df[df["as_of_date"] < "2023-01-01"].copy()
+    val_df = df[
+        (df["as_of_date"] >= "2023-01-01") & (df["as_of_date"] < "2023-07-01")
+    ].copy()
+    test_df = df[df["as_of_date"] >= "2023-07-01"].copy()
 
     logger.info(f"Train: {len(train_df):,} rows (< 2023-01-01)")
     logger.info(f"Val: {len(val_df):,} rows (2023-01-01 to 2023-06-30)")

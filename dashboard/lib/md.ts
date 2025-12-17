@@ -1,26 +1,42 @@
 // MotherDuck connection for Next.js API routes
-// Uses @motherduck/wasm-client for Vercel serverless compatibility
-// DO NOT use native DuckDB - it doesn't work on Vercel!
+// Uses backend proxy API for MotherDuck queries
 
-import { MotherDuckClient } from './motherduck';
+const PROXY_URL = process.env.MOTHERDUCK_PROXY_URL || "http://localhost:8000";
 
 /**
- * Query MotherDuck using WASM client (Vercel compatible)
- * 
+ * Query MotherDuck via backend proxy API
+ *
  * @param sql SQL query to execute
  * @returns Array of row objects with column names as keys
- * 
+ *
  * @example
  * ```typescript
- * const rows = await queryMotherDuck('SELECT * FROM forecasts.zl_predictions LIMIT 10');
+ * const rows = await queryMotherDuck('SELECT * FROM raw.databento_futures_ohlcv_1d LIMIT 10');
  * ```
  */
 export async function queryMotherDuck(sql: string): Promise<Record<string, unknown>[]> {
-    try {
-        const result = await MotherDuckClient.query(sql);
-        return result.data.toRows() as Record<string, unknown>[];
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`MotherDuck query failed: ${message}`);
+  try {
+    const response = await fetch(`${PROXY_URL}/query`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sql }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || "Query failed");
+    }
+
+    return result.data;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`MotherDuck query failed: ${message}`);
+  }
 }

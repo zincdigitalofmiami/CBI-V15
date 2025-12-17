@@ -74,3 +74,5 @@ con.close()
 echo ""
 echo "To run daily automatically, add to crontab:"
 echo "0 6 * * * /Volumes/Satechi\\ Hub/CBI-V15/scripts/daily_scrapecreators_run.sh >> /tmp/scrapecreators.log 2>&1"
+
+

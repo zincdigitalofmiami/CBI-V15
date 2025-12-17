@@ -9,12 +9,14 @@
 ## 🎯 Critical Question: Is the Table Set?
 
 **After baselines, complexity skyrockets:**
+
 - Neural networks (TFT, LSTM)
 - Vast feature engineering on Mac
 - Complex calculations
 - Multi-model ensembles
 
 **We must ensure:**
+
 1. ✅ Macro data is robust and complete
 2. ✅ Calculations are algebraically sound
 3. ✅ Baseline plan is solid
@@ -30,6 +32,7 @@
 #### 1. FRED Economic Data ✅
 
 **Coverage**:
+
 - ✅ Fed Funds Rate (FEDFUNDS)
 - ✅ 10Y Treasury (DGS10)
 - ✅ Dollar Index (DTWEXBGS)
@@ -41,12 +44,14 @@
 - ✅ **Total**: 55-60 series
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Official Federal Reserve data
 - ✅ Daily/Monthly forward-filled
 - ✅ 15+ years history
 - ✅ High data quality
 
 **Gaps**: ⚠️ **MINOR**
+
 - ⚠️ Missing: Some commodity-specific series
 - ⚠️ Missing: Regional economic data (China, Brazil)
 
@@ -57,16 +62,19 @@
 #### 2. FX Data ✅
 
 **Coverage**:
+
 - ✅ BRL Futures (6L) - Databento
 - ✅ DXY Futures (DX) - Databento
 - ✅ EUR Futures (6E) - Databento (optional)
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Databento GLBX.MDP3 (CME Globex)
 - ✅ 15+ years history
 - ✅ High data quality
 
 **Gaps**: ⚠️ **MINOR**
+
 - ⚠️ Missing: Interest rate differentials (BRL-US)
 - ⚠️ Missing: Forward rates (for carry trade)
 
@@ -77,6 +85,7 @@
 #### 3. Commodity Data ✅
 
 **Coverage**:
+
 - ✅ ZL, ZS, ZM (Soy complex)
 - ✅ CL, HO (Energy)
 - ✅ FCPO (Palm Oil)
@@ -84,6 +93,7 @@
 - ✅ HG (Copper) - Phase 1.5
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Databento GLBX.MDP3
 - ✅ 15+ years history
 - ✅ High data quality
@@ -96,15 +106,15 @@
 
 ### Macro Data Completeness Score
 
-| Category | Coverage | Robustness | Status |
-|----------|----------|------------|--------|
-| **FRED Economic** | 55-60 series | ✅ Excellent | ✅ Approved |
-| **FX** | BRL, DXY, EUR | ✅ Excellent | ✅ Approved |
-| **Commodities** | 10 symbols | ✅ Excellent | ✅ Approved |
-| **Weather** | NOAA, INMET, SMN | ✅ Good | ✅ Approved |
-| **USDA** | WASDE, Exports | ✅ Good | ⚠️ Partial |
-| **CFTC** | COT Positions | ✅ Good | ⚠️ Partial |
-| **EIA** | Biofuels, RINs | ✅ Good | ⚠️ Partial |
+| Category          | Coverage         | Robustness   | Status      |
+| ----------------- | ---------------- | ------------ | ----------- |
+| **FRED Economic** | 55-60 series     | ✅ Excellent | ✅ Approved |
+| **FX**            | BRL, DXY, EUR    | ✅ Excellent | ✅ Approved |
+| **Commodities**   | 10 symbols       | ✅ Excellent | ✅ Approved |
+| **Weather**       | NOAA, INMET, SMN | ✅ Good      | ✅ Approved |
+| **USDA**          | WASDE, Exports   | ✅ Good      | ⚠️ Partial  |
+| **CFTC**          | COT Positions    | ✅ Good      | ⚠️ Partial  |
+| **EIA**           | Biofuels, RINs   | ✅ Good      | ⚠️ Partial  |
 
 **Overall**: ✅ **85% Complete** - Solid foundation
 
@@ -115,9 +125,11 @@
 ### A. Technical Indicators ✅
 
 #### Distance MAs
+
 **Formula**: `(Price / MA) - 1`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Algebraically sound
 - ✅ Stationary (normalized)
 - ✅ No division by zero issues (NULLIF protection)
@@ -127,11 +139,14 @@
 ---
 
 #### Bollinger Bands
-**Formula**: 
+
+**Formula**:
+
 - `%B = (Price - Lower) / (Upper - Lower)`
 - `Bandwidth = (Upper - Lower) / MA`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Algebraically sound
 - ✅ NULLIF protection for division by zero
 - ✅ Normalized to 0-1 range
@@ -141,9 +156,11 @@
 ---
 
 #### PPO (Percentage Price Oscillator)
+
 **Formula**: `(EMA_12 - EMA_26) / EMA_26 * 100`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Algebraically sound
 - ✅ Stationary (percentage-based)
 - ✅ NULLIF protection
@@ -153,9 +170,11 @@
 ---
 
 #### Garman-Klass Volatility
+
 **Formula**: `SQRT(0.5 * LN(H/L)^2 - (2*LN(2)-1) * LN(C/O)^2)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Academically validated
 - ✅ More efficient than close-to-close
 - ✅ NULLIF protection for division by zero
@@ -167,9 +186,11 @@
 ### B. FX Indicators ✅
 
 #### Currency Momentum
+
 **Formula**: `(Price_t / Price_{t-N}) - 1`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Algebraically sound
 - ✅ Stationary (percentage-based)
 - ✅ NULLIF protection
@@ -179,9 +200,11 @@
 ---
 
 #### Currency Volatility
+
 **Formula**: `STDDEV(Returns) * SQRT(252)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard annualization
 - ✅ Algebraically sound
 
@@ -190,9 +213,11 @@
 ---
 
 #### Correlations
+
 **Formula**: `CORR(Return1, Return2) OVER (window)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard Pearson correlation
 - ✅ Rolling windows (30d, 60d, 90d, 252d)
 - ✅ Handles NULL values
@@ -204,9 +229,11 @@
 ### C. Fundamental Spreads ✅
 
 #### Board Crush
+
 **Formula**: `(ZM * 0.022 + ZL * 11) - ZS`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard CME formula
 - ✅ Industry-validated coefficients (0.022, 11)
 - ✅ Algebraically sound
@@ -216,9 +243,11 @@
 ---
 
 #### Oil Share
+
 **Formula**: `(ZL * 11) / Board_Crush_Value`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard industry metric
 - ✅ NULLIF protection for division by zero
 - ✅ Algebraically sound
@@ -228,9 +257,11 @@
 ---
 
 #### Hog Spread
+
 **Formula**: `HE - (0.8 * ZC + 0.2 * ZM)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard livestock economics
 - ✅ Industry-validated coefficients (0.8, 0.2)
 - ✅ Algebraically sound
@@ -240,9 +271,11 @@
 ---
 
 #### BOHO Spread
+
 **Formula**: `(ZL/100 * 7.5) - HO`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard biodiesel arbitrage
 - ✅ Unit conversion validated (cents/lb → $/gal)
 - ✅ Algebraically sound
@@ -252,9 +285,11 @@
 ---
 
 #### China Pulse
+
 **Formula**: `CORR(HG_Returns, ZS_Returns, 60d)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard correlation
 - ✅ Academically validated (copper as China proxy)
 - ✅ Algebraically sound
@@ -266,9 +301,11 @@
 ### D. Cross-Asset Features ✅
 
 #### Pair Correlations
+
 **Formula**: `CORR(Return1, Return2) OVER (window)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard Pearson correlation
 - ✅ All 28 pairs computed
 - ✅ Multiple horizons (30d, 60d, 90d, 252d)
@@ -278,9 +315,11 @@
 ---
 
 #### Cross-Asset Betas
+
 **Formula**: `COV(ZL, Asset) / VAR(Asset)`
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Standard beta calculation
 - ✅ NULLIF protection for division by zero
 - ✅ Multiple horizons (30d, 60d, 90d, 252d)
@@ -291,11 +330,11 @@
 
 ### Calculation Robustness Score
 
-| Category | Robustness | Status |
-|----------|------------|--------|
+| Category                 | Robustness   | Status      |
+| ------------------------ | ------------ | ----------- |
 | **Technical Indicators** | ✅ Excellent | ✅ Approved |
-| **FX Indicators** | ✅ Excellent | ✅ Approved |
-| **Fundamental Spreads** | ✅ Excellent | ✅ Approved |
+| **FX Indicators**        | ✅ Excellent | ✅ Approved |
+| **Fundamental Spreads**  | ✅ Excellent | ✅ Approved |
 | **Cross-Asset Features** | ✅ Excellent | ✅ Approved |
 
 **Overall**: ✅ **100% Robust** - All calculations are algebraically sound
@@ -308,17 +347,20 @@
 
 > **Note:** The LightGBM/TFT-centric baseline plan below predates the decision to standardize on **AutoGluon 1.4** as the modeling framework.  
 > In V15.1, these baselines are **optional reference benchmarks only**; the production stack is:
+>
 > - Big 8 buckets → AutoGluon `TabularPredictor`
 > - Core ZL → AutoGluon `TimeSeriesPredictor`
 > - Meta + ensemble → AutoGluon stacking + `WeightedEnsemble_L2`
 
 **Models**:
+
 - ✅ LightGBM regression per horizon (1w, 1m, 3m, 6m)
 - ✅ Price levels (not returns)
 - ✅ Train/Val/Test splits (fixed dates)
 - ✅ Regime weighting
 
 **Features**:
+
 - ✅ Technical indicators (19 features)
 - ✅ FX indicators (16 features)
 - ✅ Fundamental spreads (4 features)
@@ -328,6 +370,7 @@
 - **Total**: ~275 features pre-computed in DuckDB/MotherDuck
 
 **Robustness**: ✅ **EXCELLENT**
+
 - ✅ Industry-standard model (LightGBM)
 - ✅ Proper train/val/test splits
 - ✅ Regime weighting
@@ -340,11 +383,13 @@
 #### Phase 2: Advanced Models (After Baselines) ⚠️
 
 **Models**:
+
 - ⚠️ Temporal Fusion Transformer (TFT)
 - ⚠️ LSTM
 - ⚠️ Ensemble models
 
 **Complexity Explosion**:
+
 - ⚠️ Vast feature engineering on Mac
 - ⚠️ Complex calculations
 - ⚠️ Multi-model ensembles
@@ -359,6 +404,7 @@
 ### Pre-Baseline Checklist
 
 #### ✅ Macro Data
+
 - ✅ FRED: 55-60 series (complete)
 - ✅ FX: BRL, DXY (complete)
 - ✅ Commodities: 10 symbols (complete)
@@ -372,6 +418,7 @@
 ---
 
 #### ✅ Calculations
+
 - ✅ Technical indicators: 100% robust
 - ✅ FX indicators: 100% robust
 - ✅ Fundamental spreads: 100% robust
@@ -382,6 +429,7 @@
 ---
 
 #### ✅ DuckDB/MotherDuck Pre-Compute
+
 - ✅ Technical indicators: 19 features
 - ✅ FX indicators: 16 features
 - ✅ Fundamental spreads: 4 features
@@ -395,6 +443,7 @@
 ---
 
 #### ✅ Baseline Plan
+
 - ✅ LightGBM models per horizon
 - ✅ Proper train/val/test splits
 - ✅ Regime weighting
@@ -407,13 +456,13 @@
 
 ### Foundation Readiness Score
 
-| Component | Score | Status |
-|-----------|-------|--------|
-| **Macro Data** | 85% | ✅ Solid |
-| **Calculations** | 100% | ✅ Robust |
-| **DuckDB/MotherDuck Pre-Compute** | 80% | ✅ Excellent |
-| **Baseline Plan** | 100% | ✅ Solid |
-| **Overall** | **91%** | ✅ **READY** |
+| Component                         | Score   | Status       |
+| --------------------------------- | ------- | ------------ |
+| **Macro Data**                    | 85%     | ✅ Solid     |
+| **Calculations**                  | 100%    | ✅ Robust    |
+| **DuckDB/MotherDuck Pre-Compute** | 80%     | ✅ Excellent |
+| **Baseline Plan**                 | 100%    | ✅ Solid     |
+| **Overall**                       | **91%** | ✅ **READY** |
 
 ---
 
@@ -426,6 +475,7 @@
 **Current**: Partial (WASDE, exports)
 
 **Missing**:
+
 - ⚠️ Crop Progress (weekly)
 - ⚠️ Export Sales Reports (weekly)
 - ⚠️ Supply/Demand Tables (monthly)
@@ -441,6 +491,7 @@
 **Current**: Partial (COT positions)
 
 **Missing**:
+
 - ⚠️ Managed Money positions (ZL-specific)
 - ⚠️ Commercial positions
 - ⚠️ Small Speculator positions
@@ -456,6 +507,7 @@
 **Current**: Partial (biofuels, RINs)
 
 **Missing**:
+
 - ⚠️ D4/D6 RIN prices (daily)
 - ⚠️ Biodiesel production (weekly)
 - ⚠️ RFS mandate volumes (annual)
@@ -493,22 +545,26 @@
 ### Before Moving to Neural Networks
 
 #### ✅ Data Foundation
+
 - ✅ Macro data: 85% complete (solid)
 - ✅ Calculations: 100% robust
 - ✅ DuckDB/MotherDuck pre-compute: 80% (excellent)
 
 #### ✅ Baseline Foundation
+
 - ✅ LightGBM models: Planned
 - ✅ Feature engineering: Pre-computed
 - ✅ Train/Val/Test splits: Defined
 - ✅ Regime weighting: Implemented
 
 #### ⚠️ Gaps to Fill
+
 - ⚠️ USDA: Complete ingestion (medium priority)
 - ⚠️ CFTC: Complete ingestion (medium priority)
 - ⚠️ EIA: Complete ingestion (medium priority)
 
 #### ✅ Mac Training Pipeline
+
 - ✅ Data export from DuckDB/MotherDuck
 - ✅ LightGBM training scripts
 - ✅ Model evaluation
@@ -521,6 +577,7 @@
 ### After Baselines: Complexity Explosion
 
 **What Happens**:
+
 - Neural networks (TFT, LSTM)
 - Vast feature engineering on Mac
 - Complex calculations
@@ -533,6 +590,7 @@
 ### Strategy: Maximize DuckDB/MotherDuck Pre-Compute
 
 #### Current Pre-Compute (80%)
+
 - ✅ Technical indicators: 19 features
 - ✅ FX indicators: 16 features
 - ✅ Fundamental spreads: 4 features
@@ -542,6 +600,7 @@
 - **Total**: ~275 features
 
 #### Additional Pre-Compute (Can Add)
+
 - ⚠️ Rolling statistics: ~50 features
 - ⚠️ Feature interactions: ~20 features
 - ⚠️ Factor loadings: ~10 features
@@ -549,6 +608,7 @@
 - **Total**: ~90 additional features
 
 #### Target Pre-Compute (90%)
+
 - **Total**: ~365 features pre-computed in DuckDB/MotherDuck
 - **Mac Compute Reduction**: ~85% (from ~500 to ~75 features)
 
@@ -557,6 +617,7 @@
 ### Mac Training Pipeline (After Baselines)
 
 #### What Mac Will Do (Minimal)
+
 1. ✅ Export training data from DuckDB/MotherDuck (~365 features)
 2. ✅ Train LightGBM models (baseline)
 3. ✅ Train TFT models (advanced)
@@ -565,6 +626,7 @@
 6. ✅ Upload predictions to DuckDB/MotherDuck
 
 #### What Mac Won't Do (Pre-Computed)
+
 - ❌ Feature engineering (done in DuckDB/MotherDuck)
 - ❌ Correlations (done in DuckDB/MotherDuck)
 - ❌ Betas (done in DuckDB/MotherDuck)
@@ -578,12 +640,14 @@
 ### Foundation Readiness: ✅ **91% READY**
 
 **Strengths**:
+
 - ✅ Macro data: 85% complete (solid)
 - ✅ Calculations: 100% robust
 - ✅ DuckDB/MotherDuck pre-compute: 80% (excellent)
 - ✅ Baseline plan: 100% solid
 
 **Gaps**:
+
 - ⚠️ USDA: Complete ingestion (medium priority)
 - ⚠️ CFTC: Complete ingestion (medium priority)
 - ⚠️ EIA: Complete ingestion (medium priority)
@@ -597,6 +661,7 @@ The foundation is solid. We can proceed with baseline training while completing 
 ## 🎯 Action Items
 
 ### Before Baseline Training
+
 1. ✅ Complete USDA ingestion (WASDE, crop progress, exports)
 2. ✅ Complete CFTC ingestion (managed money positions)
 3. ✅ Complete EIA ingestion (RIN prices, biodiesel production)
@@ -604,12 +669,14 @@ The foundation is solid. We can proceed with baseline training while completing 
 5. ✅ Test DuckDB/MotherDuck pre-compute (feature export)
 
 ### During Baseline Training
+
 1. ✅ Monitor feature quality (nulls, outliers)
 2. ✅ Validate train/val/test splits
 3. ✅ Track model performance (MAE, R²)
 4. ✅ Document any issues
 
 ### After Baseline Training
+
 1. ✅ Review baseline performance
 2. ✅ Identify feature gaps
 3. ✅ Plan advanced models (TFT, LSTM)

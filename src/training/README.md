@@ -3,9 +3,11 @@
 > Fast-moving workspace: read `docs/architecture/MASTER_PLAN.md`, `AGENTS.md`, and the active master plan `.cursor/plans/ALL_PHASES_INDEX.md` before editing/adding training code. Avoid duplicate scripts; keep explorer clean.
 
 ## Purpose
+
 Model training code - baseline models, training utilities, validation schemas.
 
 ## Structure
+
 ```
 training/
 ├── baselines/       # Baseline model implementations
@@ -15,21 +17,25 @@ training/
 ```
 
 ## What Belongs Here
+
 - Model training code
 - Hyperparameter tuning utilities
 - Cross-validation helpers
 - Model evaluation code
 
 ## What Does NOT Belong Here
+
 - Training configuration (→ `config/training/`)
 - Model artifacts (→ cloud storage or `models/`)
 - Feature engineering (→ `src/features/`)
 
 ## Relationship to Orchestration
+
 - V15.1: AutoGluon-based training scripts are the canonical modeling path.
 - AutoGluon is optional/legacy; it may call these scripts for experimentation, but it is not required for production training.
 
 ## Current Models
+
 - `baselines/lightgbm_zl.py` - LightGBM baseline for ZL (Soybean Oil)
 - `autogluon/mitra_trainer.py` - Mitra time series foundation model (Metal/MPS accelerated for Mac M4)
 - `autogluon/timeseries_trainer.py` - TimeSeriesPredictor wrapper with Mitra fallback
@@ -53,6 +59,7 @@ Training code must respect the Big 8 modeling stack:
 **Why**: Alternative to Chronos-Bolt which hangs on Mac M4 (mutex lock issue)
 
 **Usage**:
+
 ```python
 from src.training.autogluon.mitra_trainer import MitraForecastWrapper
 
@@ -69,14 +76,16 @@ forecasts = mitra.predict(time_series_data)
 ```
 
 **Requirements**:
+
 - `mitra-forecast>=0.1.0` (in requirements.txt)
 - `torch>=2.0.0` with MPS support (Mac M4)
 - macOS 13.0+ (Ventura or newer)
 
 **Performance**:
+
 - ✅ Works well for inference and probabilistic forecasts
 - ✅ Metal acceleration provides good performance on Mac M4
-- ⚠️  Not suitable for heavy fine-tuning (use AutoGluon TabularPredictor instead)
+- ⚠️ Not suitable for heavy fine-tuning (use AutoGluon TabularPredictor instead)
 
 ## Engineering Agent Prompt (Codex/Cursor)
 

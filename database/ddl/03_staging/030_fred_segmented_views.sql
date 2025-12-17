@@ -248,3 +248,5 @@ UNION ALL SELECT * FROM staging.fred_agriculture
 UNION ALL SELECT * FROM staging.fred_china_proxy
 UNION ALL SELECT * FROM staging.fred_macro
 UNION ALL SELECT * FROM staging.fred_equity_indices;
+
+
