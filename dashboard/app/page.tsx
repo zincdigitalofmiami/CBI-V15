@@ -174,38 +174,31 @@ export default function ZLChart() {
         </div>
       </div>
 
-      {/* Full-screen chart (price + forecast lines) */}
-      <div className="relative flex-1 min-h-[72vh]">
-        {/* Massive ZL chart (always renders, CDN embed) */}
-        <div className="absolute top-6 left-6 z-10 rounded-2xl border border-white/10 bg-black/20 backdrop-blur-xl px-3 py-2 text-[11px] text-zinc-400 font-extralight">
-          {loading ? "Loading data…" : lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : "—"}
-        </div>
-
-        <div className="h-full w-full">
-          <TradingViewWidget
-            scriptSrc="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js"
-            config={{
-              symbols: [["CBOT:ZL1!", "ZL Soybean Oil"]],
-              chartOnly: true,
-              locale: "en",
-              colorTheme: "dark",
-              isTransparent: true,
-              autosize: true,
-              showVolume: false,
-              hideDateRanges: false,
-              hideMarketStatus: false,
-              hideSymbolLogo: false,
-              scalePosition: "right",
-              scaleMode: "Normal",
-              noTimeScale: false,
-              valuesTracking: "1",
-              changeMode: "price-and-percent",
-              chartType: "area",
-              lineWidth: 2,
-            }}
-            height="78vh"
-          />
-        </div>
+      {/* Full-screen Advanced Chart - real live data */}
+      <div className="flex-1 w-full" style={{ height: "75vh" }}>
+        <TradingViewWidget
+          scriptSrc="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
+          config={{
+            symbol: "CBOT:ZL1!",
+            interval: "D",
+            timezone: "America/Chicago",
+            theme: "dark",
+            style: "1",
+            locale: "en",
+            allow_symbol_change: true,
+            calendar: false,
+            support_host: "https://www.tradingview.com",
+            hide_side_toolbar: false,
+            withdateranges: true,
+            details: true,
+            hotlist: false,
+            show_popup_button: true,
+            popup_width: "1000",
+            popup_height: "650",
+          }}
+          height="100%"
+          width="100%"
+        />
       </div>
 
       {/* TradingView widget rail (fast, CDN-served embeds) */}
