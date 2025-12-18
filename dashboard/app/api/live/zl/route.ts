@@ -1,39 +1,56 @@
 import { NextResponse } from "next/server";
-import { queryMotherDuck } from "@/lib/md";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Yahoo Finance symbol for Soybean Oil Futures
+const YAHOO_SYMBOL = "ZL=F";
+
 export async function GET() {
   try {
-    // Query MotherDuck for ZL OHLCV data
-    const sql = `
-      SELECT 
-        symbol,
-        as_of_date::VARCHAR as date,
-        open,
-        high,
-        low,
-        close,
-        volume
-      FROM raw.databento_futures_ohlcv_1d 
-      WHERE symbol = 'ZL' 
-      ORDER BY as_of_date DESC 
-      LIMIT 365
-    `;
+    // Yahoo Finance API - free, no auth needed
+    const now = Math.floor(Date.now() / 1000);
+    const oneYearAgo = now - 365 * 24 * 60 * 60;
+    
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${YAHOO_SYMBOL}?period1=${oneYearAgo}&period2=${now}&interval=1d`;
+    
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; CBI-V15/1.0)",
+      },
+    });
 
-    const rows = await queryMotherDuck(sql);
+    if (!resp.ok) {
+      throw new Error(`Yahoo Finance error: ${resp.status}`);
+    }
 
-    // Reverse to get chronological order
-    const sortedRows = rows.reverse();
+    const json = await resp.json();
+    const result = json?.chart?.result?.[0];
+    
+    if (!result) {
+      throw new Error("No data from Yahoo Finance");
+    }
+
+    const timestamps = result.timestamp || [];
+    const quote = result.indicators?.quote?.[0] || {};
+    const { open, high, low, close, volume } = quote;
+
+    const rows = timestamps.map((ts: number, i: number) => ({
+      date: new Date(ts * 1000).toISOString().slice(0, 10),
+      open: open?.[i] ?? null,
+      high: high?.[i] ?? null,
+      low: low?.[i] ?? null,
+      close: close?.[i] ?? null,
+      volume: volume?.[i] ?? null,
+    })).filter((r: { close: number | null }) => r.close !== null);
 
     return NextResponse.json({
       success: true,
-      data: sortedRows,
-      count: sortedRows.length,
+      data: rows,
+      count: rows.length,
       symbol: "ZL",
-      source: "MotherDuck",
+      source: "Yahoo Finance",
       timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
