@@ -17,6 +17,7 @@ Target: raw.scrapecreators_news_buckets + raw.scrapecreators_trump
 import hashlib
 import os
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
@@ -38,6 +39,9 @@ REDDIT_ENDPOINT = "https://api.scrapecreators.com/v1/reddit/search"
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[3]
 RAW_DDL_PATH = PROJECT_ROOT / "database" / "ddl" / "02_raw" / "080_raw_news_articles.sql"
+OPS_DDL_PATH = (
+    PROJECT_ROOT / "database" / "ddl" / "07_ops" / "010_ops_ingestion_completion.sql"
+)
 
 
 # ============================================================================
@@ -436,6 +440,13 @@ def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
     ddl_sql = RAW_DDL_PATH.read_text(encoding="utf-8")
     con.execute(ddl_sql)
 
+def ensure_ops_tables(con: duckdb.DuckDBPyConnection) -> None:
+    """Ensure ops ingestion tracking tables exist in the target database."""
+    if not OPS_DDL_PATH.exists():
+        raise FileNotFoundError(f"Missing required DDL file: {OPS_DDL_PATH}")
+    ddl_sql = OPS_DDL_PATH.read_text(encoding="utf-8")
+    con.execute(ddl_sql)
+
 
 def connect_motherduck() -> duckdb.DuckDBPyConnection:
     """Connect to MotherDuck with small retries to handle transient network issues."""
@@ -447,6 +458,7 @@ def connect_motherduck() -> duckdb.DuckDBPyConnection:
         try:
             con = duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}")
             ensure_raw_tables(con)
+            ensure_ops_tables(con)
             return con
         except Exception as e:
             last_error = e
@@ -456,6 +468,62 @@ def connect_motherduck() -> duckdb.DuckDBPyConnection:
 
     raise RuntimeError(f"Could not connect to MotherDuck after retries: {last_error}")
 
+def log_ingestion_completion(
+    *,
+    con: duckdb.DuckDBPyConnection,
+    source: str,
+    status: str,
+    row_count: int | None,
+    started_at: datetime,
+    completed_at: datetime,
+    start_date=None,
+    end_date=None,
+    error_message: str | None = None,
+) -> None:
+    """Insert an ingestion completion record into ops.ingestion_completion (best-effort)."""
+    try:
+        run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("GITHUB_RUN_NUMBER") or "local"
+        job_name = os.getenv("GITHUB_WORKFLOW") or "scrapecreators"
+
+        ingestion_id = str(uuid.uuid4())
+        duration_seconds = max(0.0, (completed_at - started_at).total_seconds())
+
+        con.execute(
+            """
+            INSERT INTO ops.ingestion_completion (
+              ingestion_id,
+              source,
+              job_name,
+              run_id,
+              start_date,
+              end_date,
+              row_count,
+              status,
+              error_message,
+              started_at,
+              completed_at,
+              duration_seconds
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            [
+                ingestion_id,
+                source,
+                job_name,
+                str(run_id),
+                start_date,
+                end_date,
+                row_count,
+                status,
+                error_message,
+                started_at,
+                completed_at,
+                duration_seconds,
+            ],
+        )
+    except Exception as e:
+        print(f"[ops] Failed to log ingestion completion ({source}): {e}")
+
 
 def load_news_to_motherduck(rows: List[Dict[str, Any]]) -> int:
     """Load rows to MotherDuck raw.scrapecreators_news_buckets (idempotent)."""
@@ -463,6 +531,8 @@ def load_news_to_motherduck(rows: List[Dict[str, Any]]) -> int:
         return 0
 
     con = connect_motherduck()
+
+    before = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_news_buckets").fetchone()[0]
 
     df = pd.DataFrame(rows)
     con.register("temp_data", df)
@@ -509,11 +579,9 @@ def load_news_to_motherduck(rows: List[Dict[str, Any]]) -> int:
     """,
     )
 
-    count = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_news_buckets").fetchone()[
-        0
-    ]
+    after = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_news_buckets").fetchone()[0]
     con.close()
-    return count
+    return max(0, int(after) - int(before))
 
 
 def load_trump_to_motherduck(rows: List[Dict[str, Any]]) -> int:
@@ -522,6 +590,8 @@ def load_trump_to_motherduck(rows: List[Dict[str, Any]]) -> int:
         return 0
 
     con = connect_motherduck()
+
+    before = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_trump").fetchone()[0]
 
     df = pd.DataFrame(rows)
     con.register("temp_data", df)
@@ -552,9 +622,9 @@ def load_trump_to_motherduck(rows: List[Dict[str, Any]]) -> int:
     """,
     )
 
-    count = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_trump").fetchone()[0]
+    after = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_trump").fetchone()[0]
     con.close()
-    return count
+    return max(0, int(after) - int(before))
 
 
 def main():

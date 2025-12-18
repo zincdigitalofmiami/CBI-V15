@@ -53,6 +53,9 @@ export async function GET() {
   try {
     const key = getDatabentoKey();
     if (!key) throw new Error("DATABENTO_API_KEY not set");
+    
+    // Debug: show key prefix to verify it's being read
+    const keyPreview = key.slice(0, 5) + "..." + key.slice(-3);
 
     // Databento Historical REST (daily OHLCV). Used on Vercel because MotherDuck WASM
     // client requires Worker APIs that are not available in Edge runtimes.
@@ -70,13 +73,13 @@ export async function GET() {
       map_symbols: true,
     };
 
-    // Databento uses Basic auth with API key as username, empty password
-    const basicAuth = btoa(`${key}:`);
+    // Clean the key (remove any quotes/whitespace that might be in env var)
+    const cleanKey = key.trim().replace(/^["']|["']$/g, "");
     
     const resp = await fetch("https://hist.databento.com/v0/timeseries.get_range", {
       method: "POST",
       headers: {
-        Authorization: `Basic ${basicAuth}`,
+        Authorization: `Basic ${btoa(cleanKey + ":")}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -88,9 +91,9 @@ export async function GET() {
       try {
         const j = JSON.parse(text) as Record<string, unknown>;
         const detail = typeof j["detail"] === "string" ? j["detail"] : JSON.stringify(j).slice(0, 500);
-        throw new Error(`Databento error (${resp.status}): ${detail}`);
+        throw new Error(`Databento error (${resp.status}) [key: ${keyPreview}]: ${detail}`);
       } catch {
-        throw new Error(`Databento error (${resp.status}): ${text.slice(0, 500)}`);
+        throw new Error(`Databento error (${resp.status}) [key: ${keyPreview}]: ${text.slice(0, 500)}`);
       }
     }
 
