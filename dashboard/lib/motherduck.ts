@@ -48,9 +48,12 @@ export class MotherDuckClient {
    */
   public static async getConnection(): Promise<MDConnection> {
     if (!MotherDuckClient.instance) {
-      const token = process.env.MOTHERDUCK_TOKEN;
+      const token =
+        process.env.MOTHERDUCK_TOKEN || process.env.motherduck_storage_MOTHERDUCK_TOKEN;
       if (!token) {
-        throw new Error("MOTHERDUCK_TOKEN is not defined in environment variables");
+        throw new Error(
+          "MotherDuck token is not defined (expected MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN)",
+        );
       }
 
       try {

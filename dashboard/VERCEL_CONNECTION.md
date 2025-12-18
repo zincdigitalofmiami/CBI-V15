@@ -143,7 +143,7 @@ vercel --prod
 
 ### GitHub Integration
 
-Push to `main` branch triggers automatic deployment.
+Push to `main` branch starts automatic deployment.
 
 ## Related Files
 

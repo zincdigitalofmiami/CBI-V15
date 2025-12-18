@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useMemo, useState } from "react";
 
 const HeatmapEmbed = dynamic(
   () => import("@/app/components/visualizations/tradingview-widgets/HeatmapEmbed"),
@@ -10,6 +11,11 @@ const HeatmapEmbed = dynamic(
 const TechnicalGaugeWidget = dynamic(
   () => import("@/app/components/visualizations/tradingview-widgets/TechnicalGaugeWidget"),
   { ssr: false, loading: () => <WidgetLoader height={300} /> },
+);
+
+const TradingViewWidget = dynamic(
+  () => import("@/app/components/visualizations/tradingview-widgets/TradingViewWidget"),
+  { ssr: false, loading: () => <WidgetLoader height={520} /> },
 );
 
 function WidgetLoader({ height = 300 }: { height?: number }) {
@@ -24,6 +30,46 @@ function WidgetLoader({ height = 300 }: { height?: number }) {
 }
 
 export default function SentimentPage() {
+  const [macroTab, setMacroTab] = useState<"global" | "growth" | "trade">("global");
+
+  const macroSymbols = useMemo(() => {
+    const global: [string, string][] = [
+      ["FRED:UNRATE", "US Unemployment"],
+      ["FRED:CPIAUCSL", "US CPI"],
+      ["FRED:DGS10", "US 10Y"],
+      ["FRED:DFF", "Fed Funds"],
+      ["FRED:VIXCLS", "VIX"],
+      ["FRED:DTWEXBGS", "USD Broad"],
+    ];
+
+    // “Growth” proxy panel using TradingView ECONOMICS symbols shown on the GDP growth heatmap list.
+    // Source: https://www.tradingview.com/markets/world-economy/charts-growth/
+    const growth: [string, string][] = [
+      ["ECONOMICS:USGDPYY", "USA GDP YoY"],
+      ["ECONOMICS:CNGDPYY", "China GDP YoY"],
+      ["ECONOMICS:DEGDPYY", "Germany GDP YoY"],
+      ["ECONOMICS:JPGDPYY", "Japan GDP YoY"],
+      ["ECONOMICS:INGDPYY", "India GDP YoY"],
+      ["ECONOMICS:GBGDPYY", "UK GDP YoY"],
+      ["ECONOMICS:FRGDPYY", "France GDP YoY"],
+      ["ECONOMICS:ITGDPYY", "Italy GDP YoY"],
+      ["ECONOMICS:CAGDPYY", "Canada GDP YoY"],
+      ["ECONOMICS:BRGDPYY", "Brazil GDP YoY"],
+    ];
+
+    // “Trade & capital” proxy panel (using series we already track + FX macro)
+    const trade: [string, string][] = [
+      ["FRED:DTWEXBGS", "USD Trade-Weighted"],
+      ["FRED:DEXCHUS", "CNY/USD"],
+      ["FRED:DEXBZUS", "BRL/USD"],
+      ["FRED:DCOILWTICO", "WTI"],
+      ["CBOT:ZL1!", "ZL"],
+      ["NYMEX:CL1!", "CL"],
+    ];
+
+    return macroTab === "global" ? global : macroTab === "growth" ? growth : trade;
+  }, [macroTab]);
+
   const buckets = [
     { id: "crush", name: "Crush", desc: "ZL/ZS/ZM spreads", color: "bg-amber-500" },
     { id: "china", name: "China", desc: "Demand proxy", color: "bg-red-500" },
@@ -43,8 +89,105 @@ export default function SentimentPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-black p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-[#070a12] px-10 py-10">
+      <div className="max-w-screen-2xl mx-auto">
+        {/* World economy hero (full width) */}
+        <section className="mb-10 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-md overflow-hidden">
+          <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-white text-2xl font-thin tracking-wide">World Economy</div>
+              <div className="text-xs text-zinc-500 font-extralight mt-1">
+                Mirrors TradingView “Global trends” + “Trade & capital” views.
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <a
+                href="https://www.tradingview.com/markets/world-economy/charts-global-trends/"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 rounded-xl text-sm font-extralight border border-white/10 bg-black/20 text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                Global trends
+              </a>
+              <a
+                href="https://www.tradingview.com/markets/world-economy/charts-growth/"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 rounded-xl text-sm font-extralight border border-white/10 bg-black/20 text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                Growth
+              </a>
+              <a
+                href="https://www.tradingview.com/markets/world-economy/charts-trade-and-capital/"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 rounded-xl text-sm font-extralight border border-white/10 bg-black/20 text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                Trade & capital
+              </a>
+              <div className="w-px h-6 bg-white/10 mx-1" />
+              <button
+                onClick={() => setMacroTab("global")}
+                className={
+                  "px-3 py-1.5 rounded-xl text-sm font-extralight transition-colors " +
+                  (macroTab === "global" ? "bg-white/10 text-white" : "text-zinc-400 hover:text-zinc-200")
+                }
+              >
+                Global
+              </button>
+              <button
+                onClick={() => setMacroTab("growth")}
+                className={
+                  "px-3 py-1.5 rounded-xl text-sm font-extralight transition-colors " +
+                  (macroTab === "growth" ? "bg-white/10 text-white" : "text-zinc-400 hover:text-zinc-200")
+                }
+              >
+                Growth
+              </button>
+              <button
+                onClick={() => setMacroTab("trade")}
+                className={
+                  "px-3 py-1.5 rounded-xl text-sm font-extralight transition-colors " +
+                  (macroTab === "trade" ? "bg-white/10 text-white" : "text-zinc-400 hover:text-zinc-200")
+                }
+              >
+                Trade & capital
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4">
+            <TradingViewWidget
+              scriptSrc="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js"
+              config={{
+                symbols: macroSymbols,
+                chartOnly: true,
+                width: "100%",
+                height: "100%",
+                locale: "en",
+                colorTheme: "dark",
+                autosize: true,
+                showVolume: false,
+                showMA: false,
+                hideDateRanges: false,
+                hideMarketStatus: false,
+                hideSymbolLogo: false,
+                scalePosition: "right",
+                scaleMode: "Normal",
+                fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
+                fontSize: "11",
+                noTimeScale: false,
+                valuesTracking: "1",
+                changeMode: "price-and-percent",
+                chartType: "area",
+                lineWidth: 2,
+              }}
+              height={560}
+            />
+          </div>
+        </section>
+
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">

@@ -1,6 +1,8 @@
 "use client";
 
+import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
+import { cbiTextWatermarkOptions } from "../../../../components/charts/plugins/watermark";
 
 interface LivePriceMiniProps {
   data: { time: number; value: number }[];
@@ -17,6 +19,7 @@ export default function LivePriceMini({
 }: LivePriceMiniProps) {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
+  const toUtc = (t: number) => t as UTCTimestamp;
 
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => a.time - b.time);
@@ -28,12 +31,12 @@ export default function LivePriceMini({
     let chart: any;
     let lineSeries: any;
 
-    import("lightweight-charts").then(({ createChart }) => {
+    import("lightweight-charts").then(({ createChart, ColorType, LineSeries, createTextWatermark }) => {
       if (!chartContainerRef.current) return;
 
       chart = createChart(chartContainerRef.current, {
         layout: {
-          background: { color: "transparent" },
+          background: { type: ColorType.Solid, color: "transparent" },
           textColor: "#6b7280",
         },
         grid: {
@@ -55,7 +58,10 @@ export default function LivePriceMini({
         },
       });
 
-      lineSeries = chart.addLineSeries({
+      const panes = chart.panes();
+      if (panes.length > 0) createTextWatermark(panes[0], cbiTextWatermarkOptions({ line2: "LIVE" }));
+
+      lineSeries = chart.addSeries(LineSeries, {
         color: lineColor,
         lineWidth: 2,
         lineStyle: 0,
@@ -63,7 +69,9 @@ export default function LivePriceMini({
         lastValueVisible: false,
       });
 
-      lineSeries.setData(sortedData);
+      lineSeries.setData(
+        sortedData.map((p) => ({ time: toUtc(p.time), value: p.value })) as LineData<UTCTimestamp>[],
+      );
       chart.timeScale().fitContent();
 
       chartRef.current = chart;

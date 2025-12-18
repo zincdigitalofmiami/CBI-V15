@@ -1,6 +1,8 @@
 "use client";
 
+import type { LineData, UTCTimestamp } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
+import { cbiTextWatermarkOptions } from "./plugins/watermark";
 
 type PricePoint = { time: number; value: number };
 type ForecastPoint = { time: number; q10: number; q50: number; q90: number };
@@ -13,10 +15,23 @@ type Props = {
 export default function ForecastFanChart({ price, forecasts }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const toUtc = (t: number) => t as UTCTimestamp;
+
+  const asEpochSec = (d: unknown): number => {
+    // supports: Date | string | { value: string } (MotherDuck-style)
+    if (d instanceof Date) return Math.floor(d.getTime() / 1000);
+    if (typeof d === "string") return Math.floor(new Date(d).getTime() / 1000);
+    if (typeof d === "object" && d !== null && "value" in d) {
+      const v = (d as { value?: unknown }).value;
+      if (typeof v === "string") return Math.floor(new Date(v).getTime() / 1000);
+    }
+    return NaN;
+  };
+
   const priceSeries: PricePoint[] = useMemo(
     () =>
       price.map((d) => ({
-        time: Math.floor(new Date((d as any).date?.value || d.date).getTime() / 1000),
+        time: asEpochSec(d.date),
         value: d.close,
       })),
     [price],
@@ -38,14 +53,14 @@ export default function ForecastFanChart({ price, forecasts }: Props) {
   useEffect(() => {
     if (!containerRef.current || priceSeries.length === 0) return;
 
-    let chart: any;
-    let handleResize: () => void;
+    let chart: any = null;
+    let handleResize: (() => void) | null = null;
 
-    import("lightweight-charts").then(({ createChart }) => {
+    import("lightweight-charts").then(({ createChart, ColorType, LineSeries, createTextWatermark }) => {
       if (!containerRef.current) return;
 
       chart = createChart(containerRef.current, {
-        layout: { background: { color: "#0a0e1a" }, textColor: "#9ca3af" },
+        layout: { background: { type: ColorType.Solid, color: "#0a0e1a" }, textColor: "#9ca3af" },
         grid: { vertLines: { color: "#1f2937" }, horzLines: { color: "#1f2937" } },
         rightPriceScale: { borderVisible: false },
         timeScale: { borderVisible: false, secondsVisible: false },
@@ -53,18 +68,27 @@ export default function ForecastFanChart({ price, forecasts }: Props) {
         handleScale: true,
       });
 
-      const priceLine = chart.addLineSeries({ color: "#e5e7eb", lineWidth: 2.0 });
-      priceLine.setData(priceSeries);
+      const panes = chart?.panes?.() ?? [];
+      if (Array.isArray(panes) && panes.length > 0) {
+        createTextWatermark(panes[0] as never, cbiTextWatermarkOptions({ line2: "FORECAST FAN" }));
+      }
+
+      const priceLine = (chart as any).addSeries(LineSeries, { color: "#e5e7eb", lineWidth: 2 });
+      priceLine.setData(
+        priceSeries
+          .filter((p) => Number.isFinite(p.time) && Number.isFinite(p.value))
+          .map((p) => ({ time: toUtc(p.time), value: p.value })) as LineData<UTCTimestamp>[],
+      );
 
       // Forecast lines (future only)
       if (futureSeries.length > 0) {
-        const q50Line = chart.addLineSeries({ color: "#22c55e", lineWidth: 2, lineStyle: 0 });
-        const q10Line = chart.addLineSeries({
+        const q50Line = (chart as any).addSeries(LineSeries, { color: "#22c55e", lineWidth: 2, lineStyle: 0 });
+        const q10Line = (chart as any).addSeries(LineSeries, {
           color: "rgba(34,197,94,0.35)",
           lineWidth: 1,
           lineStyle: 1,
         });
-        const q90Line = chart.addLineSeries({
+        const q90Line = (chart as any).addSeries(LineSeries, {
           color: "rgba(34,197,94,0.35)",
           lineWidth: 1,
           lineStyle: 1,
@@ -85,18 +109,17 @@ export default function ForecastFanChart({ price, forecasts }: Props) {
           ...futureSeries.map((p) => ({ time: p.time, value: p.q90 })),
         ];
 
-        q50Line.setData(q50);
-        q10Line.setData(q10);
-        q90Line.setData(q90);
+        q50Line.setData(q50.map((p) => ({ time: toUtc(p.time), value: p.value })) as LineData<UTCTimestamp>[]);
+        q10Line.setData(q10.map((p) => ({ time: toUtc(p.time), value: p.value })) as LineData<UTCTimestamp>[]);
+        q90Line.setData(q90.map((p) => ({ time: toUtc(p.time), value: p.value })) as LineData<UTCTimestamp>[]);
       }
 
       handleResize = () => {
-        if (containerRef.current && chart) {
-          chart.applyOptions({
-            width: containerRef.current.clientWidth,
-            height: containerRef.current.clientHeight,
-          });
-        }
+        if (!containerRef.current || !chart?.applyOptions) return;
+        chart.applyOptions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
+        });
       };
 
       handleResize();
@@ -104,10 +127,8 @@ export default function ForecastFanChart({ price, forecasts }: Props) {
     });
 
     return () => {
-      if (handleResize) {
-        window.removeEventListener("resize", handleResize);
-      }
-      chart?.remove();
+      if (handleResize) window.removeEventListener("resize", handleResize);
+      chart?.remove?.();
     };
   }, [priceSeries, futureSeries]);
 

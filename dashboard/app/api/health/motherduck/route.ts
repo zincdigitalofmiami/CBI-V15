@@ -1,8 +1,42 @@
 import { queryMotherDuck } from "@/lib/md";
 import { NextResponse } from "next/server";
 
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
+function hasMotherDuckToken(): boolean {
+  return Boolean(
+    process.env.MOTHERDUCK_TOKEN ||
+      process.env.motherduck_storage_MOTHERDUCK_TOKEN ||
+      process.env.MOTHERDUCK_STORAGE_TOKEN ||
+      process.env.MOTHERDUCK_READ_SCALING_TOKEN ||
+      process.env.motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN,
+  );
+}
+
 export async function GET() {
   try {
+    if (!hasMotherDuckToken()) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: "unhealthy",
+          timestamp: new Date().toISOString(),
+          error: {
+            message:
+              "MotherDuck token is not defined in this environment. Set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN and redeploy.",
+            type: "MissingEnv",
+          },
+          environment: {
+            node_version: process.version,
+            has_motherduck_token: false,
+            motherduck_db: process.env.MOTHERDUCK_DB || "cbi_v15",
+          },
+        },
+        { status: 500 },
+      );
+    }
+
     // Basic connectivity test
     const basicTest = await queryMotherDuck("SELECT 1 as test_value");
 
@@ -46,7 +80,8 @@ export async function GET() {
       },
       environment: {
         node_version: process.version,
-        has_motherduck_token: !!process.env.MOTHERDUCK_TOKEN,
+        has_motherduck_token:
+          !!process.env.MOTHERDUCK_TOKEN || !!process.env.motherduck_storage_MOTHERDUCK_TOKEN,
         motherduck_db: process.env.MOTHERDUCK_DB || "cbi_v15",
       },
     });
@@ -64,7 +99,8 @@ export async function GET() {
         },
         environment: {
           node_version: process.version,
-          has_motherduck_token: !!process.env.MOTHERDUCK_TOKEN,
+          has_motherduck_token:
+            !!process.env.MOTHERDUCK_TOKEN || !!process.env.motherduck_storage_MOTHERDUCK_TOKEN,
           motherduck_db: process.env.MOTHERDUCK_DB || "cbi_v15",
         },
       },

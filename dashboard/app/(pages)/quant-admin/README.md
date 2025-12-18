@@ -17,6 +17,22 @@ Internal quant cockpit for:
 - `reference.feature_catalog`, `reference.model_registry`
 - `forecasts.zl_predictions`, `training.model_runs`
 
+## MLflow (Optional)
+
+Quant Admin includes an **MLflow** tab that can embed an MLflow UI if you provide a URL.
+
+- Local (free): `mlflow ui --backend-store-uri file:./mlruns --port 5000`
+- Set `NEXT_PUBLIC_MLFLOW_UI_URL` (e.g. `http://localhost:5000` for local dev, or your hosted MLflow URL)
+
+If your MLflow host sets `X-Frame-Options` / `frame-ancestors`, the embed may be blocked; use the “Open MLflow” link instead.
+
+## AI Explainers (Optional)
+
+The **AI Explainer** is on-demand and only runs when you click “Explain”.
+
+- Requires `OPENAI_API_KEY` to be set in the dashboard runtime (Vercel or local).
+- Optional: `OPENAI_MODEL` (defaults to `gpt-5.1-mini`).
+
 ## Key Components
 
 ### 1. Pipeline Health
