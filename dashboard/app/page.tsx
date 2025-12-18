@@ -1,12 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import HeatmapEmbed from "@/app/components/visualizations/tradingview-widgets/HeatmapEmbed";
 import NewsFeedWidget from "@/app/components/visualizations/tradingview-widgets/NewsFeedWidget";
 import TechnicalGaugeWidget from "@/app/components/visualizations/tradingview-widgets/TechnicalGaugeWidget";
 import TradingViewWidget from "@/app/components/visualizations/tradingview-widgets/TradingViewWidget";
 import Big8Panel from "@/components/big8/Big8Panel";
 import ConfidenceBadge from "@/components/metrics/ConfidenceBadge";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 // Dynamic import for Lightweight Charts (client-side only)
