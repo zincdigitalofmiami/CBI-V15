@@ -13,37 +13,6 @@ type OHLCVRow = {
   volume?: number;
 };
 
-// Generate realistic demo data for ZL (soybean oil) when API is unavailable
-function generateDemoData(): OHLCVRow[] {
-  const data: OHLCVRow[] = [];
-  const now = new Date();
-  let price = 42.5; // Typical ZL price range
-
-  for (let i = 365; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 86400000);
-    // Skip weekends
-    if (date.getDay() === 0 || date.getDay() === 6) continue;
-
-    // Random walk with slight upward drift
-    const change = (Math.random() - 0.48) * 1.2;
-    price = Math.max(35, Math.min(55, price + change));
-
-    const volatility = 0.5 + Math.random() * 0.8;
-    const open = price + (Math.random() - 0.5) * volatility;
-    const high = Math.max(open, price) + Math.random() * volatility;
-    const low = Math.min(open, price) - Math.random() * volatility;
-
-    data.push({
-      date: date.toISOString().slice(0, 10),
-      open: Number(open.toFixed(2)),
-      high: Number(high.toFixed(2)),
-      low: Number(low.toFixed(2)),
-      close: Number(price.toFixed(2)),
-    });
-  }
-
-  return data;
-}
 
 interface ZLFullScreenChartProps {
   height?: string;
@@ -55,7 +24,7 @@ export default function ZLFullScreenChart({ height = "100%" }: ZLFullScreenChart
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dataCount, setDataCount] = useState(0);
-  const [isDemo, setIsDemo] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -75,18 +44,16 @@ export default function ZLFullScreenChart({ height = "100%" }: ZLFullScreenChart
 
         if (!mounted) return;
 
-        let rows: OHLCVRow[];
-        let usingDemo = false;
-
         if (!json.data || !Array.isArray(json.data) || json.data.length === 0) {
-          // Fallback to demo data if API fails (e.g., missing DATABENTO_API_KEY)
-          usingDemo = true;
-          rows = generateDemoData();
-        } else {
-          rows = json.data as OHLCVRow[];
+          const errMsg = json.error || "No data from API";
+          setError(errMsg);
+          setLoading(false);
+          return;
         }
+
+        const rows = json.data as OHLCVRow[];
         setDataCount(rows.length);
-        setIsDemo(usingDemo);
+        setLastRefresh(new Date());
 
         // Clear existing chart
         if (chartRef.current) {
@@ -227,8 +194,14 @@ export default function ZLFullScreenChart({ height = "100%" }: ZLFullScreenChart
 
     initChart();
 
+    // Refresh every 15 minutes
+    const interval = setInterval(() => {
+      initChart();
+    }, 15 * 60 * 1000);
+
     return () => {
       mounted = false;
+      clearInterval(interval);
       if (chartRef.current) {
         (chartRef.current as { remove: () => void }).remove();
       }
@@ -264,8 +237,8 @@ export default function ZLFullScreenChart({ height = "100%" }: ZLFullScreenChart
       {!loading && !error && dataCount > 0 && (
         <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10">
           <span className="text-xs text-zinc-400 font-extralight">
-            ZL Soybean Oil • {dataCount} bars • Lightweight Charts
-            {isDemo && <span className="ml-2 text-yellow-400">(DEMO - add DATABENTO_API_KEY to Vercel)</span>}
+            ZL Soybean Oil • {dataCount} bars
+            {lastRefresh && <span className="ml-2 text-zinc-500">• {lastRefresh.toLocaleTimeString()}</span>}
           </span>
         </div>
       )}

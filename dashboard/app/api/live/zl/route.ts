@@ -70,10 +70,13 @@ export async function GET() {
       map_symbols: true,
     };
 
+    // Databento uses Basic auth with API key as username, empty password
+    const basicAuth = btoa(`${key}:`);
+    
     const resp = await fetch("https://hist.databento.com/v0/timeseries.get_range", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
+        Authorization: `Basic ${basicAuth}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
