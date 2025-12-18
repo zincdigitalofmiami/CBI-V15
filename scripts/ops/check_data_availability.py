@@ -130,7 +130,7 @@ def main():
     logger.info("\n🎯 Next Steps:")
     if not raw_has_data:
         logger.info(
-            "  1. Run data ingestion: python3 trigger/DataBento/Scripts/collect_daily.py"
+            "  1. Run data ingestion: python3 src/ingestion/databento/collect_daily.py"
         )
     elif not staging_has_data:
         logger.info("  1. Run staging transforms in MotherDuck")

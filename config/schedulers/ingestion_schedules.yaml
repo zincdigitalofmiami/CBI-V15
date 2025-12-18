@@ -1,7 +1,7 @@
 # ============================================================================
 # CBI-V15 Ingestion Schedule Configuration
 # ============================================================================
-# Runtime: Trigger.dev (cloud) or local cron
+# Runtime: GitHub Actions (cloud) or local cron
 # Database: DuckDB (local) / MotherDuck (cloud)
 # NO Google Cloud Functions, NO Dataform
 # ============================================================================
@@ -14,7 +14,7 @@ databento_zl_price:
   name: "databento-zl-price-hourly"
   schedule: "0 * * * *" # Every hour
   timezone: "America/New_York"
-  script: "trigger/DataBento/Scripts/collect_daily.py"
+  script: "src/ingestion/databento/collect_hourly.py"
   payload:
     symbol: "ZL"
     frequency: "1h"
@@ -23,7 +23,7 @@ databento_other_symbols:
   name: "databento-other-symbols-4hourly"
   schedule: "0 */4 * * *" # Every 4 hours
   timezone: "America/New_York"
-  script: "trigger/DataBento/Scripts/collect_daily.py"
+  script: "src/ingestion/databento/collect_hourly.py"
   payload:
     symbols: ["ZS", "ZM", "CL", "HO", "FCPO", "ZC", "HE", "6L", "DX", "HG", "GC"]
     frequency: "4h"
@@ -36,7 +36,7 @@ fred_macro_daily:
   name: "fred-macro-daily"
   schedule: "0 18 * * *" # Daily at 6 PM ET (after market close)
   timezone: "America/New_York"
-  script: "trigger/FRED/Scripts/collect_fred_rates_curve.py"
+  script: "src/ingestion/fred/collect_fred_rates_curve.py"
   payload:
     series_count: 60
 
@@ -48,7 +48,7 @@ scrapecreators_news_buckets:
   name: "scrapecreators-news-buckets-hourly"
   schedule: "0 * * * *" # Every hour
   timezone: "America/New_York"
-  script: "trigger/ScrapeCreators/Scripts/collect_news_buckets.py"
+  script: "src/ingestion/scrapecreators/collect_news_buckets.py"
   payload:
     buckets: ["biofuel_policy", "china_demand", "tariffs_trade_policy"]
     segment_at_ingestion: true
@@ -58,7 +58,7 @@ scrapecreators_trump:
   name: "scrapecreators-trump-hourly"
   schedule: "0 * * * *" # Every hour
   timezone: "America/New_York"
-  script: "trigger/ScrapeCreators/Scripts/buckets/collect_trump_truth_social.py"
+  script: "src/ingestion/scrapecreators/collect_trump_truth_social.py"
   payload:
     source: "truth_social"
     calculate_zl_impact: true
@@ -71,7 +71,7 @@ usda_reports:
   name: "usda-reports-weekly"
   schedule: "0 10 * * 1" # Monday at 10 AM ET
   timezone: "America/New_York"
-  script: "trigger/USDA/Scripts/ingest_wasde.py"
+  script: "src/ingestion/usda/ingest_wasde.py"
   payload:
     report_types: ["WASDE", "crop_progress", "export_sales"]
 
@@ -83,7 +83,7 @@ cftc_cot:
   name: "cftc-cot-weekly"
   schedule: "0 10 * * 5" # Friday at 10 AM ET
   timezone: "America/New_York"
-  script: "trigger/CFTC/Scripts/ingest_cot.py"
+  script: "src/ingestion/cftc/ingest_cot.py"
   payload:
     extract_managed_money: true
     zl_specific: true
@@ -96,7 +96,7 @@ eia_biofuels:
   name: "eia-biofuels-weekly"
   schedule: "0 10 * * 3" # Wednesday at 10 AM ET
   timezone: "America/New_York"
-  script: "trigger/EIA_EPA/Scripts/collect_eia_biofuels.py"
+  script: "src/ingestion/eia_epa/collect_eia_biofuels.py"
   payload:
     series: ["rin_prices_d4", "rin_prices_d6", "biodiesel_production", "rfs_volumes"]
 
@@ -108,7 +108,7 @@ weather_noaa:
   name: "weather-noaa-daily"
   schedule: "0 2 * * *" # Daily at 2 AM ET
   timezone: "America/New_York"
-  script: "trigger/Weather/Scripts/ingest_weather.py"
+  script: "src/ingestion/weather/collect_all_weather.py"
   payload:
     sources: ["NOAA"]
     aggregate_by_region: true

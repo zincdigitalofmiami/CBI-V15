@@ -14,7 +14,7 @@
 - ✅ USDA Export Sales: 5.5K rows
 - ✅ EIA Biofuels: 10 rows
 
-### Trigger.dev Orchestration (Ready)
+### GitHub Actions Scheduling (Ready)
 - **Hourly**: Databento updates
 - **Daily**: Full refresh at 2 AM UTC (Databento, FRED, NOAA weather)
 - **Coordinator pattern**: Parallel execution with real-time progress
@@ -26,13 +26,13 @@
 
 ---
 
-## 🚀 DEPLOYMENT STEPS (CLOUD EXECUTION ONLY)
+## 🚀 DEPLOYMENT STEPS
 
-### 1. Configure Environment Variables in Trigger.dev Dashboard
+### 1. Configure GitHub Actions Secrets
 
-**CRITICAL**: All tasks run in Trigger.dev cloud, NOT on local machine.
+**CRITICAL**: Scheduled ingestion runs in GitHub Actions (cloud), not on your local machine.
 
-Go to: https://cloud.trigger.dev → Your Project → Settings → Environment Variables
+Go to: GitHub repo → Settings → Secrets and variables → Actions
 
 Add these for ALL environments (Development, Staging, Production):
 
@@ -45,29 +45,22 @@ EIA_API_KEY=your_eia_key
 NOAA_API_TOKEN=your_noaa_token
 ```
 
-**Reference**: [Trigger.dev Environment Variables](https://trigger.dev/docs/deployment/environment-variables)
+**Reference:** GitHub Actions secrets (repo settings)
 
-### 2. Deploy Trigger.dev Jobs to Cloud
+### 2. Enable Scheduled Workflows
 
 ```bash
 cd /Volumes/Satechi\ Hub/CBI-V15
-npx trigger.dev@latest deploy
+	# Schedules are defined in `.github/workflows/data_ingestion.yml`
 ```
 
-This deploys to **Trigger.dev cloud servers** (NOT your local machine):
-- `databento-hourly-update` - Runs every hour in cloud
-- `fred-daily-update` - Runs daily at 2 AM in cloud
-- `noaa-weather-daily` - Runs daily at 2 AM in cloud
-- `daily-data-refresh` - Coordinator, runs daily at 2 AM in cloud
+Scheduling is defined in `.github/workflows/data_ingestion.yml` (cron + manual dispatch).
 
-**All tasks execute in Trigger.dev's infrastructure with:**
-- Machine: small-1x (0.5 vCPU, 1 GB RAM)
-- Max concurrency: 15 parallel tasks
-- Queue: data-ingestion (prevents overload)
+Workflows execute on GitHub-hosted runners (`ubuntu-latest` by default).
 
-### 3. Verify Cloud Execution in Dashboard
+### 3. Verify Workflow Runs
 
-Go to: https://cloud.trigger.dev
+Go to: GitHub repo → Actions → “Data Ingestion”
 
 Check:
 - ✅ Schedules tab shows active cron jobs
@@ -116,12 +109,9 @@ conn.close()
 "
 ```
 
-### Check Trigger.dev Activity
+### Check GitHub Actions Activity
 
-```bash
-# View recent runs
-npx trigger.dev@latest runs list --limit 10
-```
+See GitHub Actions run history in the repo UI.
 
 ---
 
@@ -139,16 +129,14 @@ Next scheduled run will automatically include it.
 
 ### Add New Symbol to Databento
 
-Edit `trigger/DataBento/Scripts/collect_daily.py`:
+Edit `src/ingestion/databento/collect_daily.py`:
 - Add symbol to `SYMBOLS` list
-- Redeploy: `npx trigger.dev@latest deploy`
+- Scheduled workflow runs pick it up automatically (or run locally)
 
 ### Add New Data Source
 
-1. Create ingestion script in `trigger/{Source}/Scripts/`
-2. Create Trigger.dev job in `trigger/{Source}/{source}_job.ts`
-3. Add to `trigger/Orchestration/daily_refresh.ts` batch
-4. Deploy: `npx trigger.dev@latest deploy`
+1. Create ingestion script in `src/ingestion/{source}/`
+2. Add it to `.github/workflows/data_ingestion.yml` (or local cron)
 
 ---
 
@@ -158,7 +146,7 @@ Edit `trigger/DataBento/Scripts/collect_daily.py`:
 - ✅ **NEVER change Big 8 buckets** - preserve all 8
 - ✅ **Use weather_location_registry** - don't hardcode locations
 - ✅ **Add new data via INSERTs** - don't drop/recreate
-- ✅ **Test locally first** - `npx trigger.dev@latest dev`
+- ✅ **Test locally first** - run the Python script directly
 
 ---
 

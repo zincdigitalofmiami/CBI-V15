@@ -11,13 +11,17 @@ on:
   workflow_dispatch:  # Manual trigger button
 
 env:
-  MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+  # Prefer canonical Vercel/MotherDuck integration token if present; fall back to legacy secret name.
+  MOTHERDUCK_TOKEN: ${{ secrets.motherduck_storage_MOTHERDUCK_TOKEN || secrets.MOTHERDUCK_STORAGE_MOTHERDUCK_TOKEN || secrets.MOTHERDUCK_TOKEN }}
   MOTHERDUCK_DB: cbi_v15
   DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
   FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+  SCRAPECREATORS_API_KEY: ${{ secrets.SCRAPECREATORS_API_KEY }}
+  NOAA_API_TOKEN: ${{ secrets.NOAA_API_TOKEN }}
 
 jobs:
   databento:
+    if: ${{ env.MOTHERDUCK_TOKEN != '' && env.DATABENTO_API_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,12 +33,13 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install duckdb databento pandas requests
+          pip install duckdb databento pandas requests python-dotenv
       
       - name: Collect Databento futures data
-        run: python trigger/DataBento/Scripts/collect_daily.py
+        run: python src/ingestion/databento/collect_daily.py
 
   fred:
+    if: ${{ env.MOTHERDUCK_TOKEN != '' && env.FRED_API_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,18 +51,19 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install duckdb fredapi pandas requests tenacity
+          pip install duckdb fredapi pandas requests tenacity python-dotenv pyyaml
       
       - name: Collect FRED FX data
-        run: python trigger/FRED/Scripts/collect_fred_fx.py
+        run: python src/ingestion/fred/collect_fred_fx.py
       
       - name: Collect FRED rates data
-        run: python trigger/FRED/Scripts/collect_fred_rates_curve.py
+        run: python src/ingestion/fred/collect_fred_rates_curve.py
       
       - name: Collect FRED financial conditions
-        run: python trigger/FRED/Scripts/collect_fred_financial_conditions.py
+        run: python src/ingestion/fred/collect_fred_financial_conditions.py
 
   usda:
+    if: ${{ env.MOTHERDUCK_TOKEN != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,15 +75,16 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install duckdb pandas requests
+          pip install duckdb pandas requests python-dotenv beautifulsoup4 lxml
       
       - name: Collect USDA Export Sales
-        run: python trigger/USDA/Scripts/ingest_export_sales.py
+        run: python src/ingestion/usda/ingest_export_sales.py
       
       - name: Collect USDA WASDE
-        run: python trigger/USDA/Scripts/ingest_wasde.py
+        run: python src/ingestion/usda/ingest_wasde.py
 
   epa:
+    if: ${{ env.MOTHERDUCK_TOKEN != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,12 +96,13 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install duckdb pandas requests
+          pip install duckdb pandas requests python-dotenv
       
       - name: Collect EPA RIN prices
-        run: python trigger/EIA_EPA/Scripts/collect_epa_rin_prices.py
+        run: python src/ingestion/eia_epa/collect_epa_rin_prices.py
 
   weather:
+    if: ${{ env.MOTHERDUCK_TOKEN != '' && env.NOAA_API_TOKEN != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,10 +114,25 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install duckdb pandas requests
+          pip install duckdb pandas requests python-dotenv
       
       - name: Collect weather data
-        run: python trigger/Weather/Scripts/ingest_weather.py
+        run: python src/ingestion/weather/collect_all_weather.py
 
+  scrapecreators:
+    if: ${{ env.MOTHERDUCK_TOKEN != '' && env.SCRAPECREATORS_API_KEY != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
+      - name: Install dependencies
+        run: |
+          pip install duckdb pandas requests python-dotenv
+
+      - name: Collect ScrapeCreators (news + Trump)
+        run: python src/ingestion/scrapecreators/collect_all_scrapecreators.py

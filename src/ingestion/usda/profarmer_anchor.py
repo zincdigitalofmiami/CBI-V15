@@ -15,8 +15,11 @@ Requires authentication (credentials in .env).
 import hashlib
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List
 
+import duckdb
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
@@ -224,16 +227,167 @@ def fetch_profarmer_articles(days_back: int = 7) -> List[Dict[str, Any]]:
     return all_articles
 
 
+ROOT_DIR = Path(__file__).resolve().parents[3]
+
+
+def _load_dotenv_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key or key in os.environ:
+            continue
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_local_env() -> None:
+    _load_dotenv_file(ROOT_DIR / ".env")
+    _load_dotenv_file(ROOT_DIR / ".env.local")
+
+
+def _iter_motherduck_tokens():
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        ("motherduck_storage_MOTHERDUCK_TOKEN", os.getenv("motherduck_storage_MOTHERDUCK_TOKEN")),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"),
+        ),
+    ]
+    for _, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token.count(".") != 2:
+            continue
+        yield token
+
+
+def connect_motherduck() -> duckdb.DuckDBPyConnection:
+    _load_local_env()
+    db_name = os.getenv("MOTHERDUCK_DB", "cbi_v15")
+    last_error: Exception | None = None
+    for token in _iter_motherduck_tokens():
+        try:
+            con = duckdb.connect(f"md:{db_name}?motherduck_token={token}")
+            con.execute("SELECT 1").fetchone()
+            return con
+        except Exception as e:
+            last_error = e
+    raise RuntimeError(
+        f"MotherDuck token required (set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN): {last_error}"
+    )
+
+
+def load_articles_to_motherduck(articles: List[Dict[str, Any]]) -> None:
+    if not articles:
+        print("[ProFarmer] No articles to load")
+        return
+
+    df = pd.DataFrame(articles)
+    if df.empty:
+        print("[ProFarmer] No articles to load")
+        return
+
+    df_out = pd.DataFrame(
+        {
+            "article_id": df.get("article_id"),
+            "published_date": pd.to_datetime(df.get("published_at"), errors="coerce"),
+            "category": df.get("edition_type"),
+            "title": df.get("headline"),
+            "content": df.get("content"),
+            "crops_mentioned": None,
+            "regions_mentioned": None,
+            "sentiment_score": None,
+            "source": "profarmer",
+            "ingested_at": datetime.utcnow(),
+        }
+    )
+
+    df_bucket = pd.DataFrame(
+        {
+            "id": df.get("article_id"),
+            "date": pd.to_datetime(df.get("published_at"), errors="coerce").dt.date,
+            "title": df.get("headline"),
+            "content": df.get("content"),
+            "url": df.get("url"),
+            "source": "ProFarmer",
+            "bucket": df.get("bucket_name"),
+            "sentiment_score": None,
+            "ingested_at": datetime.utcnow(),
+        }
+    )
+
+    con = connect_motherduck()
+    con.register("profarmer_staging", df_out)
+    con.register("bucket_staging", df_bucket)
+
+    # Robust upsert: delete + insert
+    con.execute(
+        """
+        DELETE FROM raw.profarmer_articles
+        WHERE article_id IN (SELECT article_id FROM profarmer_staging)
+        """
+    )
+    con.execute(
+        """
+        INSERT INTO raw.profarmer_articles (
+          article_id, published_date, category, title, content,
+          crops_mentioned, regions_mentioned, sentiment_score, source, ingested_at
+        )
+        SELECT
+          article_id, published_date, category, title, content,
+          crops_mentioned, regions_mentioned, sentiment_score, source, ingested_at
+        FROM profarmer_staging
+        """
+    )
+
+    con.execute(
+        """
+        DELETE FROM raw.bucket_news
+        WHERE id IN (SELECT id FROM bucket_staging)
+        """
+    )
+    con.execute(
+        """
+        INSERT INTO raw.bucket_news (id, date, title, content, url, source, bucket, sentiment_score, ingested_at)
+        SELECT id, date, title, content, url, source, bucket, sentiment_score, ingested_at
+        FROM bucket_staging
+        WHERE id IS NOT NULL
+        """
+    )
+
+    inserted_articles = con.execute("SELECT COUNT(*) FROM raw.profarmer_articles").fetchone()[0]
+    inserted_bucket = con.execute("SELECT COUNT(*) FROM raw.bucket_news").fetchone()[0]
+    con.close()
+
+    print(f"[ProFarmer] ✅ Loaded into raw.profarmer_articles (total rows now {inserted_articles:,})")
+    print(f"[ProFarmer] ✅ Loaded into raw.bucket_news (total rows now {inserted_bucket:,})")
+
+
 if __name__ == "__main__":
+    import argparse
     import json
-    import sys
 
-    # Parse command line args
-    days_back = 7
-    if len(sys.argv) > 1:
-        days_back = int(sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--days", type=int, default=7, help="How many days back to scrape")
+    parser.add_argument("--load", action="store_true", help="Load results into MotherDuck")
+    args = parser.parse_args()
 
-    articles = fetch_profarmer_articles(days_back=days_back)
+    _load_local_env()
+    articles = fetch_profarmer_articles(days_back=args.days)
 
-    # Output JSON for Trigger.dev consumption
-    print(json.dumps(articles, indent=2))
+    if args.load:
+        load_articles_to_motherduck(articles)
+    else:
+        print(json.dumps(articles, indent=2))

@@ -25,13 +25,13 @@ from typing import Any, Dict, List
 import duckdb
 import pandas as pd
 
-# Add trigger + project roots for imports
+# Add ingestion + project roots for imports
 SCRIPT_DIR = Path(__file__).resolve().parent
-TRIGGER_DIR = SCRIPT_DIR.parent
-PROJECT_ROOT = TRIGGER_DIR.parent
+INGESTION_DIR = SCRIPT_DIR.parent
+PROJECT_ROOT = INGESTION_DIR.parent
 
 sys.path.insert(0, str(SCRIPT_DIR))
-sys.path.insert(0, str(TRIGGER_DIR))
+sys.path.insert(0, str(INGESTION_DIR))
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # Import bucket collectors

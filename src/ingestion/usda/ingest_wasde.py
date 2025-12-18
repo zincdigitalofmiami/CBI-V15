@@ -20,8 +20,8 @@ CRITICAL for ZL forecasting:
 - China import demand
 
 Usage:
-    python trigger/USDA/Scripts/ingest_wasde.py --start-year 2020 --end-year 2024
-    python trigger/USDA/Scripts/ingest_wasde.py --backfill
+    python src/ingestion/usda/ingest_wasde.py --start-year 2020 --end-year 2024
+    python src/ingestion/usda/ingest_wasde.py --backfill
 """
 
 import os

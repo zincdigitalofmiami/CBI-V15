@@ -27,7 +27,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Database config
-MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 # GLBX.MDP3 dataset
@@ -64,11 +63,64 @@ OPTIONS_SYMBOLS = [
 ]
 
 
+def _load_dotenv_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key or key in os.environ:
+            continue
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_local_env() -> None:
+    _load_dotenv_file(project_root / ".env")
+    _load_dotenv_file(project_root / ".env.local")
+
+
+def _iter_motherduck_tokens():
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        ("motherduck_storage_MOTHERDUCK_TOKEN", os.getenv("motherduck_storage_MOTHERDUCK_TOKEN")),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"),
+        ),
+    ]
+    for _, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token.count(".") != 2:
+            continue
+        yield token
+
+
 def get_connection():
     """Get MotherDuck connection"""
-    if not MOTHERDUCK_TOKEN:
-        raise RuntimeError("MOTHERDUCK_TOKEN not set")
-    return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}")
+    _load_local_env()
+    db_name = os.getenv("MOTHERDUCK_DB", "cbi_v15")
+    last_error: Exception | None = None
+    for token in _iter_motherduck_tokens():
+        try:
+            con = duckdb.connect(f"md:{db_name}?motherduck_token={token}")
+            con.execute("SELECT 1").fetchone()
+            return con
+        except Exception as e:
+            last_error = e
+    raise RuntimeError(
+        f"MotherDuck token not set/invalid (set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN): {last_error}"
+    )
 
 
 def get_databento_client():
@@ -76,6 +128,7 @@ def get_databento_client():
     try:
         import databento as db
 
+        _load_local_env()
         api_key = os.getenv("DATABENTO_API_KEY")
         if not api_key:
             raise ValueError("DATABENTO_API_KEY environment variable not set")
@@ -122,12 +175,59 @@ def collect_options_for_symbol(
             logger.warning(f"No options data for {symbol}")
             return pd.DataFrame()
 
-        # Parse options metadata from symbol
-        # Format varies by exchange - this is simplified
-        df["symbol"] = symbol
-        df["as_of_date"] = pd.to_datetime(df["ts_event"]).dt.date
+        # Preserve Databento's contract identifier if present
+        contract_col = None
+        for c in ["symbol", "instrument_id", "instrument", "raw_symbol"]:
+            if c in df.columns:
+                contract_col = c
+                break
 
-        return df
+        if contract_col is None:
+            logger.warning(f"No contract identifier column returned for {symbol}")
+            return pd.DataFrame()
+
+        df_out = pd.DataFrame()
+        df_out["symbol"] = symbol  # underlying root
+        df_out["contract_symbol"] = df[contract_col].astype(str)
+        df_out["as_of_date"] = pd.to_datetime(df.get("ts_event"), errors="coerce").dt.date
+
+        def pick(colnames):
+            for c in colnames:
+                if c in df.columns:
+                    return df[c]
+            return None
+
+        strike = pick(["strike_price", "strike_px", "strike", "strike_price_px"])
+        exp = pick(["expiration_date", "expiration", "exp_date", "expiry"])
+        opt_type = pick(["option_type", "put_call", "cp_flag", "call_put"])
+
+        df_out["strike_price"] = pd.to_numeric(strike, errors="coerce") if strike is not None else None
+        df_out["expiration_date"] = pd.to_datetime(exp, errors="coerce").dt.date if exp is not None else None
+        if opt_type is not None:
+            s = opt_type.astype(str).str.upper().str.slice(0, 1)
+            df_out["option_type"] = s.where(s.isin(["C", "P"]), None)
+        else:
+            df_out["option_type"] = None
+
+        df_out["open"] = pd.to_numeric(df.get("open"), errors="coerce")
+        df_out["high"] = pd.to_numeric(df.get("high"), errors="coerce")
+        df_out["low"] = pd.to_numeric(df.get("low"), errors="coerce")
+        df_out["close"] = pd.to_numeric(df.get("close"), errors="coerce")
+        df_out["volume"] = pd.to_numeric(df.get("volume"), errors="coerce")
+        df_out["open_interest"] = pd.to_numeric(df.get("open_interest"), errors="coerce")
+
+        # Optional greeks/iv
+        df_out["implied_volatility"] = pd.to_numeric(pick(["implied_volatility", "iv"]), errors="coerce") if pick(["implied_volatility", "iv"]) is not None else None
+        df_out["delta"] = pd.to_numeric(df.get("delta"), errors="coerce") if "delta" in df.columns else None
+        df_out["gamma"] = pd.to_numeric(df.get("gamma"), errors="coerce") if "gamma" in df.columns else None
+        df_out["theta"] = pd.to_numeric(df.get("theta"), errors="coerce") if "theta" in df.columns else None
+        df_out["vega"] = pd.to_numeric(df.get("vega"), errors="coerce") if "vega" in df.columns else None
+
+        df_out["source"] = "databento_options"
+        df_out["ingested_at"] = datetime.utcnow()
+
+        df_out = df_out.dropna(subset=["contract_symbol", "as_of_date"])
+        return df_out
 
     except Exception as e:
         logger.error(f"Failed to collect options for {symbol}: {e}")
@@ -146,6 +246,7 @@ def main(days_back: int = 30, dry_run: bool = False):
     logger.info("DATABENTO OPTIONS DAILY COLLECTION")
     logger.info("=" * 60)
 
+    _load_local_env()
     client = get_databento_client()
     if not client:
         return
@@ -205,22 +306,29 @@ def main(days_back: int = 30, dry_run: bool = False):
     combined = pd.concat(all_options, ignore_index=True)
     logger.info(f"Total options contracts: {len(combined):,}")
 
-    # Load to MotherDuck (simplified - actual schema mapping needed)
+    # Load to MotherDuck (best-effort; depends on Databento subscription and symbology support)
     con.register("options_staging", combined)
     con.execute(
         """
         DELETE FROM raw.databento_options_ohlcv_1d
-        WHERE (contract_symbol, as_of_date) IN (
-            SELECT contract_symbol, as_of_date FROM options_staging
+        WHERE EXISTS (
+          SELECT 1
+          FROM options_staging s
+          WHERE s.contract_symbol = raw.databento_options_ohlcv_1d.contract_symbol
+            AND s.as_of_date = raw.databento_options_ohlcv_1d.as_of_date
         )
     """
     )
     con.execute(
         """
         INSERT INTO raw.databento_options_ohlcv_1d
-            (symbol, contract_symbol, as_of_date, open, high, low, close, volume)
-        SELECT symbol, symbol as contract_symbol, as_of_date, 
-               open, high, low, close, volume
+            (symbol, contract_symbol, as_of_date, strike_price, expiration_date, option_type,
+             open, high, low, close, volume, open_interest,
+             implied_volatility, delta, gamma, theta, vega, source, ingested_at)
+        SELECT
+               symbol, contract_symbol, as_of_date, strike_price, expiration_date, option_type,
+               open, high, low, close, volume, open_interest,
+               implied_volatility, delta, gamma, theta, vega, source, ingested_at
         FROM options_staging
     """
     )
@@ -240,5 +348,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(days_back=args.days, dry_run=args.dry_run)
-
 

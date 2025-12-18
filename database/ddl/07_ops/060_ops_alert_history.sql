@@ -17,11 +17,10 @@ CREATE TABLE IF NOT EXISTS ops.alert_history (
     resolved_at TIMESTAMP,
     resolved_by VARCHAR,
     -- Timing
-    triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    raised_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_alerts_status 
     ON ops.alert_history(status);
 CREATE INDEX IF NOT EXISTS idx_alerts_severity 
     ON ops.alert_history(severity);
-

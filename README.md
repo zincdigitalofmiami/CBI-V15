@@ -2,7 +2,7 @@
 
 > **Read first – fast-moving workspace.** Always check the latest work before editing: `docs/architecture/MASTER_PLAN.md`, `AGENTS.md`, `DATA_LINKS_MASTER.md`, and the active master plan `.cursor/plans/ALL_PHASES_INDEX.md`. Multiple agents work in parallel—plans can drift; verify current files, avoid duplicating scripts/MDs/folders, and keep the explorer clean.
 
-> **ZL (Soybean Oil) forecasting system** — DuckDB/MotherDuck + AutoGluon 1.4 + Trigger.dev, with SQL-first features.
+> **ZL (Soybean Oil) forecasting system** — DuckDB/MotherDuck + AutoGluon 1.4, with SQL-first features.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MotherDuck](https://img.shields.io/badge/Database-MotherDuck-blue)](https://motherduck.com)
@@ -23,7 +23,7 @@
   - **L2**: Production forecasts (P10/P50/P90 quantiles) at 1w/1m/3m/6m horizons
   - **L3**: Monte Carlo simulation for VaR/CVaR risk metrics (analytics only)
 - **Mac M4 Training** — All training runs locally on CPU with Metal (MPS) acceleration where available; includes foundation models (TabPFNv2, Mitra, TabICL)
-- **Trigger.dev Orchestration** — Automated ingestion from 10+ data sources (Databento, FRED, EIA/EPA RINs, USDA FAS/WASDE, CFTC COT, Farm Policy News, farmdoc Daily)
+- **Ingestion Scheduling** — Automated ingestion via GitHub Actions + local scripts (Databento, FRED, EIA/EPA RINs, USDA FAS/WASDE, CFTC COT, ScrapeCreators, weather)
 - **MotherDuck + Local DuckDB** — Cloud-first data warehouse (MotherDuck = source of truth; local mirror synced before training for 100-1000x faster I/O)
 - **Next.js 14 Dashboard** — Real-time ZL price charts, multi-horizon forecast fans, confidence metrics, Big 8 health panel; queries MotherDuck directly via DuckDB-WASM
 
@@ -33,9 +33,9 @@
 
 ### Data Flow
 
-1. **Ingestion Layer** (`trigger/`)
-   - Trigger.dev jobs write to MotherDuck cloud warehouse (`raw.*` schema)
-   - Organized per source: `DataBento`, `FRED`, `EIA_EPA`, `USDA`, `CFTC`, `ScrapeCreators`, `ProFarmer`, `UofI_Feeds`, `Weather`, `Vegas`, `TradingEconomics`, `Adapters`
+1. **Ingestion Layer** (`src/ingestion/`)
+   - API pull scripts write to MotherDuck (`raw.*` schema)
+   - Scheduling via `.github/workflows/data_ingestion.yml` (and/or local cron)
    - All columns prefixed with source (`databento_`, `fred_`, `epa_`, etc.)
 
 2. **Feature Engineering** (`database/macros/`)
@@ -76,7 +76,7 @@
 
 ```
 CBI-V15/
-├── trigger/                      # Trigger.dev ingestion orchestration
+├── .github/workflows/            # Scheduled ingestion (GitHub Actions)
 │   ├── DataBento/                # Futures OHLCV (38 symbols)
 │   ├── FRED/                     # Macro indicators (24+)
 │   ├── EIA_EPA/                  # Energy & biofuel data (EPA RIN prices)
@@ -110,7 +110,7 @@ CBI-V15/
 │   │   └── training_auditor.py   # Training run audits
 │   ├── features/                 # Feature engineering utilities
 │   ├── engines/anofox/           # AnoFox SQL macro bridge
-│   ├── ingestion/                # Legacy ingestion (migrated to trigger/)
+│   ├── ingestion/                # Ingestion scripts (API pulls only)
 │   ├── ensemble/                 # Ensemble utilities
 │   ├── shared/                   # Shared utilities
 │   ├── data/                     # Data loading utilities
@@ -165,7 +165,7 @@ CBI-V15/
 - **Python 3.11+** (Mac M4 recommended for optimal AutoGluon performance)
 - **Node.js 18+** (for dashboard)
 - **Just** task runner (`brew install just`)
-- **MotherDuck account** with access token
+- **MotherDuck account** with access token (see [MotherDuck Setup](#motherduck-setup) below)
 - **API keys**: Databento, FRED (minimum); optional: EIA, USDA NASS, ScrapeCreator
 
 ### Initial Setup
@@ -200,7 +200,7 @@ CBI-V15/
 **Run dashboard locally** (queries MotherDuck cloud)
 
 ```bash
-just dev  # Starts Trigger.dev (port 3000) + Dashboard (port 3001)
+just dev  # Starts the dashboard
 ```
 
 **Sync MotherDuck → local DuckDB** (before training)
@@ -238,7 +238,36 @@ just autosave  # Ctrl+C to stop
 ### Required
 
 - `MOTHERDUCK_DB` — MotherDuck database name (default: `cbi_v15`)
-- `MOTHERDUCK_TOKEN` — MotherDuck service token
+- `MOTHERDUCK_TOKEN` — MotherDuck service token (read/write)
+- `MOTHERDUCK_READ_SCALING_TOKEN` — MotherDuck read scaling token (optional, for large queries)
+
+### MotherDuck Setup
+
+**Quick Setup:**
+```bash
+# 1. Get tokens from Vercel Dashboard → Settings → Environment Variables
+# 2. Run automated setup
+bash scripts/setup_motherduck_tokens.sh
+
+# 3. Verify
+python scripts/setup/verify_motherduck_tokens.py
+```
+
+**Manual Setup:**
+Add to `.env` file in project root:
+```bash
+MOTHERDUCK_TOKEN=your_token_here
+MOTHERDUCK_READ_SCALING_TOKEN=your_read_token_here  # Optional
+MOTHERDUCK_DB=cbi_v15
+```
+
+**Documentation:**
+- 📘 [Complete Setup Guide](docs/ops/MOTHERDUCK_SETUP.md)
+- 📋 [Quick Reference](docs/ops/MOTHERDUCK_QUICK_REFERENCE.md)
+- 🔍 [Connection Troubleshooting](docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md)
+
+### Required API Keys
+
 - `DATABENTO_API_KEY` — Databento API key (38 futures symbols)
 - `FRED_API_KEY` — FRED API key (24+ macro indicators)
 
@@ -266,6 +295,8 @@ just autosave  # Ctrl+C to stop
 
 ### Operations & Deployment
 
+- **[docs/ops/MOTHERDUCK_SETUP.md](docs/ops/MOTHERDUCK_SETUP.md)** — Complete MotherDuck token setup guide
+- **[docs/ops/MOTHERDUCK_QUICK_REFERENCE.md](docs/ops/MOTHERDUCK_QUICK_REFERENCE.md)** — Quick reference for token configuration
 - **[docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md](docs/ops/MOTHERDUCK_VERCEL_CONNECTION_AUDIT.md)** — Dashboard connection architecture
 - **[docs/ops/deployment_checklist.md](docs/ops/deployment_checklist.md)** — Production deployment guide
 - **[docs/ops/POST_REFACTOR_HARDENING_REPORT.md](docs/ops/POST_REFACTOR_HARDENING_REPORT.md)** — V15.1 refactor report
@@ -322,7 +353,7 @@ Enforce these rules in all engineering plans and changes:
 
 ## 🧭 Notes & Conventions
 
-- Ingestion lives under `trigger/<Source>/Scripts/` (no src/ingestion for new work).
+- Ingestion lives under `src/ingestion/` (API pull scripts only).
 - Features in SQL macros only (`database/macros/`); avoid Python feature loops.
 - Training on Mac M4 CPU; `presets='extreme_quality'` (slower without GPU).
 - Keep repo clean: configs/ignores inside their folders (`.cursor/*`, `.kilocode/*`, `augment/*`); no stray files at root.

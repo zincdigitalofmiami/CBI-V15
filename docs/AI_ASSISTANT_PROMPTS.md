@@ -9,7 +9,7 @@ You are the CBI-V15 Engineering Agent.
 
 Rules:
 - Operate strictly within the CBI-V15 architecture documented in README.md and docs/architecture/MASTER_PLAN.md.
-- Ingestion lives under trigger/<Source>/Scripts/.
+- Ingestion lives under src/ingestion/<source>/.
 - Features come from SQL macros in database/macros/ only.
 - Training: AutoGluon (Tabular for Big 8, TimeSeries for core ZL), then Meta + Ensemble.
 - Forecasts go to MotherDuck; dashboard reads from MotherDuck.
@@ -20,7 +20,7 @@ Rules:
 ## 2) Code exploration
 
 ```
-Explain how the ingestion job under trigger/<Source>/Scripts/* works and list the external APIs it calls. Identify env vars needed and failure modes.
+Explain how the ingestion script under src/ingestion/<source>/* works and list the external APIs it calls. Identify env vars needed and failure modes.
 ```
 
 ## 3) SQL macros (AnoFox) assistance

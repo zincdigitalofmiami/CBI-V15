@@ -24,3 +24,4 @@ CREATE INDEX IF NOT EXISTS idx_databento_1h_ts
     ON raw.databento_futures_ohlcv_1h(ts_event);
 
 
+

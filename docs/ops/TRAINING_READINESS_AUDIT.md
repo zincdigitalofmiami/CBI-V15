@@ -133,7 +133,7 @@ Table: raw.scrapecreators_trump
 - Missing Farm Policy News integration
 
 **Action Required:**
-- Deploy `trigger/ScrapeCreators/Scripts/collect_scrapecreators_news.py`
+- Run `src/ingestion/scrapecreators/collect_scrapecreators_news.py`
 - Set up Farm Policy News scraper (farmpolicynews.illinois.edu)
 - Priority: MEDIUM (can train without, but reduces accuracy)
 
@@ -354,7 +354,7 @@ python src/training/autogluon/train_core_zl.py
 
 **Action:**
 ```python
-# Create: trigger/EIA_EPA/Scripts/backfill_epa_rin_prices.py
+# Create: src/ingestion/eia_epa/backfill_epa_rin_prices.py
 # - Scrape EPA EMTS historical data
 # - Weekly volume-weighted averages
 # - Insert into raw.epa_rin_prices
@@ -659,7 +659,7 @@ python src/training/baselines/lightgbm_zl.py
 - `src/training/autogluon/train_core_zl.py`
 - `src/training/autogluon/train_meta_model.py`
 - `src/training/run_full_training.py`
-- `trigger/EIA_EPA/Scripts/backfill_epa_rin_prices.py`
+- `src/ingestion/eia_epa/backfill_epa_rin_prices.py`
 
 ---
 

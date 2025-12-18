@@ -13,7 +13,7 @@ Health checks, status monitoring, and connection testing. Run these to verify sy
 
 ## What Does NOT Belong Here
 
-- Data collectors (→ `trigger/<Source>/Scripts/`)
+- Data collectors (→ `src/ingestion/<source>/`)
 - Setup scripts (→ `scripts/setup/`)
 
 ## Usage

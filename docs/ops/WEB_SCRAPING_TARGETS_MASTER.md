@@ -9,7 +9,7 @@
 
 This document contains ALL web sources we scrape/monitor for ZL (Soybean Oil) forecasting. These are organized by priority, bucket type, and domain.
 
-**Location:** `trigger/` — All scraping jobs live here, organized by source (`<Source>/Guides`, `<Source>/Scripts`).
+**Location:** `src/ingestion/` — API pull + scraping collectors live here, organized by source.
 
 ---
 
@@ -17,7 +17,7 @@ This document contains ALL web sources we scrape/monitor for ZL (Soybean Oil) fo
 
 ### 📊 1. MARKET DATA (DataBento)
 
-**Folder:** `trigger/DataBento/`
+**Folder:** `src/ingestion/databento/`
 
 | Source         | URL                           | Data Type        | Priority | Status    |
 | -------------- | ----------------------------- | ---------------- | -------- | --------- |
@@ -88,7 +88,7 @@ ZB   # 30-Year Treasury Bond
 
 ### 📈 2. ECONOMIC DATA (FRED)
 
-**Folder:** `trigger/FRED/`
+**Folder:** `src/ingestion/fred/`
 
 | Source             | URL                                       | Data Type        | Priority | Status    |
 | ------------------ | ----------------------------------------- | ---------------- | -------- | --------- |
@@ -150,7 +150,7 @@ DTWEXEMEGS # Dollar Index (Emerging Markets)
 
 ### 🛢️ 3. BIOFUELS & ENERGY (EIA + EPA)
 
-**Folder:** `trigger/EIA_EPA/`
+**Folder:** `src/ingestion/eia_epa/`
 
 #### EPA RIN Prices (CRITICAL - FREE)
 
@@ -183,7 +183,7 @@ ULSD_WHOLESALE_MIDWEST  # Ultra-low sulfur diesel prices
 
 ### 🌾 4. USDA DATA
 
-**Folder:** `trigger/USDA/`
+**Folder:** `src/ingestion/usda/`
 
 | Source              | URL                                        | Data Type      | Priority | Status       |
 | ------------------- | ------------------------------------------ | -------------- | -------- | ------------ |
@@ -224,7 +224,7 @@ Corn - Good/Excellent Ratings
 
 ### 📊 5. CFTC COMMITMENT OF TRADERS
 
-**Folder:** `trigger/CFTC/`
+**Folder:** `src/ingestion/cftc/`
 
 | Source           | URL                                                                                      | Data Type   | Priority | Status           |
 | ---------------- | ---------------------------------------------------------------------------------------- | ----------- | -------- | ---------------- |
@@ -250,7 +250,7 @@ Change from Prior Week
 
 ### 🌦️ 6. WEATHER DATA
 
-**Folder:** `trigger/Weather/`
+**Folder:** `src/ingestion/weather/`
 
 | Source             | URL                                                  | Data Type      | Priority | Status       |
 | ------------------ | ---------------------------------------------------- | -------------- | -------- | ------------ |
@@ -304,7 +304,7 @@ Central Plains (KS, NE)
 
 ### 📣 7. NEWS & SENTIMENT (ScrapeCreators)
 
-**Folder:** `trigger/ScrapeCreators/`
+**Folder:** `src/ingestion/scrapecreators/`
 
 | Source             | URL                               | Data Type    | Priority | Status    |
 | ------------------ | --------------------------------- | ------------ | -------- | --------- |
@@ -332,7 +332,7 @@ general_market      # General commodity news
 
 ### 🌾 8. AGRICULTURAL MEDIA (ProFarmer + Others)
 
-**Folder:** `trigger/ProFarmer/`
+**Folder:** `src/ingestion/usda/`
 
 #### ProFarmer (CRITICAL - PAID ~$500/mo)
 
@@ -360,7 +360,7 @@ general_market      # General commodity news
 | Weather Forecast   | `https://www.profarmer.com/weather/forecast`           | Weather     | HIGH     | ✅ Scraping |
 | Crop Conditions    | `https://www.profarmer.com/weather/crop-conditions`    | Weather     | HIGH     | ✅ Scraping |
 
-**Trigger Job:** `trigger/ProFarmer/ProFarmerScripts/profarmer_all_urls.ts` ✅
+**Runner Script:** `src/ingestion/usda/profarmer_anchor.py` ✅
 
 #### Other Agricultural Media
 
@@ -383,7 +383,7 @@ general_market      # General commodity news
 
 ### 🎓 9. UNIVERSITY OF ILLINOIS FEEDS (FREE - MANDATORY)
 
-**Folder:** `trigger/UofI_Feeds/`
+**Collector:** Planned (no `src/ingestion/` module yet)
 
 | Source           | URL                                    | Data Type    | Priority | Status       |
 | ---------------- | -------------------------------------- | ------------ | -------- | ------------ |
@@ -411,7 +411,7 @@ general_market      # General commodity news
 
 ### 🏛️ 10. POLICY & THINK TANKS
 
-**Folder:** `trigger/Policy/`
+**Collector:** Planned (no `src/ingestion/` module yet)
 
 | Source                       | URL                                                                                   | Data Type       | Priority | Status       |
 | ---------------------------- | ------------------------------------------------------------------------------------- | --------------- | -------- | ------------ |
@@ -448,7 +448,7 @@ general_market      # General commodity news
 
 ### 👤 11. ANALYSTS & SOCIAL (via ScrapeCreators)
 
-**Folder:** `trigger/Analysts/`
+**Collector:** Planned (no `src/ingestion/` module yet)
 
 | Analyst            | Handle          | Focus               | Bucket              | Priority | Status       |
 | ------------------ | --------------- | ------------------- | ------------------- | -------- | ------------ |
@@ -468,7 +468,7 @@ general_market      # General commodity news
 
 ### 🏝️ 12. VEGAS INTEL
 
-**Folder:** `trigger/Vegas/`
+**Collector:** Planned (no `src/ingestion/` module yet)
 
 | Source      | URL                             | Data Type        | Priority | Status       |
 | ----------- | ------------------------------- | ---------------- | -------- | ------------ |
@@ -479,7 +479,7 @@ general_market      # General commodity news
 
 ### 🌍 13. TRADING ECONOMICS (PAID)
 
-**Folder:** `trigger/TradingEconomics/`
+**Collector:** Planned (no `src/ingestion/` module yet)
 
 | Source                | URL                                  | Data Type   | Priority | Status       |
 | --------------------- | ------------------------------------ | ----------- | -------- | ------------ |
@@ -548,10 +548,10 @@ general_market      # General commodity news
 3. ✅ **ProFarmer** - 22+ URLs, 3x daily
 4. ✅ **ScrapeCreators** - 4 news buckets
 5. ✅ **Trump Truth Social** - Hourly
-6. ✅ **CFTC COT** - Script exists, needs Trigger job
+6. ✅ **CFTC COT** - Script exists, needs scheduling
 7. ✅ **EIA** - API active
 
-### Critical Priority (8) - Need Trigger Jobs
+### Critical Priority (8) - Need Scheduled Runs
 
 1. ⚠️ **EPA RIN Prices** - FREE, CRITICAL
 2. ⚠️ **Farm Policy News** - FREE, CRITICAL
@@ -574,54 +574,19 @@ general_market      # General commodity news
 ## 📁 FOLDER STRUCTURE
 
 ```
-trigger/
-├── Analysts/
-│   ├── Guides/
-│   └── Scripts/
-├── CFTC/
-│   ├── Guides/
-│   │   └── CFTC_COT_INGESTION.md
-│   └── Scripts/
-├── DataBento/
-│   ├── Guides/
-│   └── Scripts/
-├── EIA_EPA/
-│   ├── Guides/
-│   └── Scripts/
-├── FRED/
-│   ├── Guides/
-│   └── Scripts/
-├── Policy/
-│   ├── Guides/
-│   └── Scripts/
-├── ProFarmer/
-│   ├── Guides/
-│   └── Scripts/
-│       └── profarmer_all_urls.ts ✅
-├── ScrapeCreators/
-│   ├── Guides/
-│   │   └── NEWS_PIPELINE.md
-│   └── Scripts/
-├── TradingEconomics/
-│   ├── Guides/
-│   └── Scripts/
-├── UofI_Feeds/
-│   ├── Guides/
-│   └── Scripts/
-├── USDA/
-│   ├── Guides/
-│   └── Scripts/
-├── Vegas/
-│   ├── Guides/
-│   └── Scripts/
-├── Weather/
-│   ├── Guides/
-│   └── Scripts/
-├── README.md
-├── TRIGGER_SETUP.md
-├── WEB_SCRAPING_TARGETS_MASTER.md
-├── trigger.config.ts
-└── Scripts/ (cross-source orchestration)
+src/ingestion/
+├── cftc/
+├── databento/
+├── eia_epa/
+├── fred/
+├── scrapecreators/
+├── usda/
+└── weather/
+
+docs/ops/
+├── CFTC_COT_INGESTION.md
+├── NEWS_PIPELINE.md
+└── WEB_SCRAPING_TARGETS_MASTER.md
 ```
 
 ---

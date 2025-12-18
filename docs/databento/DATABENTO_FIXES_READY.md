@@ -28,7 +28,7 @@ The DDL now matches the actual MotherDuck schema with consistent column naming.
 
 ## ✅ Fix #3: Idempotency Protection - RESOLVED
 
-**File:** `trigger/DataBento/Scripts/collect_daily.py:233-241`
+**File:** `src/ingestion/databento/collect_daily.py`
 **Status:** ✅ FIXED
 **Current Code:** Uses `INSERT OR REPLACE INTO` with proper staging logic
 
@@ -52,7 +52,7 @@ The monitoring script now checks the correct table name.
 
 ```bash
 cd /Volumes/Satechi\ Hub/CBI-V15
-python trigger/DataBento/Scripts/collect_daily.py
+python src/ingestion/databento/collect_daily.py
 ```
 
 **Expected Output:**
@@ -140,11 +140,11 @@ curl http://localhost:3000/api/live/zl | jq
 Once small test passes, pull all 38 symbols:
 
 ```python
-# Edit trigger/DataBento/Scripts/collect_daily.py
+# Edit src/ingestion/databento/collect_daily.py
 # Uncomment all symbols in SYMBOLS list (lines 34-73)
 
 # Run full ingestion
-python trigger/DataBento/Scripts/collect_daily.py
+python src/ingestion/databento/collect_daily.py
 ```
 
 **Estimated Time:** 2-4 hours (depends on Databento API rate limits)  

@@ -125,7 +125,7 @@ bash scripts/training/quick_test_run.sh
 ### 🟡 BLOCKER 2: EPA RIN Prices (2-4 hours)
 
 **Issue:** Only 3 weeks of data (need 15 years)  
-**Fix:** Create `trigger/EIA_EPA/Scripts/backfill_epa_rin_prices.py`  
+**Fix:** Create `src/ingestion/eia_epa/backfill_epa_rin_prices.py`  
 **Impact:** Biofuel bucket specialist will be weak
 
 ### 🟡 BLOCKER 3: Orchestration Scripts (4-6 hours)

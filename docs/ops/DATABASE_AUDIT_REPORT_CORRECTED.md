@@ -60,7 +60,7 @@ The CBI-V15 database infrastructure follows a **MotherDuck-first architecture**:
 ```
 1. Initialize schemas → python scripts/setup_database.py --both --force
 2. Seed reference data → python database/seeds/seed_reference_tables.py
-3. Run ingestion jobs → Trigger.dev jobs populate MotherDuck raw.*
+3. Run ingestion scripts → populate MotherDuck raw.*
 4. Feature engineering → AnoFox macros build staging.* and features.* in MotherDuck
 5. Sync to local → python scripts/sync_motherduck_to_local.py --schemas features,reference,training
 6. Train models → AutoGluon runs locally with fast I/O
@@ -215,30 +215,31 @@ python scripts/sync_motherduck_to_local.py --schemas reference
 
 **Fix:**
 ```bash
-# Run Trigger.dev ingestion jobs to populate MotherDuck raw tables
-# (These jobs are configured to write directly to MotherDuck)
+# Run ingestion scripts to populate MotherDuck raw tables
+# (These scripts write directly to MotherDuck when `MOTHERDUCK_TOKEN` is set)
 
-# 1. Databento (33 symbols, ~3 years of OHLCV)
-npx trigger.dev@latest dev  # Start trigger.dev
-# Then trigger: databento_ingest_job
+# 1. Databento (futures OHLCV)
+python src/ingestion/databento/collect_daily.py
 
 # 2. CFTC Commitment of Traders
-# Trigger: cftc_cot_ingestion
+python src/ingestion/cftc/ingest_cot.py
 
 # 3. USDA Reports
-# Trigger: usda_wasde_ingestion, usda_export_sales_ingestion
+python src/ingestion/usda/ingest_wasde.py
+python src/ingestion/usda/ingest_export_sales.py
 
-# 4. EIA Energy Data
-# Trigger: eia_biofuels_ingestion
+# 4. EIA / EPA
+python src/ingestion/eia_epa/collect_eia_biofuels.py
+python src/ingestion/eia_epa/collect_epa_rin_prices.py
 
 # 5. ProFarmer (requires credentials)
-# Trigger: profarmer_ingestion
+python src/ingestion/usda/profarmer_anchor.py
 
 # 6. TradingEconomics (requires credentials)
-# Trigger: tradingeconomics_ingestion
+python src/ingestion/usda/tradingeconomics_anchor.py
 
-# 7. NOAA Weather
-# Trigger: weather_ingestion
+# 7. Weather
+python src/ingestion/weather/collect_all_weather.py
 
 # Verify ingestion
 python scripts/ops/check_data_availability.py
@@ -380,24 +381,22 @@ python scripts/ops/audit_databases.py | grep -A 20 "REFERENCE:"
 
 ### Phase 3: Raw Data Ingestion (2-4 hours)
 
-**Goal:** Populate MotherDuck raw tables via Trigger.dev jobs
+**Goal:** Populate MotherDuck raw tables via ingestion scripts
 
 **Note:** All ingestion jobs write directly to MotherDuck (cloud source of truth)
 
 ```bash
-# Start Trigger.dev dev server
-npx trigger.dev@latest dev
-
-# Then trigger these jobs (via Trigger.dev dashboard or CLI):
-# 1. databento_ingest_job (33 symbols × ~1000 days = ~33k rows)
-# 2. fred_seed_harvest (60+ series, already has 35k rows)
-# 3. cftc_cot_ingestion (~5 years of weekly data)
-# 4. usda_wasde_ingestion (monthly reports since 2015)
-# 5. usda_export_sales_ingestion (weekly data)
-# 6. eia_biofuels_ingestion (weekly RIN prices, biodiesel production)
-# 7. profarmer_ingestion (requires PROFARMER credentials)
-# 8. tradingeconomics_ingestion (requires TRADINGECONOMICS credentials)
-# 9. weather_ingestion (NOAA daily observations)
+# Run ingestion scripts (locally or scheduled via GitHub Actions):
+# 1. python src/ingestion/databento/collect_daily.py
+# 2. python src/ingestion/fred/collect_fred_priority_series.py
+# 3. python src/ingestion/cftc/ingest_cot.py
+# 4. python src/ingestion/usda/ingest_wasde.py
+# 5. python src/ingestion/usda/ingest_export_sales.py
+# 6. python src/ingestion/eia_epa/collect_eia_biofuels.py
+# 7. python src/ingestion/eia_epa/collect_epa_rin_prices.py
+# 8. python src/ingestion/usda/profarmer_anchor.py (requires credentials)
+# 9. python src/ingestion/usda/tradingeconomics_anchor.py (requires credentials)
+# 10. python src/ingestion/weather/collect_all_weather.py
 
 # Monitor ingestion status
 python scripts/ops/ingestion_status.py
@@ -651,7 +650,7 @@ python scripts/test_motherduck_connection.py
 **What Needs Fixing:**
 - ❌ MotherDuck missing 4 reference tables → Run `setup_database.py --motherduck --force`
 - ❌ Reference tables empty → Run seed scripts
-- ❌ Raw tables empty (except FRED) → Run Trigger.dev ingestion jobs
+- ❌ Raw tables empty (except FRED) → Run ingestion scripts
 - ❌ Feature tables empty → Run AnoFox feature engineering pipeline
 - ❌ 2 stale local DB copies → Delete or archive
 - ❌ MOTHERDUCK_TOKEN exposed → Rotate token

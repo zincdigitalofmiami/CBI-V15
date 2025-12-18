@@ -20,7 +20,7 @@ import yaml
 
 # Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = Path("/Volumes/Satechi Hub/CBI-V15")
+PROJECT_ROOT = SCRIPT_DIR.parents[3]
 CONFIG_PATH = PROJECT_ROOT / "config" / "scrapecreators_profiles.yaml"
 
 # Environment

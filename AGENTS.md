@@ -119,7 +119,7 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 
 ## What Goes Where
 
-- `trigger/<Source>/Scripts/` — data collection (Databento, EIA, EPA, USDA, CFTC, FRED, UofI_Feeds)
+- `src/ingestion/<source>/` — API/data collection scripts (Databento, EIA, EPA, USDA, CFTC, FRED, ScrapeCreators, NOAA)
 - `src/training/autogluon/` — AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
 - `src/features/` — Python wrappers around AnoFox SQL macros
 - `src/training/` — training orchestration (bucket specialists + main predictor)
@@ -132,7 +132,7 @@ Pattern: `{source}_{symbol}_{indicator}_{param}_{transform}`
 ## If You Need Context
 
 - Dashboard lives in `dashboard/` (Vercel). Queries read `forecasts.*` in MotherDuck.
-- Data sources: see `DATA_LINKS_MASTER.md` (canonical) and `trigger/WEB_SCRAPING_TARGETS_MASTER.md` (web scraping URLs).
+- Data sources: see `DATA_LINKS_MASTER.md` (canonical) and `docs/ops/WEB_SCRAPING_TARGETS_MASTER.md` (web scraping URLs).
 - Integration details: `README.md`, `docs/architecture/MASTER_PLAN.md`.
 
 ## When Unsure
@@ -200,7 +200,7 @@ When building implementation plans:
      - TimeSeriesPredictor: Chronos-Bolt zero-shot baseline (CPU-compatible on Mac M4)
      - Problem type: `quantile` for P10/P50/P90 (probabilistic forecasts)
    - **Feature Engineering**: SQL macros in `database/macros/` (AnoFox) — NO Python feature loops
-   - **Orchestration**: Trigger.dev jobs in `trigger/<Source>/Scripts/` — NO Airflow, NO Prefect
+   - **Orchestration**: GitHub Actions workflows in `.github/workflows/` (or local cron) — NO Airflow, NO Prefect
    - **Training**: Mac M4 local CPU (reads from local DuckDB mirror) — NO cloud training, NO GPUs
    - **Dashboard**: Next.js/Vercel querying MotherDuck — NO separate API server
 
@@ -249,7 +249,7 @@ When building implementation plans:
    - Ingestion: `src/ingestion/{source}/{action}.py` (e.g., `src/ingestion/epa/collect_rin_prices.py`)
    - Features: `database/macros/{domain}_features.sql` (e.g., `database/macros/biofuel_features.sql`)
    - Training: `src/training/autogluon/{model_type}.py` (e.g., `src/training/autogluon/bucket_specialist.py`)
-   - Trigger jobs: `trigger/ingestion/{domain}/{source}_{action}.ts` (e.g., `trigger/ingestion/energy_biofuels/epa_rin_prices.ts`)
+   - Orchestration: `.github/workflows/*.yml` (scheduled ingestion + ops)
 
 10. **Anti-Patterns to Avoid**:
     - ❌ Creating new markdown files (update existing docs in-place)

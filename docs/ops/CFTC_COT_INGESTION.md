@@ -10,7 +10,7 @@ A complete CFTC Commitment of Traders (COT) data ingestion pipeline for all 38 f
 
 ### **1. Python Ingestion Script**
 
-**File:** `trigger/CFTC/Scripts/ingest_cot.py`
+**File:** `src/ingestion/cftc/ingest_cot.py`
 
 **Features:**
 
@@ -26,10 +26,10 @@ A complete CFTC Commitment of Traders (COT) data ingestion pipeline for all 38 f
 
 ```bash
 # Quick start (last 5 years)
-python trigger/CFTC/Scripts/ingest_cot.py --start-year 2020
+python src/ingestion/cftc/ingest_cot.py --start-year 2020
 
 # Backfill all historical data
-python trigger/CFTC/Scripts/ingest_cot.py --backfill
+python src/ingestion/cftc/ingest_cot.py --backfill
 ```
 
 ---
@@ -169,10 +169,10 @@ duckdb md:cbi-v15 -c "SELECT COUNT(*) FROM raw.cftc_cot_disaggregated"
 
 ---
 
-## 🎯 Trigger Job + Python Runner
+## 🎯 Scheduling + Python Runner
 
-- **Python runner (canonical ingestion):** `trigger/CFTC/Scripts/ingest_cot.py`
-- **Trigger.dev job:** `CFTC/Scripts/cftc_cot_reports.ts` (❗ planned, not yet created)
+- **Python runner (canonical ingestion):** `src/ingestion/cftc/ingest_cot.py`
+- **Scheduling:** GitHub Actions / cron (project workflows)
 
 ---
 

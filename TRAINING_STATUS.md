@@ -89,7 +89,7 @@
 **Data:** Weekly volume-weighted average RIN prices (D3, D4, D5, D6)  
 **Target Table:** `raw.eia_petroleum` (series_id: rin_d3_price, rin_d4_price, rin_d5_price, rin_d6_price)  
 **Frequency:** Weekly (updated monthly by EPA)  
-**Implementation:** Need Trigger.dev job `trigger/epa_rin_prices.ts`
+**Runner:** `python src/ingestion/eia_epa/collect_epa_rin_prices.py` (schedule via GitHub Actions or cron)
 
 #### 2. USDA Export Sales (FREE)
 **Status:** ❌ MOCK DATA ONLY  
@@ -100,7 +100,7 @@
 **Frequency:** Weekly (Thursday releases)  
 **Implementation:** 
 - Remove mock data from `src/ingestion/usda/ingest_export_sales.py`
-- Create Trigger.dev job `trigger/usda_export_sales.ts`
+- Run `python src/ingestion/usda/ingest_export_sales.py` (after removing mock data)
 
 #### 3. CFTC COT (FREE)
 **Status:** ❌ NOT IMPLEMENTED  
@@ -109,7 +109,7 @@
 **Data:** Weekly Commitments of Traders positioning (Managed Money, Commercials, Non-reportable)  
 **Target Table:** `raw.cftc_cot`  
 **Frequency:** Weekly (Friday 3:30 PM ET)  
-**Implementation:** Create Trigger.dev job `trigger/cftc_cot.ts`
+**Runner:** `python src/ingestion/cftc/ingest_cot.py` (schedule via GitHub Actions or cron)
 
 #### 4. FRED Missing Series (FREE)
 **Status:** ⚠️ PARTIAL  
@@ -130,7 +130,7 @@
 **Data:** Trade policy news, tariff announcements, China demand signals  
 **Target Table:** `raw.farm_policy_news`  
 **Frequency:** Daily  
-**Implementation:** Create Trigger.dev job `trigger/farm_policy_news.ts` with ScrapeCreator API
+**Implementation:** Add an API pull script under `src/ingestion/` (ScrapeCreators can be used as a collector)
 
 #### 6. farmdoc Daily (FREE)
 **Status:** ❌ NOT IMPLEMENTED  
@@ -139,7 +139,7 @@
 **Data:** University of Illinois agricultural analysis and commentary  
 **Target Table:** `raw.farmdoc_daily`  
 **Frequency:** Daily  
-**Implementation:** Create Trigger.dev job `trigger/farmdoc_daily.ts` with ScrapeCreator API
+**Implementation:** Add an API pull script under `src/ingestion/` (ScrapeCreators can be used as a collector)
 
 #### 7. USDA WASDE Reports (FREE)
 **Status:** ❌ NOT IMPLEMENTED  
@@ -148,7 +148,7 @@
 **Data:** Monthly World Agricultural Supply and Demand Estimates  
 **Target Table:** `raw.usda_wasde`  
 **Frequency:** Monthly (typically 12th of each month)  
-**Implementation:** Create Trigger.dev job `trigger/usda_wasde.ts`
+**Runner:** `python src/ingestion/usda/ingest_wasde.py` (schedule via GitHub Actions or cron)
 
 ---
 
@@ -239,9 +239,9 @@
 - [ ] Upload predictions to MotherDuck (`forecasts.zl_predictions`)
 
 ### Phase 3 (Production Deployment)
-- [ ] Schedule daily training job (Trigger.dev)
-- [ ] Schedule daily forecast job (Trigger.dev)
-- [ ] Schedule model monitoring job (Trigger.dev)
+- [ ] Schedule daily training job (GitHub Actions or cron)
+- [ ] Schedule daily forecast job (GitHub Actions or cron)
+- [ ] Schedule model monitoring job (GitHub Actions or cron)
 - [ ] Configure Slack/email notifications
 - [ ] Deploy dashboard to Vercel
 

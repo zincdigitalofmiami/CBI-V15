@@ -13,7 +13,7 @@ Configuration for data source connections - endpoints, rate limits, symbols, cre
 
 ## What Does NOT Belong Here
 
-- Collector code (→ `trigger/<Source>/Scripts/`)
+- Collector code (→ `src/ingestion/<source>/`)
 - Operational scripts (→ `scripts/ops/`)
 - API keys (→ `.env` or Keychain)
 

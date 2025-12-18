@@ -38,14 +38,15 @@ echo ""
 echo "================================================================================"
 echo "[2/6] NOAA Weather Backfill (800 days missing)"
 echo "================================================================================"
-python trigger/Weather/Scripts/ingest_weather.py --backfill --days 1000
+python src/ingestion/weather/collect_all_weather.py --backfill 1000
 echo ""
 
 echo "================================================================================"
 echo "[3/6] Databento Backfill (148 days missing)"
 echo "================================================================================"
 echo "⚠️  Check Databento API limits - may have daily request caps"
-python trigger/DataBento/Scripts/collect_daily.py --backfill --days 1000 || echo "Skipped - check API limits"
+START_DATE="$(python -c "from datetime import date, timedelta; print((date.today() - timedelta(days=1000)).isoformat())")"
+python src/ingestion/databento/collect_daily.py --start-date "$START_DATE" || echo "Skipped - check API limits"
 echo ""
 
 # ============================================================================
@@ -59,14 +60,14 @@ if [ -z "$UN_COMTRADE_API_KEY" ]; then
     echo "⚠️  UN_COMTRADE_API_KEY not set - register free at https://comtradeapi.un.org/"
     echo "Skipping..."
 else
-    python trigger/UNComtrade/Scripts/collect_china_imports.py
+    python src/ingestion/usda/collect_china_imports.py
 fi
 echo ""
 
 echo "================================================================================"
 echo "[5/6] INMET Brazil Weather (NEW)"
 echo "================================================================================"
-python trigger/Weather/Scripts/collect_brazil_weather.py
+python src/ingestion/weather/collect_brazil_soy_belt.py
 echo ""
 
 echo "================================================================================"

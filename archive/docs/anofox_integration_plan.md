@@ -88,7 +88,7 @@ SELECT * FROM anofox_schema_drift(
     reference_schema => (SELECT * FROM bucket_biofuel_policy LIMIT 1)
 );
 ```
-* Alerts will be logged; any drift triggers a re‑ingest of that bucket.
+* Alerts will be logged; any drift causes a re‑ingest of that bucket.
 
 ---
 

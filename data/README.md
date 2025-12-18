@@ -24,7 +24,7 @@ data/
 ## Data Flow
 
 ```
-Ingestion Scripts (trigger/)
+Ingestion Scripts (`src/ingestion/`)
          │
          ▼
    data/raw/*.parquet     ← Raw data landing

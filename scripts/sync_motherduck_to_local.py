@@ -37,20 +37,82 @@ import duckdb
 PROJECT_ROOT = Path(__file__).parent.parent
 LOCAL_DB_PATH = PROJECT_ROOT / "data" / "duckdb" / "cbi_v15.duckdb"
 
-# MotherDuck config
-MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
-MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
-
 # All schemas to sync (in order)
 ALL_SCHEMAS = [
     "raw",
     "staging",
     "features",
+    "features_dev",
     "training",
     "forecasts",
     "reference",
     "ops",
+    "explanations",
 ]
+
+def _load_dotenv_file(path: Path) -> None:
+    """
+    Lightweight dotenv loader (no deps).
+    - Only sets keys that are not already present in the environment.
+    - Supports KEY=VALUE with optional surrounding quotes.
+    - Ignores blank lines and comments starting with '#'.
+    """
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key or key in os.environ:
+            continue
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_local_env() -> None:
+    _load_dotenv_file(PROJECT_ROOT / ".env")
+    _load_dotenv_file(PROJECT_ROOT / ".env.local")
+
+
+def _get_motherduck_db() -> str:
+    return os.getenv("MOTHERDUCK_DB", "cbi_v15")
+
+
+def _iter_motherduck_tokens():
+    """
+    Yield candidate tokens in priority order.
+    Does not print tokens and strips whitespace/quotes.
+    """
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_TOKEN"),
+        ),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"),
+        ),
+    ]
+
+    for name, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token:
+            yield name, token
+
+
+# Load local env early (does not override existing env)
+_load_local_env()
 
 
 def get_local_connection():
@@ -73,18 +135,17 @@ def get_motherduck_connection():
     Create a direct connection to MotherDuck (workaround for ATTACH CREATE_SLT issue).
     Returns connection object or None if failed.
     """
-    if not MOTHERDUCK_TOKEN:
-        return None
-
-    try:
-        md_conn = duckdb.connect(
-            f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}"
-        )
-        # Test connection
-        md_conn.execute("SELECT 1").fetchone()
-        return md_conn
-    except Exception as e:
-        return None
+    db_name = _get_motherduck_db()
+    for _, token in _iter_motherduck_tokens():
+        if token.count(".") != 2:
+            continue
+        try:
+            md_conn = duckdb.connect(f"md:{db_name}?motherduck_token={token}")
+            md_conn.execute("SELECT 1").fetchone()
+            return md_conn
+        except Exception:
+            continue
+    return None
 
 
 def attach_motherduck(conn):
@@ -94,65 +155,63 @@ def attach_motherduck(conn):
 
     If ATTACH fails (CREATE_SLT RPC error), returns None to signal fallback to direct connection.
     """
-    if not MOTHERDUCK_TOKEN:
-        print("❌ ERROR: MOTHERDUCK_TOKEN not set in environment")
-        print("   Run: export MOTHERDUCK_TOKEN=your_token")
-        print("   Or add to .env file")
+    db_name = _get_motherduck_db()
+    tokens = list(_iter_motherduck_tokens())
+    if not tokens:
+        print("❌ ERROR: No MotherDuck token found in env/.env/.env.local")
+        print(
+            "   Expected one of: MOTHERDUCK_TOKEN, motherduck_storage_MOTHERDUCK_TOKEN,"
+        )
+        print(
+            "   MOTHERDUCK_READ_SCALING_TOKEN, motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"
+        )
         sys.exit(1)
 
-    # Try environment variable approach first (DuckDB auto-detects motherduck_token env var)
-    motherduck_token_env = os.getenv("motherduck_token") or os.getenv(
-        "MOTHERDUCK_TOKEN"
-    )
-
-    attach_formats = [
-        {
-            "name": "env_var_token",
-            "query": f"ATTACH 'md:{MOTHERDUCK_DB}' AS md_source",
-            "requires_env": True,
-        },
-        {
-            "name": "original",
-            "query": f"ATTACH 'md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}' AS md_source",
-            "requires_env": False,
-        },
-    ]
-
-    for fmt in attach_formats:
-        # Set environment variable if needed for this format
-        if fmt.get("requires_env") and not os.getenv("motherduck_token"):
-            # Set lowercase version for DuckDB auto-detection
-            os.environ["motherduck_token"] = MOTHERDUCK_TOKEN
-
-        try:
-            if fmt["name"] == "original":
-                print(
-                    f"\n📎 Attaching MotherDuck database '{MOTHERDUCK_DB}' as 'md_source'..."
-                )
-            elif fmt["name"] == "env_var_token":
-                print(f"\n📎 Attaching MotherDuck using environment variable token...")
-            else:
-                print(f"\n📎 Trying {fmt['name']} format...")
-
-            conn.execute(fmt["query"])
-
-            print("✅ MotherDuck attached successfully")
-            print(f"   Hybrid execution enabled: local ↔ cloud")
-            return True
-
-        except Exception as e:
-            if fmt["name"] == "original":
-                print(f"❌ Failed to attach MotherDuck: {e}")
-            else:
-                print(f"❌ {fmt['name']} format failed: {e}")
-
-            # Continue to next format
+    for token_name, token_value in tokens:
+        if token_value.count(".") != 2:
             continue
+
+        os.environ["motherduck_token"] = token_value
+
+        attach_queries = [
+            (f"env_var_token ({token_name})", f"ATTACH 'md:{db_name}' AS md_source"),
+            (
+                f"explicit_token_param ({token_name})",
+                f"ATTACH 'md:{db_name}?motherduck_token={token_value}' AS md_source",
+            ),
+        ]
+
+        for label, query in attach_queries:
+            try:
+                print(f"\n📎 Attaching MotherDuck using {label}...")
+                conn.execute(query)
+                print("✅ MotherDuck attached successfully")
+                print("   Hybrid execution enabled: local ↔ cloud")
+                return True
+            except Exception as e:
+                print(f"❌ Attach failed via {label}: {e}")
+                continue
 
     # All formats failed - return None to signal fallback to direct connection
     print(f"\n⚠️  ATTACH failed (CREATE_SLT RPC error)")
     print(f"   Falling back to direct MotherDuck connection method...")
     return None
+
+
+def attach_motherduck_share(conn, attach_uri: str) -> bool:
+    """
+    Attach a MotherDuck share URI to the local connection.
+    Example: md:_share/cbi_v15/<uuid>
+    """
+    try:
+        print(f"\n📎 Attaching MotherDuck share as 'md_source'...")
+        conn.execute(f"ATTACH '{attach_uri}' AS md_source")
+        print("✅ MotherDuck share attached successfully")
+        print("   Hybrid execution enabled: local ↔ cloud")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to attach MotherDuck share: {e}")
+        return False
 
 
 def get_tables_in_schema(conn, schema_name, source="md_source", md_conn=None):
@@ -169,12 +228,13 @@ def get_tables_in_schema(conn, schema_name, source="md_source", md_conn=None):
             """
             ).fetchall()
         else:
-            # Use ATTACH
+            # Use ATTACH: information_schema is connection-wide in DuckDB.
             result = conn.execute(
                 f"""
                 SELECT table_name 
-                FROM {source}.information_schema.tables 
-                WHERE table_schema = '{schema_name}'
+                FROM information_schema.tables
+                WHERE table_catalog = '{source}'
+                  AND table_schema = '{schema_name}'
                 ORDER BY table_name
             """
             ).fetchall()
@@ -184,10 +244,13 @@ def get_tables_in_schema(conn, schema_name, source="md_source", md_conn=None):
         return []
 
 
-def get_row_count(conn, schema_name, table_name, source="md_source"):
-    """Get row count for a table from specified source"""
+def get_row_count(conn, schema_name, table_name, source=None):
+    """Get row count for a table from specified source ('md_source' or local if None)."""
     try:
-        full_name = f"{source}.{schema_name}.{table_name}"
+        if source:
+            full_name = f"{source}.{schema_name}.{table_name}"
+        else:
+            full_name = f"{schema_name}.{table_name}"
         result = conn.execute(f"SELECT COUNT(*) FROM {full_name}").fetchone()
         return result[0] if result else 0
     except Exception as e:
@@ -229,15 +292,11 @@ def sync_table(conn, schema_name, table_name, dry_run=False, md_conn=None):
         md_rows = get_row_count(conn, schema_name, table_name, source="md_source")
         md_source_desc = "MotherDuck (ATTACH)"
 
-    local_rows = get_row_count(conn, schema_name, table_name, source="memory")
+    local_rows = get_row_count(conn, schema_name, table_name, source=None)
 
     if md_rows == -1:
         print(f"   ⚠️  Skipping {table_name} (MotherDuck read error)")
         return False
-
-    if md_rows == 0:
-        print(f"   ⏭️  Skipping {table_name} (MotherDuck table empty)")
-        return True
 
     # Show sync info
     local_status = f"{local_rows:,}" if local_rows >= 0 else "not exists"
@@ -246,18 +305,27 @@ def sync_table(conn, schema_name, table_name, dry_run=False, md_conn=None):
     )
 
     if dry_run:
-        print(f"      🔍 [DRY RUN] Would sync {md_rows:,} rows")
+        if md_rows == 0:
+            print(f"      🔍 [DRY RUN] Would create empty table (schema only)")
+        else:
+            print(f"      🔍 [DRY RUN] Would sync {md_rows:,} rows")
         return True
 
     try:
         # Atomic replace: CREATE OR REPLACE TABLE
-        print(f"      🔄 Syncing {md_rows:,} rows...", end=" ", flush=True)
+        if md_rows == 0:
+            print(f"      🔄 Creating empty table (schema only)...", end=" ", flush=True)
+        else:
+            print(f"      🔄 Syncing {md_rows:,} rows...", end=" ", flush=True)
 
         if md_conn:
             # Direct connection: query from MotherDuck and insert into local
-            data = md_conn.execute(
-                f"SELECT * FROM {schema_name}.{table_name}"
-            ).fetchdf()
+            if md_rows == 0:
+                data = md_conn.execute(
+                    f"SELECT * FROM {schema_name}.{table_name} LIMIT 0"
+                ).fetchdf()
+            else:
+                data = md_conn.execute(f"SELECT * FROM {schema_name}.{table_name}").fetchdf()
             conn.register("temp_md_data", data)
             conn.execute(
                 f"CREATE OR REPLACE TABLE {local_full} AS SELECT * FROM temp_md_data"
@@ -266,15 +334,24 @@ def sync_table(conn, schema_name, table_name, dry_run=False, md_conn=None):
         else:
             # ATTACH method: use hybrid query
             md_full = f"md_source.{schema_name}.{table_name}"
-            conn.execute(
-                f"""
-                CREATE OR REPLACE TABLE {local_full} AS 
-                SELECT * FROM {md_full}
-            """
-            )
+            if md_rows == 0:
+                conn.execute(
+                    f"""
+                    CREATE OR REPLACE TABLE {local_full} AS
+                    SELECT * FROM {md_full}
+                    LIMIT 0
+                """
+                )
+            else:
+                conn.execute(
+                    f"""
+                    CREATE OR REPLACE TABLE {local_full} AS
+                    SELECT * FROM {md_full}
+                """
+                )
 
         # Verify
-        new_count = get_row_count(conn, schema_name, table_name, source="memory")
+        new_count = get_row_count(conn, schema_name, table_name, source=None)
         if new_count == md_rows:
             print(f"✅ {new_count:,} rows")
             return True
@@ -401,16 +478,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
 
 
 

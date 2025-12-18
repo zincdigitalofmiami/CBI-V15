@@ -11,12 +11,57 @@ Usage:
     python scripts/training/save_the_brain.py
 """
 
+from __future__ import annotations
+
 import pandas as pd
 import duckdb
 import os
-from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def _load_dotenv_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key or key in os.environ:
+            continue
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_local_env() -> None:
+    _load_dotenv_file(ROOT_DIR / ".env")
+    _load_dotenv_file(ROOT_DIR / ".env.local")
+
+
+def _iter_motherduck_tokens():
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        ("motherduck_storage_MOTHERDUCK_TOKEN", os.getenv("motherduck_storage_MOTHERDUCK_TOKEN")),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"),
+        ),
+    ]
+    for _, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token.count(".") != 2:
+            continue
+        yield token
 
 # CONFIGURATION - Updated for CBI-V15 architecture
 DB_NAME = os.getenv("MOTHERDUCK_DB", "cbi_v15")
@@ -24,11 +69,19 @@ DB_NAME = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 
 def main():
     print(f"🔌 Connecting to MotherDuck: {DB_NAME}...")
-    token = os.getenv("MOTHERDUCK_TOKEN")
-    if not token:
-        raise ValueError("❌ MOTHERDUCK_TOKEN is missing!")
-
-    con = duckdb.connect(f"md:{DB_NAME}?motherduck_token={token}")
+    _load_local_env()
+    con = None
+    last_error: Exception | None = None
+    for token in _iter_motherduck_tokens():
+        try:
+            con = duckdb.connect(f"md:{DB_NAME}?motherduck_token={token}")
+            con.execute("SELECT 1").fetchone()
+            break
+        except Exception as e:
+            last_error = e
+            con = None
+    if con is None:
+        raise ValueError(f"❌ MotherDuck token is missing or invalid: {last_error}")
 
     # 1. VERIFY SCHEMA MATCHES DDL (DECIMAL types)
     try:
@@ -88,44 +141,38 @@ def main():
                 continue
 
             print(f"  📖 Reading cached OOF predictions from: {oof_file}")
-            df_oof = pd.read_csv(oof_file)
+            try:
+                df_oof = pd.read_csv(oof_file)
+                required = {"as_of_date", "q10", "q50", "q90"}
+                if not required.issubset(df_oof.columns):
+                    missing = sorted(required - set(df_oof.columns))
+                    print(f"  ⚠️  Skipping {bucket}/{horizon} - missing columns: {missing}")
+                    continue
 
-            # Transform to bucket_predictions schema
-            for _, row in df_oof.iterrows():
-                prediction = {
-                    "as_of_date": row["as_of_date"],  # Assuming this column exists
-                    "bucket": bucket,
-                    "horizon_code": horizon,
-                    "prediction_type": "oof",
-                    "q10": float(row["q10"]),
-                    "q50": float(row["q50"]),
-                    "q90": float(row["q90"]),
-                    "model_version": "v15.0.0-beta",
-                    "created_at": pd.Timestamp.now(),
-                }
+                for _, row in df_oof.iterrows():
+                    q10 = float(row["q10"])
+                    q50 = float(row["q50"])
+                    q90 = float(row["q90"])
 
-                    # Calculate derived metrics (corrected formulas)
-                    q10, q50, q90 = (
-                        prediction["q10"],
-                        prediction["q50"],
-                        prediction["q90"],
-                    )
-
-                    # P_UP: Probability price goes up (Q90 > 0)
-                    prediction["p_up"] = 1.0 if q90 > 0 else 0.0
-                    prediction["p_down"] = 1.0 - prediction["p_up"]
-
-                    # Expected Return: Simple average of quantiles
-                    prediction["expected_return"] = (q10 + q50 + q90) / 3.0
-
-                    # Confidence: Inverse of quantile spread (higher spread = lower confidence)
                     spread = q90 - q10
-                    prediction["confidence"] = (
-                        1.0 / (1.0 + spread) if spread > 0 else 1.0
-                    )
+                    confidence = 1.0 / (1.0 + spread) if spread > 0 else 1.0
 
+                    prediction = {
+                        "as_of_date": row["as_of_date"],
+                        "bucket": bucket,
+                        "horizon_code": horizon,
+                        "prediction_type": "oof",
+                        "p_up": 1.0 if q90 > 0 else 0.0,
+                        "p_down": 0.0 if q90 > 0 else 1.0,
+                        "expected_return": (q10 + q50 + q90) / 3.0,
+                        "confidence": confidence,
+                        "q10": q10,
+                        "q50": q50,
+                        "q90": q90,
+                        "model_version": "v15.0.0-beta",
+                        "created_at": pd.Timestamp.now(),
+                    }
                     bucket_predictions.append(prediction)
-
             except Exception as e:
                 print(f"  ❌ Error loading {bucket}/{horizon}: {e}")
                 continue
@@ -173,9 +220,21 @@ def main():
 
     print(f"💾 Saving {len(df_final)} predictions to MotherDuck...")
     con.register("df_view", df_final)
+    # No PK constraints in MotherDuck tables; do an explicit delete+insert upsert.
     con.execute(
-        "INSERT OR REPLACE INTO training.bucket_predictions SELECT * FROM df_view"
+        """
+        DELETE FROM training.bucket_predictions
+        WHERE EXISTS (
+          SELECT 1
+          FROM df_view v
+          WHERE v.as_of_date = training.bucket_predictions.as_of_date
+            AND v.bucket = training.bucket_predictions.bucket
+            AND v.horizon_code = training.bucket_predictions.horizon_code
+            AND v.prediction_type = training.bucket_predictions.prediction_type
+        )
+        """
     )
+    con.execute("INSERT INTO training.bucket_predictions SELECT * FROM df_view")
     print("🎉 Success! Bucket specialist brains saved to MotherDuck.")
 
 

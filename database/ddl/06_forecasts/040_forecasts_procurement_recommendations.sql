@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS forecasts.procurement_recommendations (
     downside_risk_pct DECIMAL(6, 4),
     upside_potential_pct DECIMAL(6, 4),
     risk_reward_ratio DECIMAL(6, 4),
-    -- Tripwires (trigger levels for re-evaluation)
+    -- Tripwires (levels for re-evaluation)
     tripwire_up DECIMAL(10, 4),
     tripwire_down DECIMAL(10, 4),
     -- Regime context
@@ -32,4 +32,3 @@ CREATE TABLE IF NOT EXISTS forecasts.procurement_recommendations (
 );
 
 -- Decision engine converts forecasts → actionable procurement guidance
-

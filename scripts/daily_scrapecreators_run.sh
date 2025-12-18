@@ -31,13 +31,13 @@ echo ""
 echo "================================================================================"
 echo "Collecting Big 8 Bucket Data (Twitter + Google + Reddit)"
 echo "================================================================================"
-python trigger/ScrapeCreators/Scripts/collect_by_big8_buckets.py
+python src/ingestion/scrapecreators/collect_by_big8_buckets.py
 
 echo ""
 echo "================================================================================"
 echo "Collecting FRED Historical Data (Complete History)"
 echo "================================================================================"
-python trigger/FRED/Scripts/collect_fred_releases_historical.py
+python src/ingestion/fred/collect_fred_releases_historical.py
 
 echo ""
 echo "================================================================================"

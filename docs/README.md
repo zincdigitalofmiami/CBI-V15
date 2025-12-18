@@ -25,7 +25,7 @@ docs/
 - Code → `src/`
 - Config → `config/`
 - SQL → `database/`
-- Trigger jobs → `trigger/`
+- Workflows → `.github/workflows/`
 
 ## Key Documents (read-first)
 
@@ -36,7 +36,7 @@ docs/
 ## Hygiene
 
 - Update existing docs; do not add new markdown unless permanent and properly placed.
-- Keep filenames and paths aligned with the current repo structure (Trigger-based ingestion, DuckDB/MotherDuck).
+- Keep filenames and paths aligned with the current repo structure (GitHub Actions scheduling + `src/ingestion/`, DuckDB/MotherDuck).
 
 ## Big 8 Bucket Modeling Rules
 

@@ -6,18 +6,62 @@ import os
 import duckdb
 from datetime import datetime
 import logging
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-MOTHERDUCK_TOKEN = os.getenv('MOTHERDUCK_TOKEN')
 MOTHERDUCK_DB = os.getenv('MOTHERDUCK_DB', 'cbi_v15')
+
+def _load_dotenv_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+def _load_local_env() -> None:
+    root = Path(__file__).resolve().parents[2]
+    _load_dotenv_file(root / ".env")
+    _load_dotenv_file(root / ".env.local")
+
+
+def _iter_tokens():
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        ("motherduck_storage_MOTHERDUCK_TOKEN", os.getenv("motherduck_storage_MOTHERDUCK_TOKEN")),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        ("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN")),
+    ]
+    for name, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token.count(".") == 2:
+            yield name, token
+
 
 def get_connection():
     """Get MotherDuck connection"""
-    if not MOTHERDUCK_TOKEN:
-        raise ValueError("MOTHERDUCK_TOKEN environment variable not set")
-    return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}")
+    _load_local_env()
+    last_error = None
+    for name, token in _iter_tokens():
+        try:
+            con = duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={token}")
+            con.execute("SELECT 1").fetchone()
+            logger.info(f"🔑 Token source: {name}")
+            return con
+        except Exception as e:
+            last_error = e
+            continue
+    raise ValueError(f"No working MotherDuck token found; last error: {last_error}")
 
 def check_ingestion_status():
     """Check status of all ingestion sources"""
@@ -103,7 +147,7 @@ def check_ingestion_status():
     
     logger.info("\n" + "=" * 60)
     logger.info("📋 Recommendations:")
-    logger.info("  - Run ingestion: python3 trigger/DataBento/Scripts/collect_daily.py")
+    logger.info("  - Run ingestion: python3 src/ingestion/databento/collect_daily.py")
     logger.info("  - Check env vars: MOTHERDUCK_TOKEN, DATABENTO_API_KEY")
     
     conn.close()

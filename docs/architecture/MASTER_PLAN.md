@@ -65,7 +65,7 @@
 
 ### Architecture Pattern: SQL Features + AutoGluon Training
 
-**Data Collection**: Trigger.dev jobs → MotherDuck cloud  
+**Data Collection**: API pull scripts → MotherDuck cloud (scheduled via GitHub Actions)  
 **Feature Engineering**: AnoFox SQL macros in `database/macros/` (1,428 lines)  
 **Training Prep**: Sync MotherDuck → Local DuckDB (`scripts/sync_motherduck_to_local.py`)  
 **Training**: Mac M4 AutoGluon (reads from local DuckDB for speed)  
@@ -134,16 +134,16 @@
 
 - **DuckDB SQL Macros** → `database/macros/` (AnoFox feature engineering)
 - **Raw Table Definitions** → `database/models/01_raw/`
-- **Python/Trigger Ingestion** → `trigger/<Source>/Scripts/`
+- **Python Ingestion** → `src/ingestion/<source>/`
 - **AutoGluon Training** → `src/training/autogluon/`
-- **Trigger.dev Jobs** → `trigger/`
+- **Ingestion Scheduling** → `.github/workflows/`
 - **Operational Scripts** → `scripts/`
 - **Configuration** → `config/`
 - **Documentation** → `docs/`
 
 ### Workflow (V15.1)
 
-1. **Data Ingestion**: Trigger.dev jobs run on schedule → MotherDuck
+1. **Data Ingestion**: scheduled runs execute `src/ingestion/**` → MotherDuck
 2. **Feature Engineering**: AnoFox SQL macros execute → `features.daily_ml_matrix`
 3. **Sync to Local**: `python scripts/sync_motherduck_to_local.py` → Local DuckDB
 4. **Train Models**: `python src/training/autogluon/train_all_buckets.py` → Reads local DuckDB
@@ -178,8 +178,8 @@
   - `src/engines/anofox/` - AnoFox bridge to DuckDB
   - `src/training/autogluon/` - AutoGluon TabularPredictor + TimeSeriesPredictor wrappers
   - (LLM agents removed in V15.1; orchestration now handled directly via AutoGluon + SQL)
-  - `trigger/<Source>/Scripts/` - Data collection scripts (per-source)
-- `trigger/` - Trigger.dev orchestration jobs
+  - `src/ingestion/<source>/` - Data collection scripts (per-source)
+- `.github/workflows/` - scheduled ingestion workflows
 - `data/` - Local DuckDB mirror + model artifacts
 - `config/` - Configuration files (YAML/JSON)
 - `docs/` - Documentation
@@ -262,7 +262,7 @@
 2. ⚠️ Farm Policy News scraper (China trade policy - CRITICAL)
 3. ⚠️ farmdoc Daily scraper (Scott Irwin RIN analysis)
 4. ✅ USDA FAS Export Sales (real API implemented)
-5. ⚠️ CFTC COT Trigger.dev job (script exists, needs Trigger job)
+5. ⚠️ CFTC COT scheduling (script exists; ensure it is scheduled)
 6. ⚠️ Local DuckDB mirror setup (training landing pad)
 
 **Status**: ⚠️ **IN PROGRESS** - Phase 0-1 implementation underway

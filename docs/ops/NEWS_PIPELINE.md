@@ -23,7 +23,7 @@
 - AI-powered element selection
 - Extracts full article content (500 words max)
 
-**Based on:** [Trigger.dev Anchor Browser Example](https://trigger.dev/docs/guides/example-projects/anchor-browser-web-scraper)
+**Reference:** Anchor browser automation patterns (project-local scripts)
 
 ---
 
@@ -86,7 +86,7 @@
 1. **Scrape** - Anchor browser automation
 2. **Process** - OpenAI Agent signal extraction
 3. **Store** - MotherDuck features table
-4. **Trigger** - Downstream feature engineering
+4. **Run** - Downstream feature engineering
 
 **Schedules:**
 
@@ -138,13 +138,13 @@ CREATE TABLE features.news_signals (
 
 ---
 
-## Trigger Jobs
+## Jobs
 
 | Job                   | File                                      | Status     |
 | --------------------- | ----------------------------------------- | ---------- |
-| Anchor Scraper        | `trigger/profarmer_anchor_scraper.ts`     | ✅ Created |
-| OpenAI Agent          | `trigger/news_to_signals_openai_agent.ts` | ✅ Created |
-| Pipeline Orchestrator | `trigger/intelligent_news_pipeline.ts`    | ✅ Created |
+| Anchor Scraper        | `src/ingestion/usda/profarmer_anchor.py` | ✅ Created |
+| Signal Processing     | `src/ingestion/scrapecreators/sentiment_calculator.py` | ✅ Created |
+| Pipeline Runner       | `src/ingestion/scrapecreators/collect_all_scrapecreators.py` | ✅ Created |
 
 ---
 

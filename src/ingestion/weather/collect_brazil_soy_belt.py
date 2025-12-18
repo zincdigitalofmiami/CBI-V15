@@ -2,7 +2,7 @@
 """
 Brazil Soy Belt Weather Collection - NOAA CDO API
 
-Direct API pull. NO Trigger.dev.
+Direct API pull (no external orchestrator coupling).
 
 Regions covered:
 - Mato Grosso (MT) - Largest soy state (~30% of Brazil production)
@@ -76,10 +76,20 @@ COUNTRY = "Brazil"
 
 def get_connection():
     """Get MotherDuck connection"""
-    token = os.getenv("MOTHERDUCK_TOKEN")
-    if not token:
-        raise RuntimeError("MOTHERDUCK_TOKEN not set")
-    return duckdb.connect(f"md:{MOTHERDUCK_DB}")
+    candidates = [
+        os.getenv("MOTHERDUCK_TOKEN"),
+        os.getenv("motherduck_storage_MOTHERDUCK_TOKEN"),
+    ]
+    for raw in candidates:
+        if not raw:
+            continue
+        token = raw.strip().strip('"').strip("'")
+        if token.count(".") != 2:
+            continue
+        return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={token}")
+    raise RuntimeError(
+        "MotherDuck token required (set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN)"
+    )
 
 
 def fetch_station_data(station_id: str, start_date: str, end_date: str) -> list:

@@ -76,14 +76,14 @@ done
 # Ingestion Scripts
 echo ""
 echo "6️⃣  Ingestion Scripts:"
-if [ -d "$PROJECT_ROOT/trigger" ]; then
-    INGEST_PY_COUNT=$(find "$PROJECT_ROOT/trigger" -path "*/Scripts/*.py" 2>/dev/null | wc -l | tr -d ' ')
-    INGEST_TS_COUNT=$(find "$PROJECT_ROOT/trigger" -path "*/Scripts/*.ts" 2>/dev/null | wc -l | tr -d ' ')
-    echo "   ✅ trigger/ source folders exist"
+if [ -d "$PROJECT_ROOT/src/ingestion" ]; then
+    INGEST_PY_COUNT=$(find "$PROJECT_ROOT/src/ingestion" -name "*.py" -not -name "__init__.py" 2>/dev/null | wc -l | tr -d ' ')
+    INGEST_TS_COUNT=$(find "$PROJECT_ROOT/src/ingestion" -name "*.ts" 2>/dev/null | wc -l | tr -d ' ')
+    echo "   ✅ src/ingestion/ exists"
     echo "   📊 Python scripts: $INGEST_PY_COUNT"
-    echo "   📊 TypeScript jobs: $INGEST_TS_COUNT"
+    echo "   📊 TypeScript files: $INGEST_TS_COUNT"
 else
-    echo "   ⚠️  trigger/ not found"
+    echo "   ⚠️  src/ingestion/ not found"
 fi
 
 # Training Scripts
@@ -97,20 +97,9 @@ else
     echo "   ⚠️  Training directory not found"
 fi
 
-# Trigger.dev Jobs
-echo ""
-echo "8️⃣  Trigger.dev Jobs:"
-if [ -d "$PROJECT_ROOT/trigger" ]; then
-    TRIGGER_COUNT=$(find "$PROJECT_ROOT/trigger" -name "*.ts" 2>/dev/null | wc -l | tr -d ' ')
-    echo "   ✅ Trigger directory exists"
-    echo "   📊 TypeScript jobs: $TRIGGER_COUNT"
-else
-    echo "   ⚠️  Trigger directory not found"
-fi
-
 # Dashboard
 echo ""
-echo "9️⃣  Dashboard:"
+echo "8️⃣  Dashboard:"
 if [ -d "$PROJECT_ROOT/dashboard" ]; then
     if [ -f "$PROJECT_ROOT/dashboard/package.json" ]; then
         echo "   ✅ Next.js dashboard exists"
@@ -133,4 +122,4 @@ echo "📋 Next Steps:"
 echo "   1. Ensure MOTHERDUCK_TOKEN is set in .env"
 echo "   2. Run: python scripts/setup/execute_local_duckdb_schema.py"
 echo "   3. Run: python scripts/setup/deploy_schema_to_motherduck.py"
-echo "   4. Begin data ingestion with: python trigger/DataBento/Scripts/collect_daily.py"
+echo "   4. Begin data ingestion with: python src/ingestion/databento/collect_daily.py"

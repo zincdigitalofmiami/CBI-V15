@@ -3,7 +3,7 @@
 NOAA Weather Collection Orchestrator
 
 Calls all country-specific weather collection scripts.
-Direct API pulls. NO Trigger.dev.
+Direct API pulls (no external orchestrator coupling).
 
 Coverage:
 - 🇺🇸 US Corn Belt (25 stations): Iowa, Illinois, Nebraska, Minnesota, Indiana
@@ -48,11 +48,21 @@ from collect_argentina_pampas import collect_argentina_pampas
 
 def get_connection():
     """Get MotherDuck connection"""
-    token = os.getenv("MOTHERDUCK_TOKEN")
     db = os.getenv("MOTHERDUCK_DB", "cbi_v15")
-    if not token:
-        raise RuntimeError("MOTHERDUCK_TOKEN not set")
-    return duckdb.connect(f"md:{db}")
+    candidates = [
+        os.getenv("MOTHERDUCK_TOKEN"),
+        os.getenv("motherduck_storage_MOTHERDUCK_TOKEN"),
+    ]
+    for raw in candidates:
+        if not raw:
+            continue
+        token = raw.strip().strip('"').strip("'")
+        if token.count(".") != 2:
+            continue
+        return duckdb.connect(f"md:{db}?motherduck_token={token}")
+    raise RuntimeError(
+        "MotherDuck token required (set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN)"
+    )
 
 
 def collect_all_weather(start_date: str, end_date: str, country: str = None):

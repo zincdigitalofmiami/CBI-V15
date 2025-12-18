@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import HeatmapEmbed from "@/app/components/visualizations/tradingview-widgets/HeatmapEmbed";
 import NewsFeedWidget from "@/app/components/visualizations/tradingview-widgets/NewsFeedWidget";
 import TechnicalGaugeWidget from "@/app/components/visualizations/tradingview-widgets/TechnicalGaugeWidget";
@@ -7,6 +8,16 @@ import TradingViewWidget from "@/app/components/visualizations/tradingview-widge
 import Big8Panel from "@/components/big8/Big8Panel";
 import ConfidenceBadge from "@/components/metrics/ConfidenceBadge";
 import { useEffect, useState } from "react";
+
+// Dynamic import for Lightweight Charts (client-side only)
+const ZLFullScreenChart = dynamic(() => import("@/app/components/charts/ZLFullScreenChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-[#070a12]">
+      <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
 
 type ZLRow = {
   as_of_date?: string | { value?: string };
@@ -174,31 +185,9 @@ export default function ZLChart() {
         </div>
       </div>
 
-      {/* Full-screen Advanced Chart - real live data */}
-      <div className="flex-1 w-full" style={{ height: "75vh" }}>
-        <TradingViewWidget
-          scriptSrc="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
-          config={{
-            symbol: "CBOT:ZL1!",
-            interval: "D",
-            timezone: "America/Chicago",
-            theme: "dark",
-            style: "1",
-            locale: "en",
-            allow_symbol_change: true,
-            calendar: false,
-            support_host: "https://www.tradingview.com",
-            hide_side_toolbar: false,
-            withdateranges: true,
-            details: true,
-            hotlist: false,
-            show_popup_button: true,
-            popup_width: "1000",
-            popup_height: "650",
-          }}
-          height="100%"
-          width="100%"
-        />
+      {/* Full-screen Lightweight Chart with real data from /api/live/zl */}
+      <div className="flex-1 w-full" style={{ height: "75vh", minHeight: "500px" }}>
+        <ZLFullScreenChart height="100%" />
       </div>
 
       {/* TradingView widget rail (fast, CDN-served embeds) */}

@@ -16,7 +16,7 @@ Operational and setup utilities (not core app code). Use these for setup, sync, 
 
 ## What Does NOT Belong Here
 
-- Ingestion (→ `trigger/<Source>/Scripts/`)
+- Ingestion (→ `src/ingestion/<source>/`)
 - Feature engineering (→ `database/macros/`)
 - Training code (→ `src/training/`)
 

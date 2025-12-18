@@ -7,7 +7,6 @@ Target: raw.epa_rin_prices
 DATA SOURCES (in priority order):
 1. OPIS_API_KEY env var - OPIS daily RIN prices (paid, ~$2000/year)
 2. EPA EMTS - EPA Moderated Transaction System (requires EPA registration)
-3. Historical average fallback - based on typical RIN price ranges
 
 RIN Types:
 - D3: Cellulosic biofuel (highest value)
@@ -95,69 +94,18 @@ def fetch_opis_rin_prices():
 def get_rin_prices():
     """
     Get RIN prices from best available source.
-    Priority: OPIS API > Historical data model
+    Priority: OPIS API > (unimplemented EPA EMTS)
+
+    NOTE: This repo prohibits synthetic/placeholder data. If no real source is
+    configured, this returns an empty DataFrame and does not write to the DB.
     """
     # Try OPIS first (paid, real-time)
     df = fetch_opis_rin_prices()
     if df is not None and not df.empty:
         return df
 
-    # Fall back to historical model (based on typical price ranges)
-    logger.info("Using historical RIN price model")
-    return generate_historical_rin_data()
-
-
-def generate_historical_rin_data():
-    """
-    Generate RIN price data based on historical averages and typical ranges.
-
-    Historical RIN price ranges (2023-2024):
-    - D3 (Cellulosic): $2.50 - $3.50 (highest, limited supply)
-    - D4 (Biodiesel): $0.80 - $1.50 (KEY for soybean oil demand)
-    - D5 (Advanced): $1.20 - $1.80
-    - D6 (Conventional): $0.50 - $0.90 (lowest, corn ethanol)
-
-    NOTE: These are estimates. For production use, set OPIS_API_KEY.
-    """
-    import numpy as np
-
-    logger.info(
-        "Generating historical RIN price estimates (set OPIS_API_KEY for real data)"
-    )
-
-    records = []
-    today = datetime.now().date()
-    np.random.seed(42)  # Reproducible for consistency
-
-    # Historical price ranges (based on 2023-2024 market data)
-    RIN_PARAMS = {
-        "D3": {"base": 3.00, "volatility": 0.15, "trend": -0.02},  # Cellulosic
-        "D4": {"base": 1.10, "volatility": 0.12, "trend": 0.01},  # Biodiesel (CRITICAL)
-        "D5": {"base": 1.50, "volatility": 0.10, "trend": 0.00},  # Advanced
-        "D6": {"base": 0.70, "volatility": 0.08, "trend": -0.01},  # Conventional
-    }
-
-    for weeks_ago in range(52):  # Last year of weekly data
-        week_ending = today - timedelta(weeks=weeks_ago)
-        week_factor = weeks_ago / 52  # 0 to 1 for trend
-
-        for rin_type in ["D3", "D4", "D5", "D6"]:
-            params = RIN_PARAMS[rin_type]
-
-            # Price model: base + trend + random walk
-            base_price = params["base"]
-            trend = params["trend"] * week_factor
-            noise = np.random.normal(0, params["volatility"])
-
-            price = max(0.10, base_price + trend + noise)  # Floor at $0.10
-
-            records.append(
-                {"date": week_ending, "rin_type": rin_type, "price": round(price, 4)}
-            )
-
-    df = pd.DataFrame(records)
-    logger.info(f"Generated {len(df)} historical RIN price estimates")
-    return df
+    logger.info("No real RIN source configured (OPIS_API_KEY missing); skipping")
+    return pd.DataFrame(columns=["date", "rin_type", "price"])
 
 
 def main():
@@ -171,7 +119,7 @@ def main():
     logger.info(f"Collected {len(df)} RIN price records")
 
     if df.empty:
-        logger.warning("No data to ingest")
+        logger.warning("No real data to ingest (skipping write)")
         return
 
     # Connect to database

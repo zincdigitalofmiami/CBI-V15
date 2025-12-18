@@ -75,7 +75,7 @@ models:
 | API endpoints         | Python scripts → `src/`         |
 | Rate limits           | SQL files → `database/`         |
 | Model hyperparameters | Secrets → `.env`                |
-| Schedule definitions  | Actual schedulers → Trigger.dev |
+| Schedule definitions  | Actual schedulers → GitHub Actions / cron |
 | Feature flags         | Business logic                  |
 
 ## Environment Variables

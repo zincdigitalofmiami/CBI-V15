@@ -43,7 +43,6 @@ china:
     - ReutersAg
     - BloombergAg
     - AgriCensus  # Commodity news
-    -
     - FarmFutures
     
   google_queries:

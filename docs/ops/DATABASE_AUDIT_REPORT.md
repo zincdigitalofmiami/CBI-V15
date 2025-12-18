@@ -89,7 +89,7 @@ All key tables are empty except `raw.fred_economic`:
 **Root Cause:** Ingestion jobs have not run successfully or data has been cleared.
 
 **Action Required:**
-1. Run all Trigger.dev ingestion jobs to populate raw tables
+1. Run ingestion scripts to populate raw tables
 2. Run AnoFox feature engineering pipeline to populate staging/features
 3. Verify Databento, CFTC, USDA, EIA, Weather collectors are operational
 
@@ -349,23 +349,23 @@ python scripts/ops/audit_databases.py | grep -A 20 "REFERENCE:"
 
 ```bash
 # 1. FRED Economic Data (already has 35k rows in MD, sync to local)
-python trigger/FRED/Scripts/fred_seed_harvest.ts
+python src/ingestion/fred/collect_fred_priority_series.py
 
 # 2. Databento OHLCV (33 symbols, ~3 years)
-python trigger/DataBento/Scripts/collect_daily.py
+python src/ingestion/databento/collect_daily.py
 
 # 3. CFTC Commitment of Traders
-python trigger/CFTC/Scripts/ingest_cot.py
+python src/ingestion/cftc/ingest_cot.py
 
 # 4. USDA Reports
-python trigger/USDA/Scripts/ingest_wasde.py
-python trigger/USDA/Scripts/ingest_export_sales.py
+python src/ingestion/usda/ingest_wasde.py
+python src/ingestion/usda/ingest_export_sales.py
 
 # 5. EIA Energy Data
-python trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
+python src/ingestion/eia_epa/collect_eia_biofuels.py
 
 # 6. Weather Data
-python trigger/Weather/Scripts/ingest_weather.py
+python src/ingestion/weather/collect_all_weather.py
 
 # 7. Verify data ingested
 python scripts/ops/audit_databases.py | grep "rows"

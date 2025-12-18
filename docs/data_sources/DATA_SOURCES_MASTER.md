@@ -2,7 +2,7 @@
 
 ⚠️ **DEPRECATED - See `DATA_LINKS_MASTER.md` for canonical data links and API endpoints.**
 
-This file is kept for feature engineering prefix reference only. All data source URLs, API endpoints, Trigger jobs, and ingestion scripts are documented in **`DATA_LINKS_MASTER.md`**.
+This file is kept for feature engineering prefix reference only. All data source URLs, API endpoints, and ingestion scripts are documented in **`DATA_LINKS_MASTER.md`**.
 
 ---
 
@@ -27,7 +27,7 @@ This file is kept for feature engineering prefix reference only. All data source
 
 ## Available Symbols & Series
 
-**For complete data source details, URLs, API endpoints, Trigger jobs, and ingestion scripts, see:** `DATA_LINKS_MASTER.md`
+**For complete data source details, URLs, API endpoints, and ingestion scripts, see:** `DATA_LINKS_MASTER.md`
 
 ### Futures Symbols (38 total)
 

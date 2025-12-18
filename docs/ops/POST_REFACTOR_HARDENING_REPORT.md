@@ -79,7 +79,7 @@ Files to archive:
 All BigQuery references are CORRECT (stating we DON'T use BigQuery):
 
 - `database/README.md` (2 refs)
-- `trigger/DataBento/Scripts/collect_daily.py` (1 ref)
+- `src/ingestion/databento/collect_daily.py` (1 ref)
 - `augment/.augment.md` (5 refs)
 - `docs/README.md` (1 ref)
 - `docs/architecture/BASELINE_TRAINING_PIPELINE.md` (1 ref)

@@ -93,32 +93,29 @@ python scripts/ops/audit_databases.py | grep -A 30 "REFERENCE:"
 
 **Status:** Ready to begin
 
-### Ingestion Jobs Available (15+ jobs found):
+### Ingestion Scripts Available (15+ scripts found):
 
 **CRITICAL (Priority 1):**
-1. `databento_ingest_job.ts` - 38 futures symbols, OHLCV data
-2. `fred_seed_harvest.ts` - FRED economic series discovery
-3. `collect_fred_fx.py` - FRED FX rates
-4. `collect_fred_rates_curve.py` - FRED yield curve
-5. `ingest_cot.py` - CFTC Commitment of Traders
+1. `src/ingestion/databento/collect_daily.py` - 38 futures symbols, OHLCV data
+2. `src/ingestion/fred/collect_fred_priority_series.py` - FRED priority series
+3. `src/ingestion/fred/collect_fred_fx.py` - FRED FX rates
+4. `src/ingestion/fred/collect_fred_rates_curve.py` - FRED yield curve
+5. `src/ingestion/cftc/ingest_cot.py` - CFTC Commitment of Traders
 
 **HIGH (Priority 2):**
-6. `ingest_wasde.py` - USDA WASDE reports
-7. `ingest_export_sales.py` - USDA export sales
-8. `collect_eia_biofuels.py` - EIA biofuels data
-9. `ingest_weather.py` - NOAA weather data
+6. `src/ingestion/usda/ingest_wasde.py` - USDA WASDE reports
+7. `src/ingestion/usda/ingest_export_sales.py` - USDA export sales
+8. `src/ingestion/eia_epa/collect_eia_biofuels.py` - EIA biofuels data
+9. `src/ingestion/weather/collect_all_weather.py` - weather data (all regions)
 
 **MEDIUM (Priority 3 - requires credentials):**
-10. `profarmer_ingest_job.ts` - ProFarmer news (requires PROFARMER_USERNAME/PASSWORD)
-11. `collect_news_buckets.py` - ScrapeCreators news
-12. `collect_vegas_intel.py` - Vegas intel
+10. `src/ingestion/usda/profarmer_anchor.py` - ProFarmer via Anchor (requires credentials)
+11. `src/ingestion/scrapecreators/collect_news_buckets.py` - ScrapeCreators news buckets
+12. `src/ingestion/usda/collect_vegas_intel.py` - Vegas intel
 
 **Next Steps:**
 ```bash
-# Start Trigger.dev dev server
-npx trigger.dev@latest dev
-
-# Then trigger jobs via Trigger.dev dashboard or CLI
+# Run ingestion scripts locally (or via GitHub Actions)
 # Monitor with:
 python scripts/ops/ingestion_status.py
 python scripts/ops/check_data_availability.py
@@ -195,7 +192,7 @@ python scripts/sync_motherduck_to_local.py --schemas reference,features,training
 - Reference data populated (33 symbols, 3 splits, 8 buckets, geo data)
 - System ready for ingestion jobs
 
-**Next Action:** Start Trigger.dev and run ingestion jobs (Phase 3)
+**Next Action:** Run ingestion scripts (Phase 3)
 
 ---
 

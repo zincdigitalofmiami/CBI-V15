@@ -2,7 +2,7 @@
  * MotherDuck Client - Shared Database Connection
  * 
  * Provides connection pooling and batch insert utilities for MotherDuck.
- * Used by all Trigger.dev jobs for data ingestion.
+ * Used by ingestion scripts and services that write to MotherDuck.
  */
 
 import * as duckdb from "duckdb";
@@ -12,11 +12,13 @@ export class MotherDuckClient {
   private connection: duckdb.Connection | null = null;
 
   constructor() {
-    const token = process.env.MOTHERDUCK_TOKEN;
+    const token = process.env.MOTHERDUCK_TOKEN || process.env.motherduck_storage_MOTHERDUCK_TOKEN;
     const dbName = process.env.MOTHERDUCK_DB || "cbi_v15";
 
     if (!token) {
-      throw new Error("MOTHERDUCK_TOKEN environment variable not set");
+      throw new Error(
+        "MotherDuck token not set (expected MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN)",
+      );
     }
 
     this.db = new duckdb.Database(`:md:${dbName}?motherduck_token=${token}`);

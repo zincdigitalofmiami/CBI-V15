@@ -10,8 +10,8 @@ Frequency: Weekly (released every Thursday at 8:30 AM ET)
 History: Data available from 1990-present
 
 Usage:
-    python trigger/USDA/Scripts/ingest_export_sales.py --start-date 2020-01-01
-    python trigger/USDA/Scripts/ingest_export_sales.py --backfill
+    python src/ingestion/usda/ingest_export_sales.py --start-date 2020-01-01
+    python src/ingestion/usda/ingest_export_sales.py --backfill
 """
 
 import os

@@ -2,12 +2,7 @@ name: Endpoint Verify (Headless)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 */6 * * *" # every 6 hours
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # Disabled scheduled/PR automation: run manually when needed.
 
 jobs:
   endpoint-verify:
@@ -24,8 +19,9 @@ jobs:
           pip install duckdb
       - name: Verify dashboard API SQL against MotherDuck
         env:
-          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-          MOTHERDUCK_DB: ${{ secrets.MOTHERDUCK_DB }}
+          # Prefer canonical Vercel/MotherDuck integration token if present; fall back to legacy secret name.
+          MOTHERDUCK_TOKEN: ${{ secrets.motherduck_storage_MOTHERDUCK_TOKEN || secrets.MOTHERDUCK_STORAGE_MOTHERDUCK_TOKEN || secrets.MOTHERDUCK_TOKEN }}
+          MOTHERDUCK_DB: cbi_v15
         run: |
           python scripts/ops/verify_dashboard_api.py | tee endpoint-verify.log
       - name: Upload verify logs

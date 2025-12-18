@@ -34,7 +34,7 @@
 
 - Volatility spikes
 - Regime changes
-- **USE CASE**: Trigger bucket reweighting
+- **USE CASE**: Initiate bucket reweighting
 
 ### 5. **Sentiment Analysis** (if available)
 

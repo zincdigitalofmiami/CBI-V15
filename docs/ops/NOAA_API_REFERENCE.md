@@ -78,13 +78,13 @@ GET /gridpoints/{wfo}/{x},{y}/forecast/hourly
 ## CBI-V15 Integration
 
 **Current Implementation:**
-- `trigger/Weather/Scripts/ingest_weather.py` - NOAA data collector
+- `src/ingestion/weather/collect_all_weather.py` - Weather data collector
 - `raw.weather_noaa` - Storage table (600 rows currently)
 - Locations: US Corn Belt, Brazil (via INMET), Argentina (via SMN)
 
 **Daily Collection:**
 ```bash
-python trigger/Weather/Scripts/ingest_weather.py
+python src/ingestion/weather/collect_all_weather.py
 ```
 
 ---

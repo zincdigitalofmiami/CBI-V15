@@ -12,5 +12,5 @@ Data export utilities - backup data, export to CSV, migrate between systems.
 
 ## What Does NOT Belong Here
 
-- Data collectors (→ `trigger/<Source>/Scripts/`)
+- Data collectors (→ `src/ingestion/<source>/`)
 - ETL transforms (→ `database/models/`)

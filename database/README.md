@@ -59,7 +59,7 @@ database/
 ## Data Flow
 
 ```
-Trigger.dev jobs → raw.* (MotherDuck, source of truth)
+Ingestion scripts (scheduled workflows) → raw.* (MotherDuck, source of truth)
                        ↓
               AnoFox SQL macros
                        ↓

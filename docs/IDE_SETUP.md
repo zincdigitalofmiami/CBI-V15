@@ -45,7 +45,6 @@ Local IDE preferences not shared:
 |--------|---------|
 | `.venv/` | Python virtual environment |
 | `.pytest_cache/` | Pytest cache |
-| `.trigger/` | Trigger.dev local state |
 
 ## Setup
 

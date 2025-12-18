@@ -11,8 +11,7 @@ setup:
 
 # Development
 dev:
-    echo "Starting Trigger.dev and Dashboard..."
-    (npm run dev &)
+    echo "Starting dashboard..."
     cd dashboard && npm run dev
 
 # Quality gates

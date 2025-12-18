@@ -28,18 +28,11 @@ fi
 echo "✅ Environment validated"
 echo ""
 
-# 1. NOAA Weather (14 stations: US, Brazil, Argentina)
+# 1. Weather (US, Brazil, Argentina)
 echo "================================================================================"
-echo "[1/2] NOAA Weather (14 agricultural regions)"
+echo "[1/1] Weather (agricultural regions)"
 echo "================================================================================"
-python trigger/Weather/Scripts/ingest_weather.py --days 7
-echo ""
-
-# 2. INMET Brazil Weather (3 soy regions)
-echo "================================================================================"
-echo "[2/2] INMET Brazil Weather (3 soy regions)"
-echo "================================================================================"
-python trigger/Weather/Scripts/collect_brazil_weather.py
+python src/ingestion/weather/collect_all_weather.py --days 7
 echo ""
 
 echo "================================================================================"

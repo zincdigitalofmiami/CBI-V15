@@ -58,17 +58,15 @@ raw.epa_rin_prices: 0 rows ⏳
 # Run remaining Python ingestion scripts directly
 cd /Volumes/Satechi\ Hub/CBI-V15
 
-python3 trigger/FRED/Scripts/collect_fred_fx.py
-python3 trigger/FRED/Scripts/collect_fred_rates_curve.py
-python3 trigger/FRED/Scripts/collect_fred_financial_conditions.py
-python3 trigger/CFTC/Scripts/ingest_cot.py
-python3 trigger/USDA/Scripts/ingest_wasde.py
-python3 trigger/USDA/Scripts/ingest_export_sales.py
-python3 trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
+python3 src/ingestion/fred/collect_fred_fx.py
+python3 src/ingestion/fred/collect_fred_rates_curve.py
+python3 src/ingestion/fred/collect_fred_financial_conditions.py
+python3 src/ingestion/cftc/ingest_cot.py
+python3 src/ingestion/usda/ingest_wasde.py
+python3 src/ingestion/usda/ingest_export_sales.py
+python3 src/ingestion/eia_epa/collect_eia_biofuels.py
 
-# Or trigger via Trigger.dev
-npx trigger.dev@latest dev
-# Then trigger: fred_seed_harvest, etc.
+# Or run via the scheduled workflow (GitHub Actions)
 ```
 
 **Time:** 1-2 hours (reduced from 2-4 hours since Databento already done)
@@ -148,25 +146,14 @@ pip3 install 'autogluon.timeseries[all]>=1.1.0'
 
 ---
 
-## ✅ Blocker #7: Trigger.dev Jobs (FALSE POSITIVE)
+## ✅ Blocker #7: Scheduler Jobs (FALSE POSITIVE)
 
-**Status:** ✅ **JOBS EXIST** - Just not all in Trigger.dev format
+**Status:** ✅ **SCRIPTS EXIST** - schedule them as needed
 
 **Jobs Available:**
 
-### Trigger.dev Jobs (TypeScript) - 12 files:
-1. ✅ `databento_ingest_job.ts` - **ALREADY RAN** (219K rows ingested)
-2. ✅ `fred_seed_harvest.ts` - FRED discovery
-3. ✅ `profarmer_ingest_job.ts` - ProFarmer news
-4. ✅ `eia_procurement_ingest.ts` - EIA procurement
-5. ✅ `vegas_intel_job.ts` - Vegas intel
-6. ✅ `intelligent_news_pipeline.ts` - News processing
-7. ✅ `news_to_signals_openai_agent.ts` - Sentiment
-8. ✅ `tradingeconomics_goldmine.ts` - TradingEconomics
-9. `multi_source_etl.ts` - Multi-source orchestrator
-10. `trigger.config.ts` - Configuration
-11. `profarmer_all_urls.ts` - ProFarmer URL discovery
-12. `profarmer_anchor_scraper.ts` - ProFarmer scraper
+### Scheduler wrappers - removed
+Use the Python ingestion scripts under `src/ingestion/` and schedule them via GitHub Actions (or cron) as needed.
 
 ### Python Ingestion Scripts - 22 files:
 1. ✅ `collect_daily.py` (Databento) - **ALREADY RAN**
@@ -190,8 +177,8 @@ pip3 install 'autogluon.timeseries[all]>=1.1.0'
 
 **Action:**
 1. Use existing Python scripts (most ingestion done this way)
-2. Use existing Trigger.dev TypeScript jobs for orchestration
-3. Training jobs not needed in Trigger.dev (run via Python directly)
+2. Use GitHub Actions (or cron) for orchestration
+3. Training jobs run via Python directly (not scheduled here)
 
 **Time:** No time needed - jobs already exist
 
@@ -231,19 +218,19 @@ pip3 install 'autogluon.timeseries[all]>=1.1.0'
 cd /Volumes/Satechi\ Hub/CBI-V15
 
 # FRED (3 scripts)
-python3 trigger/FRED/Scripts/collect_fred_fx.py
-python3 trigger/FRED/Scripts/collect_fred_rates_curve.py
-python3 trigger/FRED/Scripts/collect_fred_financial_conditions.py
+python3 src/ingestion/fred/collect_fred_fx.py
+python3 src/ingestion/fred/collect_fred_rates_curve.py
+python3 src/ingestion/fred/collect_fred_financial_conditions.py
 
 # CFTC
-python3 trigger/CFTC/Scripts/ingest_cot.py
+python3 src/ingestion/cftc/ingest_cot.py
 
 # USDA (2 scripts)
-python3 trigger/USDA/Scripts/ingest_wasde.py
-python3 trigger/USDA/Scripts/ingest_export_sales.py
+python3 src/ingestion/usda/ingest_wasde.py
+python3 src/ingestion/usda/ingest_export_sales.py
 
 # EIA
-python3 trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
+python3 src/ingestion/eia_epa/collect_eia_biofuels.py
 
 # Verify data populated
 python3 -c "
@@ -269,7 +256,7 @@ conn.close()
 **Breakdown:**
 - ✅ DuckDB version: Already correct (0 min)
 - ✅ Local DB schema: Already correct (0 min)
-- ✅ Trigger.dev jobs: Already exist (0 min)
+- ✅ Ingestion scripts: already exist (0 min)
 - ✅ Databento data: Already ingested (0 min)
 - ⏳ AutoGluon verification: 5-15 min
 - ⏳ Remaining ingestion (FRED, CFTC, USDA, EIA): 1-2 hours
@@ -285,7 +272,7 @@ conn.close()
 **False alarm on 3 out of 5 "blockers":**
 1. DuckDB version already correct
 2. Local DB schema is intentionally correct
-3. Trigger.dev jobs already exist (22 Python + 12 TypeScript)
+3. Ingestion scripts already exist
 
 **Real work remaining:**
 1. Verify AutoGluon installation (5-15 min)

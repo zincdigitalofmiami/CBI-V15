@@ -126,10 +126,10 @@
 
 ```bash
 # 1. Ingest raw data (Databento, FRED, EIA, ScrapeCreators)
-python trigger/DataBento/Scripts/collect_daily.py
-python trigger/FRED/Scripts/collect_fred_rates_curve.py
-python trigger/EIA_EPA/Scripts/collect_eia_biofuels.py
-python trigger/ScrapeCreators/Scripts/collect_news_buckets.py
+python src/ingestion/databento/collect_daily.py
+python src/ingestion/fred/collect_fred_rates_curve.py
+python src/ingestion/eia_epa/collect_eia_biofuels.py
+python src/ingestion/scrapecreators/collect_news_buckets.py
 
 # 2. Build features (SQL-first via AnoFox)
 python src/engines/anofox/build_all_features.py

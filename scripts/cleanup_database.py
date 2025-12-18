@@ -23,12 +23,42 @@ MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 
+def _iter_motherduck_tokens():
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_TOKEN"),
+        ),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"),
+        ),
+    ]
+    for _, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token and token.count(".") == 2:
+            yield token
+
+
 def get_motherduck_connection():
     """Get MotherDuck connection"""
-    motherduck_token = os.getenv("MOTHERDUCK_TOKEN")
-    if not motherduck_token:
-        raise ValueError("MOTHERDUCK_TOKEN environment variable not set")
-    return duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={motherduck_token}")
+    last_error: Exception | None = None
+    for token in _iter_motherduck_tokens():
+        try:
+            con = duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={token}")
+            con.execute("SELECT 1").fetchone()
+            return con
+        except Exception as e:
+            last_error = e
+            continue
+    raise ValueError(
+        "No working MotherDuck token found (checked MOTHERDUCK_TOKEN / motherduck_storage_MOTHERDUCK_TOKEN)"
+        + (f"; last error: {last_error}" if last_error else "")
+    )
 
 
 def get_local_connection():
@@ -248,7 +278,7 @@ to recreate the database structure.
     print(f"Finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\n📋 Next steps:")
     print("  1. Recreate database: python scripts/setup_database.py --both")
-    print("  2. Ingest raw data: python trigger/DataBento/Scripts/collect_daily.py")
+    print("  2. Ingest raw data: python src/ingestion/databento/collect_daily.py")
     print("  3. Build features: python src/engines/anofox/build_all_features.py")
 
 

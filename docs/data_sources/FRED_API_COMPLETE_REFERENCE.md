@@ -518,7 +518,7 @@ session.mount("https://", adapter)
 ## Integration with CBI-V15
 
 **Current Implementation:**
-- `trigger/FRED/Scripts/collect_fred_releases_historical.py` - Backfill script
+- `src/ingestion/fred/collect_fred_releases_historical.py` - Backfill script
 - `config/fred_releases.yaml` - Release ID mapping to Big 8 buckets
 - `raw.fred_economic` - Storage table in MotherDuck
 
@@ -528,7 +528,7 @@ session.mount("https://", adapter)
 bash scripts/daily_scrapecreators_run.sh
 
 # Or standalone
-python trigger/FRED/Scripts/collect_fred_releases_historical.py
+python src/ingestion/fred/collect_fred_releases_historical.py
 ```
 
 **Expected Data Volume:**

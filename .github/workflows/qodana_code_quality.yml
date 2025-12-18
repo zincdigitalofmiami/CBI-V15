@@ -1,11 +1,7 @@
 name: Qodana (Cloud)
 on:
   workflow_dispatch:
-  pull_request:
-  push:
-    branches: # Specify your branches here
-      - main # The 'main' branch
-      - "releases/*" # The release branches
+  # Disabled PR/push automation: requires a Qodana Cloud token and duplicates .github/workflows/qodana.yml.
 
 jobs:
   qodana:

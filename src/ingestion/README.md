@@ -1,6 +1,6 @@
 # Data Ingestion
 
-Python scripts for collecting data from various sources. **Direct API calls** - NO Trigger.dev.
+Python scripts for collecting data from various sources. **Direct API calls only** (no external orchestrator coupling).
 
 ## Structure
 
@@ -99,7 +99,7 @@ NOAA_API_TOKEN=...
 
 ## Legacy Code
 
-Historical Trigger.dev files are archived in `archive/trigger/`:
-- `.ts` files (TypeScript/Trigger.dev)
+Historical orchestration prototypes are archived in `archive/`:
+- `.ts` files (TypeScript prototypes)
 - Not actively maintained
 - Kept for reference only

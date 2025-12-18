@@ -89,3 +89,5 @@ skaffold
 
 # MLX (install via pip, not source)
 mlx/
+.vercel
+.env.local.backup*

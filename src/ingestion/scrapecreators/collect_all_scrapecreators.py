@@ -16,7 +16,9 @@ Target: raw.scrapecreators_news_buckets + raw.scrapecreators_trump
 
 import hashlib
 import os
+import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List
 
 import duckdb
@@ -32,6 +34,11 @@ TWITTER_ENDPOINT = "https://api.scrapecreators.com/v1/twitter/user-tweets"
 GOOGLE_ENDPOINT = "https://api.scrapecreators.com/v1/google/search"
 REDDIT_ENDPOINT = "https://api.scrapecreators.com/v1/reddit/search"
 
+# Repo paths
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parents[3]
+RAW_DDL_PATH = PROJECT_ROOT / "database" / "ddl" / "02_raw" / "080_raw_news_articles.sql"
+
 
 # ============================================================================
 # EXPANDED TWITTER ACCOUNTS (Agriculture/Trade/Policy)
@@ -41,6 +48,8 @@ TWITTER_ACCOUNTS = [
     "realDonaldTrump",
     "POTUS",
     "SecretaryPete",  # Transportation (logistics)
+    "CommerceGov",
+    "USTreasury",
     # USDA/Government
     "USDA",
     "USDAForeignAg",
@@ -52,11 +61,31 @@ TWITTER_ACCOUNTS = [
     "ASA_Soybeans",
     "GrowthEnergy",  # Ethanol
     "BiodieselBoard",
+    "CleanFuelsNow",
+    "RFA_Ethanol",
+    "BiodieselMag",
+    "EIAgov",
+    "CMEGroup",
+    "Bunge",
+    "ADMupdates",
+    "CargillNews",
+    "RaboResearch",
+    # Palm oil / veg oils
+    "MPOBOfficial",
+    "GAPKI_ID",
+    "WillmarIntl",
+    "IOI_Group",
     # Market/Analysis
     "AgWeb",
     "ProFarmer",
     "DTNCommodities",
     "GrainStats",
+    # China / trade signalers
+    "COFCO_Group",
+    "SCMPNews",
+    "CGTNOfficial",
+    "XHNews",
+    "ChinaDaily",
 ]
 
 
@@ -159,6 +188,76 @@ def classify_bucket(text: str) -> str:
     return "general"
 
 
+def infer_policy_axis(bucket: str, text: str, is_trump_related: bool) -> str | None:
+    """
+    Map an item to the canonical policy_axis values used by SQL macros.
+    Keep this conservative: only emit values we know downstream uses.
+    """
+    if not is_trump_related:
+        return None
+
+    t = text.lower()
+    if bucket == "china" or "china" in t or "cofco" in t or "sinograin" in t:
+        return "TRADE_CHINA"
+    if bucket == "tariff" or "tariff" in t or "trade war" in t or "section 301" in t:
+        return "TRADE_TARIFFS"
+    return None
+
+
+def infer_zl_sentiment(bucket: str, text: str, is_trump_related: bool) -> tuple[str, float]:
+    """
+    Lightweight heuristic sentiment for ZL from text.
+    This avoids heavyweight NLP deps in scheduled ingestion.
+
+    Returns:
+      (zl_sentiment_label, sentiment_score) where sentiment_score ∈ [-1, 1].
+    """
+    t = text.lower()
+
+    bullish_terms = [
+        "remove tariffs",
+        "tariffs lifted",
+        "deal reached",
+        "agreement reached",
+        "phase one",
+        "purchase",
+        "buy",
+        "imports surge",
+        "demand strong",
+        "mandate",
+        "increase rvo",
+    ]
+    bearish_terms = [
+        "tariffs imposed",
+        "trade war",
+        "retaliation",
+        "embargo",
+        "ban",
+        "export cancelled",
+        "weak demand",
+        "recession",
+    ]
+
+    score = 0.0
+    for term in bullish_terms:
+        if term in t:
+            score += 1.0
+    for term in bearish_terms:
+        if term in t:
+            score -= 1.0
+
+    # Bucket bias: tariff/trade content tends to be risk-off for the soy complex unless explicitly positive.
+    if bucket in {"tariff", "china"} and is_trump_related and score == 0.0:
+        if any(k in t for k in ["tariff", "trade war", "section 301", "retaliation"]):
+            score = -0.5
+
+    if score > 0.0:
+        return ("BULLISH_ZL", min(1.0, score / 2.0))
+    if score < 0.0:
+        return ("BEARISH_ZL", max(-1.0, score / 2.0))
+    return ("NEUTRAL", 0.0)
+
+
 def fetch_twitter_account(handle: str, limit: int = 50) -> List[Dict[str, Any]]:
     """Fetch tweets from a Twitter account."""
     headers = {"x-api-key": SCRAPECREATORS_API_KEY}
@@ -179,6 +278,9 @@ def fetch_twitter_account(handle: str, limit: int = 50) -> List[Dict[str, Any]]:
             created = tweet.get("created_at")
 
             bucket = classify_bucket(text)
+            is_trump_related = "trump" in handle.lower() or "trump" in (text or "").lower()
+            policy_axis = infer_policy_axis(bucket, text or "", is_trump_related)
+            zl_sentiment, sentiment_score = infer_zl_sentiment(bucket, text or "", is_trump_related)
 
             rows.append(
                 {
@@ -199,10 +301,10 @@ def fetch_twitter_account(handle: str, limit: int = 50) -> List[Dict[str, Any]]:
                     "source_trust_score": (
                         0.90 if handle in ["USDA", "USDAForeignAg"] else 0.75
                     ),
-                    "sentiment_score": 0.0,
-                    "zl_sentiment": "neutral",
-                    "is_trump_related": "trump" in handle.lower(),
-                    "policy_axis": None,
+                    "sentiment_score": sentiment_score,
+                    "zl_sentiment": zl_sentiment,
+                    "is_trump_related": is_trump_related,
+                    "policy_axis": policy_axis,
                     "created_at": datetime.now(),
                 }
             )
@@ -233,6 +335,13 @@ def fetch_google_queries(bucket: str, queries: List[str]) -> List[Dict[str, Any]
                 title = result.get("title", "")
                 snippet = result.get("snippet", result.get("description", ""))
                 link = result.get("link", result.get("url", ""))
+                if not link:
+                    continue
+                is_trump_related = "trump" in (title + snippet).lower()
+                full_text = f"{title}\n\n{snippet}".strip()
+                zl_sentiment, sentiment_score = infer_zl_sentiment(
+                    bucket, full_text, is_trump_related
+                )
 
                 rows.append(
                     {
@@ -249,10 +358,10 @@ def fetch_google_queries(bucket: str, queries: List[str]) -> List[Dict[str, Any]
                         "edition_type": "search_result",
                         "source": "google_search",
                         "source_trust_score": 0.70,
-                        "sentiment_score": 0.0,
-                        "zl_sentiment": "neutral",
-                        "is_trump_related": "trump" in (title + snippet).lower(),
-                        "policy_axis": None,
+                        "sentiment_score": sentiment_score,
+                        "zl_sentiment": zl_sentiment,
+                        "is_trump_related": is_trump_related,
+                        "policy_axis": infer_policy_axis(bucket, full_text, is_trump_related),
                         "created_at": datetime.now(),
                     }
                 )
@@ -285,6 +394,10 @@ def fetch_reddit_discussions(
             post_id = post.get("id", "")
 
             bucket = classify_bucket(title + " " + body)
+            is_trump_related = "trump" in (title + " " + body).lower()
+            zl_sentiment, sentiment_score = infer_zl_sentiment(
+                bucket, title + "\n\n" + body, is_trump_related
+            )
 
             rows.append(
                 {
@@ -299,10 +412,10 @@ def fetch_reddit_discussions(
                     "edition_type": "reddit_post",
                     "source": "reddit",
                     "source_trust_score": 0.60,
-                    "sentiment_score": 0.0,
-                    "zl_sentiment": "neutral",
-                    "is_trump_related": False,
-                    "policy_axis": None,
+                    "sentiment_score": sentiment_score,
+                    "zl_sentiment": zl_sentiment,
+                    "is_trump_related": is_trump_related,
+                    "policy_axis": infer_policy_axis(bucket, title + "\n\n" + body, is_trump_related),
                     "created_at": datetime.now(),
                 }
             )
@@ -315,30 +428,132 @@ def fetch_reddit_discussions(
         return []
 
 
-def load_to_motherduck(rows: List[Dict[str, Any]], table: str) -> int:
-    """Load rows to MotherDuck."""
-    if not rows:
-        return 0
+def ensure_raw_tables(con: duckdb.DuckDBPyConnection) -> None:
+    """Ensure required ScrapeCreators raw tables exist in the target database."""
+    if not RAW_DDL_PATH.exists():
+        raise FileNotFoundError(f"Missing required DDL file: {RAW_DDL_PATH}")
 
+    ddl_sql = RAW_DDL_PATH.read_text(encoding="utf-8")
+    con.execute(ddl_sql)
+
+
+def connect_motherduck() -> duckdb.DuckDBPyConnection:
+    """Connect to MotherDuck with small retries to handle transient network issues."""
     if not MOTHERDUCK_TOKEN:
         raise ValueError("MOTHERDUCK_TOKEN required")
 
-    con = duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}")
+    last_error: Exception | None = None
+    for attempt in range(1, 6):
+        try:
+            con = duckdb.connect(f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}")
+            ensure_raw_tables(con)
+            return con
+        except Exception as e:
+            last_error = e
+            sleep_s = min(2**attempt, 20)
+            print(f"[motherduck] Connect attempt {attempt}/5 failed: {e}; retrying in {sleep_s}s")
+            time.sleep(sleep_s)
+
+    raise RuntimeError(f"Could not connect to MotherDuck after retries: {last_error}")
+
+
+def load_news_to_motherduck(rows: List[Dict[str, Any]]) -> int:
+    """Load rows to MotherDuck raw.scrapecreators_news_buckets (idempotent)."""
+    if not rows:
+        return 0
+
+    con = connect_motherduck()
 
     df = pd.DataFrame(rows)
     con.register("temp_data", df)
 
     con.execute(
-        f"""
-        INSERT INTO raw.{table}
-        SELECT * FROM temp_data
+        """
+        INSERT INTO raw.scrapecreators_news_buckets (
+            article_id,
+            date,
+            published_at,
+            headline,
+            content,
+            url,
+            author,
+            bucket_name,
+            edition_type,
+            source,
+            source_trust_score,
+            sentiment_score,
+            zl_sentiment,
+            is_trump_related,
+            policy_axis,
+            created_at
+        )
+        SELECT
+            article_id,
+            date,
+            published_at,
+            headline,
+            content,
+            url,
+            author,
+            bucket_name,
+            edition_type,
+            source,
+            source_trust_score,
+            sentiment_score,
+            zl_sentiment,
+            is_trump_related,
+            policy_axis,
+            created_at
+        FROM temp_data
         ON CONFLICT (article_id) DO NOTHING
-    """
+    """,
     )
 
-    count = con.execute(f"SELECT COUNT(*) FROM raw.{table}").fetchone()[0]
+    count = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_news_buckets").fetchone()[
+        0
+    ]
     con.close()
+    return count
 
+
+def load_trump_to_motherduck(rows: List[Dict[str, Any]]) -> int:
+    """Load rows to MotherDuck raw.scrapecreators_trump (idempotent)."""
+    if not rows:
+        return 0
+
+    con = connect_motherduck()
+
+    df = pd.DataFrame(rows)
+    con.register("temp_data", df)
+
+    con.execute(
+        """
+        INSERT INTO raw.scrapecreators_trump (
+            post_id,
+            published_date,
+            platform,
+            content,
+            sentiment_score,
+            zl_impact_score,
+            source,
+            ingested_at
+        )
+        SELECT
+            post_id,
+            published_date,
+            platform,
+            content,
+            sentiment_score,
+            zl_impact_score,
+            source,
+            ingested_at
+        FROM temp_data
+        ON CONFLICT (post_id) DO NOTHING
+    """,
+    )
+
+    count = con.execute("SELECT COUNT(*) FROM raw.scrapecreators_trump").fetchone()[0]
+    con.close()
     return count
 
 
@@ -384,7 +599,7 @@ def main():
     print(f"  Trump posts: {len(trump_rows)}")
 
     if all_rows:
-        count = load_to_motherduck(all_rows, "scrapecreators_news_buckets")
+        count = load_news_to_motherduck(all_rows)
         print(f"✅ raw.scrapecreators_news_buckets: {count:,} total rows")
 
     if trump_rows:
@@ -404,7 +619,7 @@ def main():
                 }
             )
 
-        count = load_to_motherduck(trump_formatted, "scrapecreators_trump")
+        count = load_trump_to_motherduck(trump_formatted)
         print(f"✅ raw.scrapecreators_trump: {count:,} total rows")
 
 

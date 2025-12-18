@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useId } from "react";
 
 interface TradingViewWidgetProps {
   scriptSrc: string;
@@ -22,7 +22,9 @@ function TradingViewWidget({
   width = "100%",
 }: TradingViewWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const uniqueId = useId().replace(/:/g, "_");
+  const actualContainerId = containerId || `tv_widget_${uniqueId}`;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -33,6 +35,9 @@ function TradingViewWidget({
     // Create the widget container div that TradingView expects
     const widgetContainer = document.createElement("div");
     widgetContainer.className = "tradingview-widget-container__widget";
+    widgetContainer.id = actualContainerId;
+    widgetContainer.style.height = "100%";
+    widgetContainer.style.width = "100%";
     containerRef.current.appendChild(widgetContainer);
 
     // Create and inject the script
@@ -42,17 +47,18 @@ function TradingViewWidget({
     script.type = "text/javascript";
 
     // Merge default dark theme with provided config
+    // For advanced chart, we need container_id
     const mergedConfig = {
       colorTheme: "dark",
       isTransparent: false,
       width: "100%",
       height: "100%",
+      container_id: actualContainerId,
       ...config,
     };
 
     script.innerHTML = JSON.stringify(mergedConfig);
     containerRef.current.appendChild(script);
-    scriptRef.current = script;
 
     return () => {
       // Cleanup on unmount
@@ -60,12 +66,11 @@ function TradingViewWidget({
         containerRef.current.innerHTML = "";
       }
     };
-  }, [scriptSrc, config]);
+  }, [scriptSrc, config, actualContainerId]);
 
   return (
     <div
       ref={containerRef}
-      id={containerId}
       className="tradingview-widget-container rounded-lg overflow-hidden"
       style={{
         height: typeof height === "number" ? `${height}px` : height,

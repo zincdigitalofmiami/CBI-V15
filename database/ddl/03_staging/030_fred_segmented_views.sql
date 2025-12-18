@@ -250,3 +250,4 @@ UNION ALL SELECT * FROM staging.fred_macro
 UNION ALL SELECT * FROM staging.fred_equity_indices;
 
 
+

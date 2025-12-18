@@ -272,7 +272,7 @@ for bucket in buckets:
 
     # Compare to baseline
     if recent_score > threshold:
-        # Model degraded, trigger re-tournament
+        # Model degraded, initiate re-tournament
         run_tournament(bucket)
 ```
 

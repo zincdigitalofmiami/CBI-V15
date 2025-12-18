@@ -10,8 +10,8 @@ Data sources:
 Reports released: Every Friday at 3:30 PM ET (data as of prior Tuesday)
 
 Usage:
-    python trigger/CFTC/Scripts/ingest_cot.py --start-date 2020-01-01 --end-date 2024-12-31
-    python trigger/CFTC/Scripts/ingest_cot.py --backfill  # Download all historical data
+    python src/ingestion/cftc/ingest_cot.py --start-date 2020-01-01 --end-date 2024-12-31
+    python src/ingestion/cftc/ingest_cot.py --backfill  # Download all historical data
 """
 
 import os

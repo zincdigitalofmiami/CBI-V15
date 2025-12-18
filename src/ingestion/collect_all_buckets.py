@@ -4,16 +4,10 @@ Master Bucket News Orchestrator
 
 Runs all bucket-level news collectors:
 1. ProFarmer Anchor (premium curated)
-2. China bucket (Agrimoney, CONAB, Reuters)
-3. Tariff bucket (Immigration, Farm Bureau, State Ag)
-4. Biofuel bucket
-5. Weather bucket
-6. Energy bucket
-7. Crush bucket
-8. FX bucket
-9. Fed bucket
+2. TradingEconomics soybeans news (free HTML scrape)
+3. Existing ScrapeCreators news already in raw.scrapecreators_news_buckets (optional sync)
 
-Combines with ScrapeCreators API collectors for comprehensive coverage.
+Loads a unified feed into raw.bucket_news for downstream consumption.
 """
 
 import os
@@ -25,23 +19,73 @@ from typing import Any, Dict, List
 import duckdb
 import pandas as pd
 
-# Add trigger + project roots for imports
-SCRIPT_DIR = Path(__file__).resolve().parent
-TRIGGER_DIR = SCRIPT_DIR.parent
-PROJECT_ROOT = TRIGGER_DIR.parent
+ROOT_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT_DIR))
 
-sys.path.insert(0, str(SCRIPT_DIR))
-sys.path.insert(0, str(TRIGGER_DIR))
-sys.path.insert(0, str(PROJECT_ROOT))
+from src.ingestion.usda.profarmer_anchor import fetch_profarmer_articles  # type: ignore
+from src.ingestion.usda.tradingeconomics_anchor import scrape_tradingeconomics_news  # type: ignore
 
-# Import bucket collectors
-from Analysts.Scripts.collect_china_news import fetch_china_bucket_news
-from Policy.Scripts.collect_tariff_news import fetch_tariff_bucket_news
-from ProFarmer.Scripts.profarmer_anchor import fetch_profarmer_articles
-
-MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
 MOTHERDUCK_DB = os.getenv("MOTHERDUCK_DB", "cbi_v15")
-RAW_TABLE = "raw.scrapecreators_news_buckets"  # Separate table from scrapecreators_news_buckets
+RAW_TABLE = "raw.bucket_news"
+
+
+def _load_dotenv_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key or key in os.environ:
+            continue
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_local_env() -> None:
+    _load_dotenv_file(ROOT_DIR / ".env")
+    _load_dotenv_file(ROOT_DIR / ".env.local")
+
+
+def _iter_motherduck_tokens():
+    candidates = [
+        ("MOTHERDUCK_TOKEN", os.getenv("MOTHERDUCK_TOKEN")),
+        ("motherduck_storage_MOTHERDUCK_TOKEN", os.getenv("motherduck_storage_MOTHERDUCK_TOKEN")),
+        ("MOTHERDUCK_READ_SCALING_TOKEN", os.getenv("MOTHERDUCK_READ_SCALING_TOKEN")),
+        (
+            "motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN",
+            os.getenv("motherduck_storage_MOTHERDUCK_READ_SCALING_TOKEN"),
+        ),
+    ]
+    for _, value in candidates:
+        if not value:
+            continue
+        token = value.strip().strip('"').strip("'")
+        if token.count(".") != 2:
+            continue
+        yield token
+
+
+def connect_motherduck() -> duckdb.DuckDBPyConnection:
+    _load_local_env()
+    db_name = os.getenv("MOTHERDUCK_DB", "cbi_v15")
+    last_error: Exception | None = None
+    for token in _iter_motherduck_tokens():
+        try:
+            con = duckdb.connect(f"md:{db_name}?motherduck_token={token}")
+            con.execute("SELECT 1").fetchone()
+            return con
+        except Exception as e:
+            last_error = e
+    raise RuntimeError(
+        f"MotherDuck token required (set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN): {last_error}"
+    )
 
 
 def fetch_all_bucket_news() -> List[Dict[str, Any]]:
@@ -53,36 +97,20 @@ def fetch_all_bucket_news() -> List[Dict[str, Any]]:
     print("="*60)
     
     # ProFarmer Anchor (premium curated)
-    print("\n[1/3] ProFarmer Anchor...")
+    print("\n[1/2] ProFarmer Anchor...")
     try:
         profarmer_articles = fetch_profarmer_articles(days_back=7)
         all_articles.extend(profarmer_articles)
     except Exception as e:
         print(f"❌ ProFarmer error: {e}")
     
-    # China bucket
-    print("\n[2/3] China Bucket...")
+    # TradingEconomics soybeans news
+    print("\n[2/2] TradingEconomics Soybeans News...")
     try:
-        china_articles = fetch_china_bucket_news()
-        all_articles.extend(china_articles)
+        te_articles = scrape_tradingeconomics_news(max_words_per_article=500)
+        all_articles.extend(te_articles)
     except Exception as e:
-        print(f"❌ China bucket error: {e}")
-    
-    # Tariff bucket
-    print("\n[3/3] Tariff Bucket...")
-    try:
-        tariff_articles = fetch_tariff_bucket_news()
-        all_articles.extend(tariff_articles)
-    except Exception as e:
-        print(f"❌ Tariff bucket error: {e}")
-    
-    # TODO: Add remaining buckets
-    # - Biofuel bucket
-    # - Weather bucket
-    # - Energy bucket
-    # - Crush bucket
-    # - FX bucket
-    # - Fed bucket
+        print(f"❌ TradingEconomics error: {e}")
     
     print(f"\n{'='*60}")
     print(f"TOTAL: {len(all_articles)} articles from all buckets")
@@ -114,39 +142,84 @@ def deduplicate_by_url(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return unique_articles
 
 
+def sync_scrapecreators_to_bucket_news(conn: duckdb.DuckDBPyConnection) -> int:
+    """
+    Copy ScrapeCreators bucketed news into raw.bucket_news for a unified feed.
+    """
+    try:
+        conn.execute(
+            """
+            INSERT INTO raw.bucket_news (id, date, title, content, url, source, bucket, sentiment_score, ingested_at)
+            SELECT
+              article_id AS id,
+              date,
+              headline AS title,
+              content,
+              url,
+              COALESCE(source, 'scrapecreators') AS source,
+              bucket_name AS bucket,
+              CAST(sentiment_score AS DOUBLE) AS sentiment_score,
+              CURRENT_TIMESTAMP AS ingested_at
+            FROM raw.scrapecreators_news_buckets sc
+            WHERE NOT EXISTS (
+              SELECT 1 FROM raw.bucket_news bn WHERE bn.id = sc.article_id
+            )
+            """
+        )
+        return 1
+    except Exception:
+        return 0
+
+
 def load_to_motherduck(articles: List[Dict[str, Any]]) -> None:
-    """Load articles to MotherDuck raw.scrapecreators_news_buckets table"""
+    """Load articles to MotherDuck raw.bucket_news table"""
     if not articles:
         print("[motherduck] No articles to load")
         return
-    
-    if not MOTHERDUCK_TOKEN:
-        raise RuntimeError("MOTHERDUCK_TOKEN not set")
-    
-    # Convert to DataFrame
+
     df = pd.DataFrame(articles)
-    
-    # Add metadata
-    df['date'] = pd.to_datetime(df['published_at']).dt.date
-    df['created_at'] = datetime.utcnow()
-    
-    # Connect to MotherDuck
-    conn_str = f"md:{MOTHERDUCK_DB}?motherduck_token={MOTHERDUCK_TOKEN}"
-    
-    with duckdb.connect(conn_str) as conn:
-        # Create temp staging table
-        conn.execute("CREATE TEMP TABLE staging_bucket_news AS SELECT * FROM df")
-        
-        # Insert with deduplication
-        merge_sql = f"""
-        INSERT OR IGNORE INTO {RAW_TABLE}
-        SELECT * FROM staging_bucket_news
+    if df.empty:
+        print("[motherduck] No articles to load")
+        return
+
+    df_out = pd.DataFrame(
+        {
+            "id": df.get("article_id"),
+            "date": pd.to_datetime(df.get("published_at"), errors="coerce").dt.date,
+            "title": df.get("headline"),
+            "content": df.get("content"),
+            "url": df.get("url"),
+            "source": df.get("source"),
+            "bucket": df.get("bucket_name"),
+            "sentiment_score": df.get("sentiment_score"),
+            "ingested_at": datetime.utcnow(),
+        }
+    )
+
+    conn = connect_motherduck()
+    conn.register("staging_bucket_news", df_out)
+
+    # Upsert by id
+    conn.execute(
         """
-        
-        result = conn.execute(merge_sql)
-        rows_inserted = result.fetchone()[0] if result else 0
-        
-        print(f"[motherduck] ✅ Inserted {rows_inserted:,} new articles into {RAW_TABLE}")
+        DELETE FROM raw.bucket_news
+        WHERE id IN (SELECT id FROM staging_bucket_news WHERE id IS NOT NULL)
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO raw.bucket_news (id, date, title, content, url, source, bucket, sentiment_score, ingested_at)
+        SELECT id, date, title, content, url, source, bucket, CAST(sentiment_score AS DOUBLE), ingested_at
+        FROM staging_bucket_news
+        WHERE id IS NOT NULL
+        """
+    )
+
+    sync_scrapecreators_to_bucket_news(conn)
+    total = conn.execute("SELECT COUNT(*) FROM raw.bucket_news").fetchone()[0]
+    conn.close()
+
+    print(f"[motherduck] ✅ raw.bucket_news total rows now {total:,}")
 
 
 def main():
@@ -154,12 +227,22 @@ def main():
     print("\n" + "="*60)
     print("BUCKET NEWS INGESTION PIPELINE")
     print("="*60)
+
+    _load_local_env()
     
     # Fetch all articles
     articles = fetch_all_bucket_news()
     
     if not articles:
-        print("\n⚠️  No articles fetched")
+        print("\n⚠️  No articles fetched; syncing ScrapeCreators → raw.bucket_news only")
+        try:
+            conn = connect_motherduck()
+            sync_scrapecreators_to_bucket_news(conn)
+            total = conn.execute("SELECT COUNT(*) FROM raw.bucket_news").fetchone()[0]
+            conn.close()
+            print(f"[motherduck] ✅ raw.bucket_news total rows now {total:,}")
+        except Exception as e:
+            print(f"[motherduck] ❌ Sync failed: {e}")
         return
     
     # Deduplicate

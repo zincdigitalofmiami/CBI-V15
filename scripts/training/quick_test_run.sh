@@ -12,9 +12,13 @@ echo "Started: $(date)"
 echo ""
 
 # Check environment
+if [ -z "$MOTHERDUCK_TOKEN" ] && [ -n "$motherduck_storage_MOTHERDUCK_TOKEN" ]; then
+    export MOTHERDUCK_TOKEN="$motherduck_storage_MOTHERDUCK_TOKEN"
+fi
+
 if [ -z "$MOTHERDUCK_TOKEN" ]; then
-    echo "❌ ERROR: MOTHERDUCK_TOKEN not set"
-    echo "   Run: export MOTHERDUCK_TOKEN=your_token"
+    echo "❌ ERROR: No MotherDuck token set"
+    echo "   Set MOTHERDUCK_TOKEN or motherduck_storage_MOTHERDUCK_TOKEN"
     exit 1
 fi
 

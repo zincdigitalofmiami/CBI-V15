@@ -7,7 +7,7 @@ Ingests weekly Commitment of Traders (COT) reports from the CFTC for all 38 futu
 **Data source:** https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm  
 **Frequency:** Weekly (released Friday 3:30 PM ET, data as of prior Tuesday)  
 **Historical data:** Available back to 2006 (Disaggregated reports)
-**Canonical script:** `trigger/CFTC/Scripts/ingest_cot.py`
+**Canonical script:** `src/ingestion/cftc/ingest_cot.py`
 
 ---
 
@@ -39,21 +39,21 @@ The CFTC publishes weekly reports showing the positions of different trader cate
 
 ```bash
 # Download last 5 years
-python trigger/CFTC/Scripts/ingest_cot.py --start-year 2020 --end-year 2025
+python src/ingestion/cftc/ingest_cot.py --start-year 2020 --end-year 2025
 ```
 
 ### **Backfill All Historical Data:**
 
 ```bash
 # Download all data from 2006 to present
-python trigger/CFTC/Scripts/ingest_cot.py --backfill
+python src/ingestion/cftc/ingest_cot.py --backfill
 ```
 
 ### **Custom Date Range:**
 
 ```bash
 # Download specific years
-python trigger/CFTC/Scripts/ingest_cot.py --start-year 2015 --end-year 2020
+python src/ingestion/cftc/ingest_cot.py --start-year 2015 --end-year 2020
 ```
 
 ---
@@ -211,7 +211,7 @@ Some symbols may not appear in COT reports if:
 
 ```bash
 # Run every Friday at 4:00 PM ET (after 3:30 PM release)
-0 16 * * 5 cd /path/to/CBI-V15 && python trigger/CFTC/Scripts/ingest_cot.py --start-year 2024 --end-year 2025
+0 16 * * 5 cd /path/to/CBI-V15 && python src/ingestion/cftc/ingest_cot.py --start-year 2024 --end-year 2025
 ```
 
 ---

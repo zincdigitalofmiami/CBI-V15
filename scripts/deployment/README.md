@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Scripts for deploying to production environments - Vercel, MotherDuck, Trigger.dev.
+Scripts for deploying to production environments - Vercel and MotherDuck.
 
 ## What Belongs Here
 

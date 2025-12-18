@@ -29,7 +29,7 @@ All previously identified critical blocking issues have been resolved. The inges
 
 ### 2. Ingestion Script (MOSTLY GOOD)
 
-- ✅ `trigger/DataBento/Scripts/collect_daily.py` exists
+- ✅ `src/ingestion/databento/collect_daily.py` exists
 - ✅ Uses official Databento Python SDK
 - ✅ Supports all 38 symbols (Agricultural, Energy, Metals, Treasuries, FX)
 - ✅ Handles MotherDuck and local DuckDB connections
@@ -83,7 +83,7 @@ DDL now matches actual MotherDuck schema with consistent column naming.
 
 ### Issue #3: Idempotency Protection - ✅ RESOLVED
 
-**File:** `trigger/DataBento/Scripts/collect_daily.py:233-241`
+**File:** `src/ingestion/databento/collect_daily.py`
 
 **Status:** ✅ FIXED
 
@@ -180,7 +180,7 @@ All critical fixes have been completed:
 
 **Ready to proceed with data ingestion:**
 
-- [ ] **Test:** Run small ingestion test: `python trigger/DataBento/Scripts/collect_daily.py`
+- [ ] **Test:** Run small ingestion test: `python src/ingestion/databento/collect_daily.py`
 - [ ] **Verify:** Check MotherDuck: `SELECT COUNT(*) FROM raw.databento_futures_ohlcv_1d WHERE symbol = 'ZL'`
 - [ ] **Test Dashboard:** `curl http://localhost:3000/api/live/zl` (should return data)
 - [ ] **Full Pull:** Run for all 38 symbols, full history
@@ -207,7 +207,7 @@ All fixes have been applied. You can now proceed with data ingestion:
 
 ```bash
 # 1. Test ingestion (all symbols from last available date or 2010-01-01)
-python trigger/DataBento/Scripts/collect_daily.py
+python src/ingestion/databento/collect_daily.py
 
 # 2. Verify data in MotherDuck
 python -c "
@@ -242,6 +242,6 @@ python scripts/ops/check_data_availability.py
 **Next Steps:**
 
 1. ✅ All fixes completed
-2. Run full historical ingestion: `python trigger/DataBento/Scripts/collect_daily.py`
+2. Run full historical ingestion: `python src/ingestion/databento/collect_daily.py`
 3. Verify data and test dashboard
 4. Proceed with feature engineering and model training
