@@ -79,7 +79,7 @@ export async function GET() {
     const resp = await fetch("https://hist.databento.com/v0/timeseries.get_range", {
       method: "POST",
       headers: {
-        Authorization: `Basic ${btoa(cleanKey + ":")}`,
+        Authorization: `Bearer ${cleanKey}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },

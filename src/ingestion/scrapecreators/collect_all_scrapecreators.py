@@ -262,7 +262,11 @@ def infer_zl_sentiment(bucket: str, text: str, is_trump_related: bool) -> tuple[
     return ("NEUTRAL", 0.0)
 
 
-def fetch_twitter_account(handle: str, limit: int = 50) -> List[Dict[str, Any]]:
+def fetch_twitter_account(
+    handle: str,
+    limit: int = 50,
+    errors: list[str] | None = None,
+) -> List[Dict[str, Any]]:
     """Fetch tweets from a Twitter account."""
     headers = {"x-api-key": SCRAPECREATORS_API_KEY}
     params = {"handle": handle, "limit": limit}
@@ -317,11 +321,18 @@ def fetch_twitter_account(handle: str, limit: int = 50) -> List[Dict[str, Any]]:
         return rows
 
     except Exception as e:
-        print(f"[Twitter] @{handle} Error: {e}")
+        msg = f"[Twitter] @{handle} Error: {e}"
+        print(msg)
+        if errors is not None:
+            errors.append(msg)
         return []
 
 
-def fetch_google_queries(bucket: str, queries: List[str]) -> List[Dict[str, Any]]:
+def fetch_google_queries(
+    bucket: str,
+    queries: List[str],
+    errors: list[str] | None = None,
+) -> List[Dict[str, Any]]:
     """Fetch Google search results for bucket queries."""
     headers = {"x-api-key": SCRAPECREATORS_API_KEY}
 
@@ -373,13 +384,18 @@ def fetch_google_queries(bucket: str, queries: List[str]) -> List[Dict[str, Any]
             print(f"[Google] {bucket} - '{query[:30]}...': {len(results)} results")
 
         except Exception as e:
-            print(f"[Google] {bucket} - '{query[:30]}...' Error: {e}")
+            msg = f"[Google] {bucket} - '{query[:30]}...' Error: {e}"
+            print(msg)
+            if errors is not None:
+                errors.append(msg)
 
     return rows
 
 
 def fetch_reddit_discussions(
-    subreddit: str, query: str = "soybeans"
+    subreddit: str,
+    query: str = "soybeans",
+    errors: list[str] | None = None,
 ) -> List[Dict[str, Any]]:
     """Fetch Reddit discussions (if endpoint available)."""
     headers = {"x-api-key": SCRAPECREATORS_API_KEY}
@@ -428,7 +444,10 @@ def fetch_reddit_discussions(
         return rows
 
     except Exception as e:
-        print(f"[Reddit] r/{subreddit} Error: {e}")
+        msg = f"[Reddit] r/{subreddit} Error: {e}"
+        print(msg)
+        if errors is not None:
+            errors.append(msg)
         return []
 
 
