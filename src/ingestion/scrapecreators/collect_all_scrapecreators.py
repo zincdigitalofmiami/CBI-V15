@@ -648,6 +648,7 @@ def load_trump_to_motherduck(rows: List[Dict[str, Any]]) -> int:
 
 def main():
     """Main collection routine - EXPANDED."""
+    started_at = datetime.utcnow()
     print("=" * 80)
     print("SCRAPECREATORS MASTER COLLECTOR (EXPANDED)")
     print("=" * 80)
@@ -655,13 +656,14 @@ def main():
     if not SCRAPECREATORS_API_KEY:
         raise ValueError("SCRAPECREATORS_API_KEY required")
 
+    fetch_errors: list[str] = []
     all_rows = []
     trump_rows = []
 
     # 1. Twitter accounts (18 accounts × 50 tweets = 900 potential tweets)
     print("\n[1/3] Collecting Twitter accounts...")
     for handle in TWITTER_ACCOUNTS:
-        tweets = fetch_twitter_account(handle, limit=50)
+        tweets = fetch_twitter_account(handle, limit=50, errors=fetch_errors)
 
         if handle == "realDonaldTrump":
             # Separate Trump posts
@@ -672,44 +674,87 @@ def main():
     # 2. Google searches (8 buckets × 4-6 queries × 10 results = 320-480 articles)
     print("\n[2/3] Collecting Google News...")
     for bucket, queries in GOOGLE_QUERIES.items():
-        results = fetch_google_queries(bucket, queries)
+        results = fetch_google_queries(bucket, queries, errors=fetch_errors)
         all_rows.extend(results)
 
     # 3. Reddit (5 subreddits × 20 posts = 100 posts)
     print("\n[3/3] Collecting Reddit discussions...")
     for subreddit in REDDIT_SUBREDDITS:
-        posts = fetch_reddit_discussions(subreddit, query="soybeans OR agriculture")
+        posts = fetch_reddit_discussions(
+            subreddit, query="soybeans OR agriculture", errors=fetch_errors
+        )
         all_rows.extend(posts)
+
+    total_items = len(all_rows) + len(trump_rows)
 
     # Load to MotherDuck
     print("\n" + "=" * 80)
-    print(f"Total items collected: {len(all_rows) + len(trump_rows)}")
+    print(f"Total items collected: {total_items}")
     print(f"  General news: {len(all_rows)}")
     print(f"  Trump posts: {len(trump_rows)}")
 
-    if all_rows:
-        count = load_news_to_motherduck(all_rows)
-        print(f"✅ raw.scrapecreators_news_buckets: {count:,} total rows")
+    completed_at = datetime.utcnow()
 
-    if trump_rows:
-        # Convert Trump tweets to trump table format
-        trump_formatted = []
-        for row in trump_rows:
-            trump_formatted.append(
-                {
-                    "post_id": row["article_id"],
-                    "published_date": row["published_at"],
-                    "platform": "twitter",
-                    "content": row["content"],
-                    "sentiment_score": None,
-                    "zl_impact_score": None,
-                    "source": "scrapecreators_twitter",
-                    "ingested_at": datetime.now(),
-                }
-            )
+    inserted_news = 0
+    inserted_trump = 0
+    status = "success"
+    error_message: str | None = None
 
-        count = load_trump_to_motherduck(trump_formatted)
-        print(f"✅ raw.scrapecreators_trump: {count:,} total rows")
+    if total_items == 0:
+        status = "failed"
+        error_message = (
+            "ScrapeCreators returned 0 items. "
+            + ("; ".join(fetch_errors[:5]) if fetch_errors else "No fetch errors captured.")
+        )
+    else:
+        try:
+            if all_rows:
+                inserted_news = load_news_to_motherduck(all_rows)
+                print(f"✅ raw.scrapecreators_news_buckets: +{inserted_news:,} new rows")
+
+            if trump_rows:
+                # Convert Trump tweets to trump table format
+                trump_formatted = []
+                for row in trump_rows:
+                    trump_formatted.append(
+                        {
+                            "post_id": row["article_id"],
+                            "published_date": row["published_at"],
+                            "platform": "twitter",
+                            "content": row["content"],
+                            "sentiment_score": None,
+                            "zl_impact_score": None,
+                            "source": "scrapecreators_twitter",
+                            "ingested_at": datetime.now(),
+                        }
+                    )
+
+                inserted_trump = load_trump_to_motherduck(trump_formatted)
+                print(f"✅ raw.scrapecreators_trump: +{inserted_trump:,} new rows")
+        except Exception as e:
+            status = "failed"
+            error_message = str(e)
+
+    # Log completion to ops table (best-effort; non-fatal)
+    try:
+        con = connect_motherduck()
+        log_ingestion_completion(
+            con=con,
+            source="scrapecreators",
+            status=status,
+            row_count=int(inserted_news + inserted_trump),
+            started_at=started_at,
+            completed_at=completed_at,
+            start_date=started_at.date(),
+            end_date=completed_at.date(),
+            error_message=error_message,
+        )
+        con.close()
+    except Exception as e:
+        print(f"[ops] Could not log ops.ingestion_completion: {e}")
+
+    if status != "success":
+        raise RuntimeError(error_message or "ScrapeCreators ingestion failed")
 
 
 if __name__ == "__main__":
